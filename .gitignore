@@ -1,0 +1,5 @@
+.DS_Store
+octopus
+dump.rdb
+log/*/*.log
+tests/tests
