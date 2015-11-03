@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-func NewConnection(identifier string, ws *websocket.Conn, messageHandler func(Connection, *Message, error)) (Connection, error) {
+func NewConnection(identifier string, ws *websocket.Conn, h MessageHandler) (Connection, error) {
 	conn := &connection{
 		identifier: identifier,
 		createdAt:  time.Now(),
@@ -25,7 +25,7 @@ func NewConnection(identifier string, ws *websocket.Conn, messageHandler func(Co
 		return nil, err
 	}
 
-	go conn.Listen(messageHandler)
+	go conn.Listen(h)
 	return conn, nil
 }
 
@@ -38,7 +38,7 @@ type Connection interface {
 	SendAsyncRequest(*Message) error
 	SendSyncRequest(*Message) (*Message, error)
 	SendResponse(*Message) error
-	Listen(func(*Message, err))
+	Listen(MessageHandler)
 }
 
 type connection struct {
@@ -188,7 +188,7 @@ func (c *connection) Close() error {
 	c.unlock()
 
 	c.wg.Wait()
-	if err = c.cm.UnregisterConnection(c); err != nil {
+	if err := CM.UnregisterConnection(c); err != nil {
 		return &ConnectionUnregisterError{
 			message: fmt.Sprintf("error unregistering connection, %s", err.Error()),
 		}
@@ -224,34 +224,35 @@ func (c *connection) readMessage() (*Message, error) {
 		}, nil
 	}
 
-	return Unmarshal(messageBody)
+	return Unmarshal(string(messageBody))
 }
 
-func (c *connection) Listen(messageHandler func(*Message, error)) {
+func (c *connection) Listen(h MessageHandler) {
 	for {
 		message, err := c.readMessage()
 		if err != nil {
 			c.Close()
-			messageHandler(nil, err)
+			h(c, nil, err)
+			return
 		} else if message.MessageType == CloseMessage {
 			c.Close()
-			messageHandler(message, nil)
+			h(c, message, nil)
+			return
 		} else if message.MessageType == ResponseMessage {
 			msgId := message.MessageId
 			c.chm.RLock()
-			ch, found := c.chm[msgId]
+			ch, found := c.msgChans[msgId]
 			c.chm.RUnlock()
 			if found {
 				ch <- message
+				DefaultMiddlewares.Chain(nil)(c, message, nil)
 			} else {
-				messageHandler(nil, &MessageResponseError{
+				h(c, nil, &MessageResponseError{
 					message: "unexpected response messages received, probably due to connection reset?",
 				})
 			}
 		} else {
-			messageHandler(message, nil)
+			h(c, message, nil)
 		}
-
-		return
 	}
 }

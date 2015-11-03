@@ -1,6 +1,6 @@
 package connections
 
-var CM *ConnectionManager
+var CM ConnectionManager
 
 type ConnectionManager interface {
 	Close() error

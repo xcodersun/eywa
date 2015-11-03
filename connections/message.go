@@ -7,9 +7,9 @@ import (
 )
 
 const (
-	AsyncRequestMessage = 0
-	SyncRequestMessage  = 1
-	ResponseMessage     = 2
+	AsyncRequestMessage = 1
+	SyncRequestMessage  = 2
+	ResponseMessage     = 4
 	CloseMessage        = 8
 )
 
@@ -30,7 +30,8 @@ func (m *Message) Marshal() string {
 func (m *Message) Valid() bool {
 	return (m.MessageType == AsyncRequestMessage ||
 		m.MessageType == SyncRequestMessage ||
-		m.MessageType == ResponseMessage) && len(m.MessageId) > 0
+		m.MessageType == ResponseMessage ||
+		m.MessageType == CloseMessage) && len(m.MessageId) > 0
 }
 
 func Marshal(m *Message) string {
@@ -41,15 +42,15 @@ func Unmarshal(raw string) (*Message, error) {
 	fields := strings.SplitN(raw, "|", 3)
 	if len(fields) != 3 {
 		return nil, &MessageParsingError{
-			message: fmt.Sprintf("expected 3 fields instead of %d, [%s]", len(fields), raw),
+			message: fmt.Sprintf("expected 3 fields instead of %d, raw: %s", len(fields), raw),
 		}
 	}
 
 	msgType, err := strconv.Atoi(fields[0])
 	if err != nil || (msgType != AsyncRequestMessage &&
-		msgType != SyncRequestMessage && msgType != ResponseMessage) {
+		msgType != SyncRequestMessage && msgType != ResponseMessage && msgType != CloseMessage) {
 		return nil, &MessageParsingError{
-			message: fmt.Sprintf("invalid messagetype, [%s]", raw),
+			message: fmt.Sprintf("invalid messagetype, raw: %s", raw),
 		}
 	}
 
@@ -58,9 +59,9 @@ func Unmarshal(raw string) (*Message, error) {
 		MessageId:   fields[1],
 		Payload:     fields[2],
 	}
-	if len(m.MessageId) == 0 {
+	if len(m.MessageId) == 0 && msgType != CloseMessage {
 		return nil, &MessageParsingError{
-			message: fmt.Sprintf("empty messageid, [%s]", raw),
+			message: fmt.Sprintf("empty messageid, raw: %s", raw),
 		}
 	}
 
