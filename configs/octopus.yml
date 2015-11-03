@@ -1,0 +1,6 @@
+connections:
+  expiry: &expiry 300s
+  timeouts:
+    write: 2s
+    read: *expiry
+    response: 8s
