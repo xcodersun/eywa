@@ -1,8 +1,7 @@
-package middlewares
+package connections
 
 import (
 	"fmt"
-	"github.com/vivowares/octopus/connections"
 )
 
 var Logger = func(h MessageHandler) MessageHandler {

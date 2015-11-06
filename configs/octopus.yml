@@ -4,3 +4,6 @@ connections:
     write: 2s
     read: *expiry
     response: 8s
+  registry:
+    type: memory
+

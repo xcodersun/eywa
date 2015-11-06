@@ -58,10 +58,42 @@ func (e *MessageResponseError) Error() string {
 	return fmt.Sprintf("[MessageResponseError] %s", e.message)
 }
 
+type ConnectionRegisterError struct {
+	message string
+}
+
+func (e *ConnectionRegisterError) Error() string {
+	return fmt.Sprintf("[ConnectionRegisterError] %s", e.message)
+}
+
 type ConnectionUnregisterError struct {
 	message string
 }
 
 func (e *ConnectionUnregisterError) Error() string {
 	return fmt.Sprintf("[ConnectionUnregisterError] %s", e.message)
+}
+
+type ConnectionManagerStartingError struct {
+	message string
+}
+
+func (e *ConnectionManagerStartingError) Error() string {
+	return fmt.Sprintf("[ConnectionManagerStartingError] %s", e.message)
+}
+
+type UpdateRegisteredConnectionError struct {
+	message string
+}
+
+func (e *UpdateRegisteredConnectionError) Error() string {
+	return fmt.Sprintf("[UpdateRegisteredConnectionError] %s", e.message)
+}
+
+type WebsocketError struct {
+	message string
+}
+
+func (e *WebsocketError) Error() string {
+	return fmt.Sprintf("[WebsocketError] %s", e.message)
 }

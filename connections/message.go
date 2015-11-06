@@ -49,7 +49,7 @@ func Unmarshal(raw string) (*Message, error) {
 	msgType, err := strconv.Atoi(fields[0])
 	if err != nil || (msgType != AsyncRequestMessage &&
 		msgType != SyncRequestMessage && msgType != ResponseMessage && msgType != CloseMessage) {
-		return nil, &MessageParsingError{
+		return nil, &MessageTypeError{
 			message: fmt.Sprintf("invalid messagetype, raw: %s", raw),
 		}
 	}
