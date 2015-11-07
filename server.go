@@ -1,55 +1,67 @@
 package main
 
 import (
-	"fmt"
-	// "github.com/spf13/viper"
-	// "os"
-	"time"
-	// "path"
+	"github.com/gorilla/mux"
+	"github.com/spf13/viper"
+	"github.com/vivowares/octopus/connections"
+	"github.com/vivowares/octopus/handlers"
+	. "github.com/vivowares/octopus/utils"
+	"github.com/zenazn/goji/bind"
+	"github.com/zenazn/goji/graceful"
+	"github.com/zenazn/goji/web"
+	"github.com/zenazn/goji/web/middleware"
+	"log"
 	"net/http"
-
-	// . "github.com/vivowares/octopus.single/util"
-	"github.com/gorilla/websocket"
+	"os"
+	"path"
 )
 
 func main() {
-	// configure()
-	// fmt.Println(viper.GetDuration("connections.expiry"))
-	http.HandleFunc("/", handler)
-	http.ListenAndServe(":8080", nil)
+	configure()
+	connections.InitializeCM()
+
+	go graceful.Serve(
+		bind.Socket(":"+viper.GetString("http_port")),
+		HttpRouter(),
+	)
+
+	go func() {
+		http.ListenAndServe(":"+viper.GetString("ws_port"), WsRouter())
+	}()
+
+	graceful.HandleSignals()
+	graceful.PreHook(func() { log.Printf("Goji received signal, gracefully stopping") })
+	graceful.PreHook(func() { connections.CM.Close() })
+	graceful.PostHook(func() { connections.CM.Wait() })
+	graceful.PostHook(func() { log.Printf("Goji stopped") })
+	graceful.Wait()
 }
 
-// func configure() {
-// 	viper.SetConfigName("octopus.single")
-// 	viper.AddConfigPath("/etc/octopus.single/")
-// 	pwd, err := os.Getwd()
-// 	PanicIfErr(err)
-// 	viper.AddConfigPath(path.Join(pwd, "configs"))
-// 	err = viper.ReadInConfig()
-// 	if err != nil {
-// 		PanicIfErr(err)
-// 	}
-// }
-
-var upgrader = websocket.Upgrader{
-	ReadBufferSize:  1024,
-	WriteBufferSize: 1024,
+func configure() {
+	viper.SetConfigName("octopus")
+	viper.AddConfigPath("/etc/octopus/configs/")
+	pwd, err := os.Getwd()
+	PanicIfErr(err)
+	viper.AddConfigPath(path.Join(pwd, "configs"))
+	err = viper.ReadInConfig()
+	PanicIfErr(err)
 }
 
-func handler(w http.ResponseWriter, r *http.Request) {
-	conn, err := upgrader.Upgrade(w, r, nil)
-	if err != nil {
-		return
-	}
-	conn.SetPingHandler(func(p string) error {
-		fmt.Println("ping")
-		return nil
-	})
-	conn.SetPongHandler(func(p string) error {
-		fmt.Println("pong")
-		return nil
-	})
-	conn.SetReadDeadline(time.Now().Add(5 * time.Second))
-	t, p, err := conn.ReadMessage()
-	fmt.Println(t, p, err)
+func WsRouter() http.Handler {
+	wsRouter := mux.NewRouter()
+	wsRouter.HandleFunc("/ws/{device_id}", handlers.WsHandler)
+	wsRouter.HandleFunc("/heartbeat", handlers.HeartBeatWs)
+	return wsRouter
+}
+
+func HttpRouter() http.Handler {
+	httpRouter := web.New()
+	httpRouter.Use(middleware.RequestID)
+	httpRouter.Use(middleware.Logger)
+	httpRouter.Use(middleware.Recoverer)
+	httpRouter.Use(middleware.AutomaticOptions)
+	httpRouter.Get("/heartbeat", handlers.HeartBeatHttp)
+	httpRouter.Compile()
+
+	return httpRouter
 }

@@ -16,8 +16,6 @@ type Middlewares struct {
 	middlewares []*Middleware
 }
 
-var DefaultMiddlewares Middlewares
-
 // Not thread safe!
 // This is implimented without thread safty intentionally.
 // We don't encouge using this method concurrently with other methods

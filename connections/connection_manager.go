@@ -1,15 +1,39 @@
 package connections
 
 import (
+	"github.com/gorilla/websocket"
+	"github.com/spf13/viper"
+	. "github.com/vivowares/octopus/utils"
+	"log"
+	"os"
 	"sync"
 	"time"
-
-	"github.com/gorilla/websocket"
 )
 
+var CM ConnectionManager
+
+func InitializeCM() {
+	hostname, err := os.Hostname()
+	PanicIfErr(err)
+
+	cmType := viper.GetString("connections.type")
+	switch cmType {
+	case "memory":
+		CM = &InMemoryConnectionManager{
+			host:        hostname,
+			connections: make(map[string]Connection),
+		}
+	default:
+		CM = &InMemoryConnectionManager{
+			host:        hostname,
+			connections: make(map[string]Connection),
+		}
+	}
+}
+
 type ConnectionManager interface {
-	Start() error
 	Close() error
+	Wait()
 	Host() string
 	NewConnection(string, *websocket.Conn, MessageHandler) (Connection, error)
 
@@ -29,27 +53,6 @@ type InMemoryConnectionManager struct {
 
 func (cm *InMemoryConnectionManager) Host() string {
 	return cm.host
-}
-
-func (cm *InMemoryConnectionManager) Start() error {
-	cm.m.Lock()
-	defer cm.m.Unlock()
-
-	if len(cm.host) == 0 {
-		return &ConnectionManagerStartingError{
-			message: "empty host name",
-		}
-	}
-
-	if !cm.closed {
-		return &ConnectionManagerStartingError{
-			message: "connection manager is already started",
-		}
-	}
-
-	cm.connections = make(map[string]Connection)
-	cm.closed = false
-	return nil
 }
 
 func (cm *InMemoryConnectionManager) NewConnection(identifier string, ws *websocket.Conn, h MessageHandler) (Connection, error) {
@@ -117,7 +120,6 @@ func (cm *InMemoryConnectionManager) refreshConnectionRegistry(conn Connection, 
 
 func (cm *InMemoryConnectionManager) Close() error {
 	cm.m.Lock()
-	defer cm.wg.Wait()
 	defer cm.m.Unlock()
 
 	if cm.closed {
@@ -131,4 +133,9 @@ func (cm *InMemoryConnectionManager) Close() error {
 	}
 
 	return nil
+}
+
+func (cm *InMemoryConnectionManager) Wait() {
+	cm.wg.Wait()
+	log.Printf("cm closed")
 }

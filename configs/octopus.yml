@@ -1,9 +1,13 @@
+host: "localhost"
+http_port: 8080
+ws_port: 8081
 connections:
+  type: memory
   expiry: &expiry 300s
   timeouts:
     write: 2s
     read: *expiry
     response: 8s
-  registry:
-    type: memory
-
+  buffer_sizes:
+    read: 1024
+    write: 1024
