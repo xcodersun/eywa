@@ -1,7 +1,6 @@
 package connections
 
 import (
-	"github.com/gorilla/websocket"
 	"github.com/spf13/viper"
 	. "github.com/vivowares/octopus/utils"
 	"log"
@@ -35,7 +34,8 @@ type ConnectionManager interface {
 	Close() error
 	Wait()
 	Host() string
-	NewConnection(string, *websocket.Conn, MessageHandler) (Connection, error)
+	NewConnection(string, wsConn, MessageHandler) (Connection, error)
+	ConnectionCount() int
 
 	registerConnection(Connection) error
 	unregisterConnection(Connection) error
@@ -55,7 +55,7 @@ func (cm *InMemoryConnectionManager) Host() string {
 	return cm.host
 }
 
-func (cm *InMemoryConnectionManager) NewConnection(identifier string, ws *websocket.Conn, h MessageHandler) (Connection, error) {
+func (cm *InMemoryConnectionManager) NewConnection(identifier string, ws wsConn, h MessageHandler) (Connection, error) {
 	t := time.Now()
 	conn := &connection{
 		identifier:   identifier,
@@ -102,7 +102,7 @@ func (cm *InMemoryConnectionManager) unregisterConnection(conn Connection) error
 	cm.m.Lock()
 
 	if c, found := cm.connections[conn.Identifier()]; found {
-		if conn.CreatedAt().Before(c.CreatedAt()) || conn.CreatedAt().Equal(c.CreatedAt()) {
+		if conn.CreatedAt().Equal(c.CreatedAt()) {
 			delete(cm.connections, conn.Identifier())
 		}
 	}
@@ -112,6 +112,13 @@ func (cm *InMemoryConnectionManager) unregisterConnection(conn Connection) error
 	cm.wg.Done()
 
 	return nil
+}
+
+func (cm *InMemoryConnectionManager) ConnectionCount() int {
+	cm.m.RLock()
+	defer cm.m.RUnlock()
+
+	return len(cm.connections)
 }
 
 func (cm *InMemoryConnectionManager) refreshConnectionRegistry(conn Connection, t time.Time) error {

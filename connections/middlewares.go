@@ -15,7 +15,7 @@ var Logger = &Middleware{
 			if e != nil {
 				fmt.Errorf("Error: %s\n", e.Error())
 			} else {
-				fmt.Println("Info: Connection: %+v\t\tMessage: %+v", c, m)
+				fmt.Printf("Info: Connection: %+v\t\tMessage: %+v\n", c, m)
 			}
 		}
 		return MessageHandler(fn)

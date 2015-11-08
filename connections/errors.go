@@ -18,14 +18,6 @@ func (e *MessageReadingError) Error() string {
 	return fmt.Sprintf("[MessageReadingError] %s", e.message)
 }
 
-type MessageTypeError struct {
-	message string
-}
-
-func (e *MessageTypeError) Error() string {
-	return fmt.Sprintf("[MessageTypeError] %s", e.message)
-}
-
 type ConnectionCloseError struct {
 	message string
 }
@@ -40,6 +32,22 @@ type MessageParsingError struct {
 
 func (e *MessageParsingError) Error() string {
 	return fmt.Sprintf("[MessageParsingError] %s", e.message)
+}
+
+type MessageTypeError struct {
+	message string
+}
+
+func (e *MessageTypeError) Error() string {
+	return fmt.Sprintf("[MessageTypeError] %s", e.message)
+}
+
+type MessageIdError struct {
+	message string
+}
+
+func (e *MessageIdError) Error() string {
+	return fmt.Sprintf("[MessageIdError] %s", e.message)
 }
 
 type ResponseTimeoutError struct {

@@ -27,13 +27,6 @@ func (m *Message) Marshal() string {
 	return m.String()
 }
 
-func (m *Message) Valid() bool {
-	return (m.MessageType == AsyncRequestMessage ||
-		m.MessageType == SyncRequestMessage ||
-		m.MessageType == ResponseMessage ||
-		m.MessageType == CloseMessage) && len(m.MessageId) > 0
-}
-
 func Marshal(m *Message) string {
 	return m.Marshal()
 }
@@ -49,7 +42,7 @@ func Unmarshal(raw string) (*Message, error) {
 	msgType, err := strconv.Atoi(fields[0])
 	if err != nil || (msgType != AsyncRequestMessage &&
 		msgType != SyncRequestMessage && msgType != ResponseMessage && msgType != CloseMessage) {
-		return nil, &MessageTypeError{
+		return nil, &MessageParsingError{
 			message: fmt.Sprintf("invalid messagetype, raw: %s", raw),
 		}
 	}

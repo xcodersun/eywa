@@ -2,6 +2,8 @@ package connections
 
 import (
 	"fmt"
+	"io"
+	"net"
 	"sync"
 	"time"
 
@@ -9,7 +11,27 @@ import (
 	"github.com/spf13/viper"
 )
 
+type wsConn interface {
+	Subprotocol() string
+	Close() error
+	LocalAddr() net.Addr
+	RemoteAddr() net.Addr
+	WriteControl(int, []byte, time.Time) error
+	NextWriter(int) (io.WriteCloser, error)
+	WriteMessage(int, []byte) error
+	SetWriteDeadline(time.Time) error
+	NextReader() (int, io.Reader, error)
+	ReadMessage() (int, []byte, error)
+	SetReadDeadline(time.Time) error
+	SetReadLimit(int64)
+	SetPingHandler(h func(string) error)
+	SetPongHandler(h func(string) error)
+	UnderlyingConn() net.Conn
+}
+
 type Connection interface {
+	Host() string
+	IsLocal() bool
 	Identifier() string
 	Closed() bool
 	CreatedAt() time.Time
@@ -32,7 +54,7 @@ type connection struct {
 	closeChan    chan bool
 	closed       bool
 	msgChans     map[string]chan *Message
-	ws           *websocket.Conn
+	ws           wsConn
 
 	rm  sync.Mutex
 	wm  sync.Mutex
@@ -52,6 +74,14 @@ func (c *connection) LastPingedAt() time.Time {
 	c.rm.Lock()
 	defer c.rm.Unlock()
 	return c.lastPingedAt
+}
+
+func (c *connection) Host() string {
+	return c.cm.Host()
+}
+
+func (c *connection) IsLocal() bool {
+	return c.cm.Host() == viper.GetString("host")
 }
 
 func (c *connection) Closed() bool {
@@ -96,6 +126,12 @@ func (c *connection) readMessage() (*Message, error) {
 }
 
 func (c *connection) sendMessage(message *Message) error {
+	if len(message.MessageId) == 0 {
+		return &MessageIdError{
+			message: "empty message id",
+		}
+	}
+
 	c.wm.Lock()
 	defer c.wm.Unlock()
 
@@ -124,7 +160,7 @@ func (c *connection) sendMessage(message *Message) error {
 func (c *connection) SendAsyncRequest(message *Message) error {
 	if message.MessageType != AsyncRequestMessage {
 		return &MessageSendingError{
-			message: fmt.Sprintf("invalid message type %s, expected %s", message.MessageType, AsyncRequestMessage),
+			message: fmt.Sprintf("invalid message type %d, expected %d", message.MessageType, AsyncRequestMessage),
 		}
 	}
 
@@ -134,7 +170,7 @@ func (c *connection) SendAsyncRequest(message *Message) error {
 func (c *connection) SendResponse(message *Message) error {
 	if message.MessageType != ResponseMessage {
 		return &MessageSendingError{
-			message: fmt.Sprintf("invalid message type %s, expected %s", message.MessageType, ResponseMessage),
+			message: fmt.Sprintf("invalid message type %d, expected %d", message.MessageType, ResponseMessage),
 		}
 	}
 
@@ -167,7 +203,7 @@ func (c *connection) findMessageChan(messageId string) (chan *Message, bool) {
 func (c *connection) SendSyncRequest(message *Message) (*Message, error) {
 	if message.MessageType != SyncRequestMessage {
 		return nil, &MessageSendingError{
-			message: fmt.Sprintf("invalid message type %s, expected %s", message.MessageType, SyncRequestMessage),
+			message: fmt.Sprintf("invalid message type %d, expected %d", message.MessageType, SyncRequestMessage),
 		}
 	}
 
@@ -248,8 +284,8 @@ func (c *connection) listen(h MessageHandler) {
 				h(c, nil, err)
 				if _, ok := err.(*WebsocketError); ok {
 					c.close()
+					return
 				}
-				return
 			} else if message.MessageType == CloseMessage {
 				h(c, message, nil)
 				c.close()
