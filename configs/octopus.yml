@@ -2,7 +2,7 @@ host: "localhost"
 http_port: 8080
 ws_port: 8081
 connections:
-  type: memory
+  store: memory
   expiry: &expiry 300s
   timeouts:
     write: 2s
@@ -11,3 +11,12 @@ connections:
   buffer_sizes:
     read: 1024
     write: 1024
+persistence:
+  store: bolt
+  db_file: octopus.db
+  file_mode: 0600
+  readonly: false
+  timeout: 1s
+indices:
+  store: influxdb
+

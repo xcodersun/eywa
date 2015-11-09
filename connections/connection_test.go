@@ -75,7 +75,7 @@ func TestConnection(t *testing.T) {
 
 	var yaml = []byte(`
     connections:
-      type: memory
+      store: memory
       expiry: &expiry 300s
       timeouts:
         write: 2s

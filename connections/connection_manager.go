@@ -15,7 +15,7 @@ func InitializeCM() {
 	hostname, err := os.Hostname()
 	PanicIfErr(err)
 
-	cmType := viper.GetString("connections.type")
+	cmType := viper.GetString("connections.store")
 	switch cmType {
 	case "memory":
 		CM = &InMemoryConnectionManager{
