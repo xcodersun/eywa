@@ -5,6 +5,7 @@ import (
 	"github.com/spf13/viper"
 	"github.com/vivowares/octopus/connections"
 	"github.com/vivowares/octopus/handlers"
+	"github.com/vivowares/octopus/models"
 	. "github.com/vivowares/octopus/utils"
 	"github.com/zenazn/goji/bind"
 	"github.com/zenazn/goji/graceful"
@@ -18,21 +19,32 @@ import (
 
 func main() {
 	configure()
-	connections.InitializeCM()
-
-	go graceful.Serve(
-		bind.Socket(":"+viper.GetString("http_port")),
-		HttpRouter(),
-	)
+	err := models.InitializeMetaStore()
+	PanicIfErr(err)
+	err = connections.InitializeCM()
+	PanicIfErr(err)
 
 	go func() {
+		log.Printf("Goji started listenning to port %s", viper.GetString("http_port"))
+		graceful.Serve(
+			bind.Socket(":"+viper.GetString("http_port")),
+			HttpRouter(),
+		)
+	}()
+
+	go func() {
+		log.Printf("Connection Manager started listenning to port %s", viper.GetString("ws_port"))
 		http.ListenAndServe(":"+viper.GetString("ws_port"), WsRouter())
 	}()
 
 	graceful.HandleSignals()
 	graceful.PreHook(func() { log.Printf("Goji received signal, gracefully stopping") })
 	graceful.PreHook(func() { connections.CM.Close() })
-	graceful.PostHook(func() { connections.CM.Wait() })
+	graceful.PostHook(func() {
+		connections.CM.Wait()
+		log.Printf("Connection Manager closed")
+	})
+	graceful.PostHook(func() { models.CloseMetaStore() })
 	graceful.PostHook(func() { log.Printf("Goji stopped") })
 	graceful.Wait()
 }

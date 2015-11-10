@@ -14,9 +14,6 @@ connections:
 persistence:
   store: bolt
   db_file: octopus.db
-  file_mode: 0600
-  readonly: false
-  timeout: 1s
 indices:
   store: influxdb
 

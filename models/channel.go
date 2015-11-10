@@ -3,33 +3,18 @@ package models
 import (
 	"errors"
 	"fmt"
-	. "github.com/vivowares/octopus/persistence"
 	. "github.com/vivowares/octopus/utils"
 	"strings"
 )
 
-var SupportedDataTypes = []string{"float64", "int64", "boolean", "string"}
+var SupportedDataTypes = []string{"float", "int", "boolean", "string"}
 
 // use channel to query
-// channel metadata is stored in persistant db
-// need some validations
 type Channel struct {
-	// we don't allow duplicate channel names
-	Name        string
-	Description string
-	// we still wanna restrict the tags/fields creation. Since this is used to monitor hardwares. these settings shouldn't change much
-	// however we do allow modifications on channel settings
-	Tags      []string          // max to 255 tags, tag datatype is always string
-	Fields    map[string]string // max to 255 fields, different fields may have different datatype
-	datastore DataStore
-}
-
-func NewChannel() *Channel {
-	return &Channel{
-		Tags:      make([]string, 0),
-		Fields:    make(map[string]string),
-		datastore: DB,
-	}
+	Name        string            `json:"name"`
+	Description string            `json:"description"`
+	Tags        []string          `json:"tags"`
+	Fields      map[string]string `json:"fields"`
 }
 
 func (c *Channel) Validate() (map[string]error, bool) {
@@ -57,7 +42,7 @@ func (c *Channel) Validate() (map[string]error, bool) {
 	}
 
 	for k, v := range c.Fields {
-		if StringSliceContains(SupportedDataTypes, v) {
+		if !StringSliceContains(SupportedDataTypes, v) {
 			ers["fields"] = errors.New(fmt.Sprintf("supported datatype on %s: %s, supported datatypes are %s", k, v, strings.Join(SupportedDataTypes, ",")))
 		}
 	}
@@ -65,15 +50,36 @@ func (c *Channel) Validate() (map[string]error, bool) {
 	return ers, len(ers) == 0
 }
 
-func (c *Channel) Store() (map[string]error, bool) {
+func (c *Channel) Insert() (map[string]error, bool) {
 	if ers, valid := c.Validate(); !valid {
 		return ers, false
 	}
 
-	err := c.datastore.Save()
+	err := MStore.InsertChannel(c)
 	if err != nil {
 		return map[string]error{"datastore": err}, false
 	}
 
 	return map[string]error{}, true
+}
+
+func (c *Channel) Update() (map[string]error, bool) {
+	if ers, valid := c.Validate(); !valid {
+		return ers, false
+	}
+
+	err := MStore.UpdateChannel(c)
+	if err != nil {
+		return map[string]error{"datastore": err}, false
+	}
+
+	return map[string]error{}, true
+}
+
+func FindChannelByName(name string) (*Channel, bool) {
+	return MStore.FindChannelByName(name)
+}
+
+func (c *Channel) Delete() error {
+	return MStore.DeleteChannel(c)
 }

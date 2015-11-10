@@ -2,8 +2,6 @@ package connections
 
 import (
 	"github.com/spf13/viper"
-	. "github.com/vivowares/octopus/utils"
-	"log"
 	"os"
 	"sync"
 	"time"
@@ -11,9 +9,11 @@ import (
 
 var CM ConnectionManager
 
-func InitializeCM() {
+func InitializeCM() error {
 	hostname, err := os.Hostname()
-	PanicIfErr(err)
+	if err != nil {
+		return err
+	}
 
 	cmType := viper.GetString("connections.store")
 	switch cmType {
@@ -22,11 +22,13 @@ func InitializeCM() {
 			host:        hostname,
 			connections: make(map[string]Connection),
 		}
+		return nil
 	default:
 		CM = &InMemoryConnectionManager{
 			host:        hostname,
 			connections: make(map[string]Connection),
 		}
+		return nil
 	}
 }
 
@@ -144,5 +146,4 @@ func (cm *InMemoryConnectionManager) Close() error {
 
 func (cm *InMemoryConnectionManager) Wait() {
 	cm.wg.Wait()
-	log.Printf("cm closed")
 }
