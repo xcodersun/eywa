@@ -3,3 +3,4 @@ octopus
 dump.rdb
 log/*/*.log
 tests/tests
+octopus.db

@@ -1,8 +1,10 @@
 package connections
 
 import (
+	"github.com/gorilla/websocket"
 	"github.com/spf13/viper"
 	"os"
+	"strconv"
 	"sync"
 	"time"
 )
@@ -71,7 +73,11 @@ func (cm *InMemoryConnectionManager) NewConnection(identifier string, ws wsConn,
 	}
 	ws.SetPingHandler(func(payload string) error {
 		conn.lastPingedAt = time.Now()
-		return nil
+		err := conn.ws.WriteControl(
+			websocket.PongMessage,
+			[]byte(strconv.FormatInt(conn.lastPingedAt.UnixNano(), 10)),
+			time.Now().Add(viper.GetDuration("connections.timeouts.write")))
+		return err
 	})
 
 	if err := cm.registerConnection(conn); err != nil {
