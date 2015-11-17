@@ -16,4 +16,9 @@ persistence:
   db_file: octopus.db
 indices:
   store: influxdb
+  host: localhost
+  port: 8086
+  database: test
+
+
 

@@ -21,6 +21,8 @@ func main() {
 	configure()
 	err := models.InitializeMetaStore()
 	PanicIfErr(err)
+	err = models.InitializeIndexStore()
+	PanicIfErr(err)
 	err = connections.InitializeCM()
 	PanicIfErr(err)
 
@@ -45,6 +47,7 @@ func main() {
 		log.Printf("Connection Manager closed")
 	})
 	graceful.PostHook(func() { models.CloseMetaStore() })
+	graceful.PostHook(func() { models.CloseIndexStore() })
 	graceful.PostHook(func() { log.Printf("Goji stopped") })
 	graceful.Wait()
 }

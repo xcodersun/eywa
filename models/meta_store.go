@@ -120,24 +120,22 @@ func (b *boltStore) Open() error {
 func InitializeMetaStore() error {
 	switch viper.GetString("persistence.store") {
 	case "bolt":
-		b := &boltStore{}
-		err := b.Open()
-		if err != nil {
-			return err
-		}
-		MStore = b
-		return nil
+		return initBoltStore()
 	default:
-		b := &boltStore{}
-		err := b.Open()
-		if err != nil {
-			return err
-		}
-		MStore = b
-		return nil
+		return initBoltStore()
 	}
 }
 
 func CloseMetaStore() error {
 	return MStore.Close()
+}
+
+func initBoltStore() error {
+	b := &boltStore{}
+	err := b.Open()
+	if err != nil {
+		return err
+	}
+	MStore = b
+	return nil
 }
