@@ -1,12 +1,12 @@
 package models
 
 import (
-	// "errors"
-	// "fmt"
-	// . "github.com/vivowares/octopus/utils"
-	// "net/url"
-	// "strconv"
-	// "strings"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"net/url"
+	"strconv"
+	"strings"
 	"time"
 )
 
@@ -23,50 +23,93 @@ type Point struct {
 	Timestamp time.Time
 	Tags      map[string]string
 	Fields    map[string]interface{}
-	// Validate() map[string]error //field/tag -> error
-	// Store() error               // -> index db
 }
 
-// func (p *Point) ParseRaw() error {
-// 	if p.channel == nil {
-// 		return errors.New("a point needs to be associated with a channel")
-// 	}
+func (p *Point) Store() error {
+	return IStore.WritePoint(p)
+}
 
-// 	if !StringSliceContains(SupportedPointFormat, p.Format) {
-// 		return errors.New(fmt.Sprintf(
-// 			"unsupported data format %s, supported formats are %s",
-// 			p.Format, strings.Join(SupportedPointFormat, ",")))
-// 	}
+type stringGetter interface {
+	Get(string) string
+}
 
-// 	switch p.Format {
-// 	case "url":
-// 		values, err := url.ParseQuery(raw)
-// 		if err != nil {
-// 			return err
-// 		}
-// 		i, err := strconv.ParseInt(values.Get("timestamp"), 10, 64)
-// 		if err != nil {
-// 			return err
-// 		}
-// 		p.Timestamp = time.Unix(i, 0)
+type mapGetter map[string]interface{}
 
-// 		tags := make(map[string]string)
-// 		for _, tag := range p.channel.Tags {
-// 			if len(values.Get(tag)) > 0 {
-// 				tags[tag] = values.Get(tag)
-// 			}
-// 		}
-// 		p.Tags = tags
+func (m mapGetter) Get(key string) string {
+	if v, found := m[key]; found {
+		return fmt.Sprintf("%v", v)
+	}
+	return ""
+}
 
-// 		fields := make(map[string]interface{})
-// 		for fieldName, fieldType := range p.Fields {
-// 			fieldV := values.Get(fieldName)
-// 			if len(fieldV) > 0 {
+func (p *Point) parseRaw() error {
+	var sg stringGetter
+	switch p.Format {
+	case "url":
+		urlValues, err := url.ParseQuery(p.Raw)
+		if err != nil {
+			return err
+		}
+		sg = urlValues
+	case "json":
+		jsonValues := make(map[string]interface{})
+		err := json.Unmarshal([]byte(p.Raw), &jsonValues)
+		if err != nil {
+			return err
+		}
+		sg = mapGetter(jsonValues)
+	default:
+		return errors.New("unsupported point format, supported formats are: " + strings.Join(SupportedPointFormat, ","))
+	}
 
-// 			}
-// 		}
+	if len(sg.Get("timestamp")) > 0 {
+		t, err := strconv.ParseInt(sg.Get("timestamp"), 10, 64)
+		if err != nil {
+			return err
+		} else {
+			p.Timestamp = time.Unix(t, 0)
+		}
+	}
 
-// 	case "json":
-// 	}
+	tags := make(map[string]string)
+	for _, tag := range p.channel.Tags {
+		if len(sg.Get(tag)) > 0 {
+			tags[tag] = sg.Get(tag)
+		}
+	}
+	p.Tags = tags
 
-// }
+	fields := make(map[string]interface{})
+	for fieldName, fieldType := range p.channel.Fields {
+		fieldValue := sg.Get(fieldName)
+		if len(fieldValue) > 0 {
+			switch fieldType {
+			case "boolean":
+				if fieldValue == "true" {
+					fields[fieldName] = true
+				} else if fieldValue == "false" {
+					fields[fieldName] = false
+				} else {
+					return errors.New("invalid boolean value: " + fieldValue)
+				}
+			case "int":
+				i, err := strconv.ParseInt(fieldValue, 10, 64)
+				if err != nil {
+					return err
+				}
+				fields[fieldName] = i
+			case "float":
+				f, err := strconv.ParseFloat(fieldValue, 64)
+				if err != nil {
+					return err
+				}
+				fields[fieldName] = f
+			default:
+				fields[fieldName] = fieldValue
+			}
+		}
+	}
+	p.Fields = fields
+
+	return nil
+}
