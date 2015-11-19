@@ -2,7 +2,6 @@ package connections
 
 import (
 	"bytes"
-	"fmt"
 	. "github.com/smartystreets/goconvey/convey"
 	"github.com/spf13/viper"
 	"strconv"
@@ -94,7 +93,7 @@ func TestConnectionManager(t *testing.T) {
 				closed: false,
 			})
 		}
-		fmt.Println(len(wss))
+
 		for i := 0; i < concurrency; i++ {
 			go func(iter int) {
 				CM.NewConnection("test"+strconv.Itoa(iter), wss[iter], h)
