@@ -5,7 +5,6 @@ import (
 	"fmt"
 	. "github.com/vivowares/octopus/utils"
 	"strings"
-	"time"
 )
 
 var SupportedDataTypes = []string{"float", "int", "boolean", "string"}
@@ -86,12 +85,11 @@ func (c *Channel) Delete() error {
 	return MStore.DeleteChannel(c)
 }
 
-func (c *Channel) NewPoint(format, raw string, t time.Time) (*Point, error) {
+func (c *Channel) NewPoint(format, raw string) (*Point, error) {
 	p := &Point{
-		Format:    format,
-		Raw:       raw,
-		Timestamp: t,
-		channel:   c,
+		Format:  format,
+		Raw:     raw,
+		channel: c,
 	}
 
 	err := p.parseRaw()

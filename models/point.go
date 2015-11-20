@@ -37,7 +37,14 @@ type mapGetter map[string]interface{}
 
 func (m mapGetter) Get(key string) string {
 	if v, found := m[key]; found {
-		return fmt.Sprintf("%v", v)
+		switch v.(type) {
+		case int64:
+			return fmt.Sprintf("%d", v)
+		case float64:
+			return fmt.Sprintf("%f", v)
+		default:
+			return fmt.Sprintf("%v", v)
+		}
 	}
 	return ""
 }
@@ -53,7 +60,9 @@ func (p *Point) parseRaw() error {
 		sg = urlValues
 	case "json":
 		jsonValues := make(map[string]interface{})
-		err := json.Unmarshal([]byte(p.Raw), &jsonValues)
+		d := json.NewDecoder(strings.NewReader(p.Raw))
+		d.UseNumber()
+		err := d.Decode(&jsonValues)
 		if err != nil {
 			return err
 		}
@@ -69,6 +78,8 @@ func (p *Point) parseRaw() error {
 		} else {
 			p.Timestamp = time.Unix(t, 0)
 		}
+	} else {
+		return errors.New("missing timestamp in point")
 	}
 
 	tags := make(map[string]string)

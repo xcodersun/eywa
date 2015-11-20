@@ -13,6 +13,7 @@ var MStore MetaStore
 type MetaStore interface {
 	Close() error
 	FindChannelByName(string) (*Channel, bool)
+	FindChannels() ([]*Channel, error)
 	UpdateChannel(*Channel) error
 	InsertChannel(*Channel) error
 	DeleteChannel(*Channel) error
@@ -24,6 +25,36 @@ type boltStore struct {
 
 func (b *boltStore) Close() error {
 	return b.db.Close()
+}
+
+func (b *boltStore) FindChannels() ([]*Channel, error) {
+	chs := make([]*Channel, 0)
+
+	err := b.db.View(func(tx *bolt.Tx) error {
+		buc := tx.Bucket([]byte("channels"))
+		if buc == nil {
+			return errors.New("bucket does not exist")
+		}
+
+		cur := buc.Cursor()
+
+		for k, v := cur.First(); k != nil; k, v = cur.Next() {
+			ch := &Channel{}
+			if err := json.Unmarshal(v, ch); err != nil {
+				return err
+			}
+
+			chs = append(chs, ch)
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return []*Channel{}, err
+	}
+
+	return chs, nil
 }
 
 func (b *boltStore) FindChannelByName(name string) (*Channel, bool) {
@@ -58,6 +89,11 @@ func (b *boltStore) UpdateChannel(c *Channel) error {
 		buc := tx.Bucket([]byte("channels"))
 		if buc == nil {
 			return errors.New("bucket does not exist")
+		}
+
+		v := buc.Get([]byte(c.Name))
+		if v == nil {
+			return errors.New("channel " + c.Name + " doesn't exist")
 		}
 
 		err = buc.Put([]byte(c.Name), bs)
