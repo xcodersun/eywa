@@ -15,7 +15,6 @@ type Channel struct {
 	Description string            `json:"description"`
 	Tags        []string          `json:"tags"`
 	Fields      map[string]string `json:"fields"`
-	// Metadata    map[string]string `json:"metadata"`
 }
 
 func (c *Channel) Validate() (map[string]error, bool) {
@@ -79,6 +78,10 @@ func (c *Channel) Update() (map[string]error, bool) {
 
 func FindChannelByName(name string) (*Channel, bool) {
 	return MStore.FindChannelByName(name)
+}
+
+func FindChannels() ([]*Channel, error) {
+	return MStore.FindChannels()
 }
 
 func (c *Channel) Delete() error {

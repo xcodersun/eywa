@@ -75,7 +75,7 @@ func (cm *InMemoryConnectionManager) NewConnection(identifier string, ws wsConn,
 		conn.lastPingedAt = time.Now()
 		err := conn.ws.WriteControl(
 			websocket.PongMessage,
-			[]byte(strconv.FormatInt(conn.lastPingedAt.UnixNano(), 10)),
+			[]byte(strconv.FormatInt(time.Now().UnixNano()/int64(time.Millisecond), 10)),
 			time.Now().Add(viper.GetDuration("connections.timeouts.write")))
 		return err
 	})
