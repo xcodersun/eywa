@@ -76,7 +76,8 @@ func (p *Point) parseRaw() error {
 		if err != nil {
 			return err
 		} else {
-			p.Timestamp = time.Unix(0, t*int64(time.Millisecond))
+			nano := int64(time.Now().Nanosecond()) % int64(time.Millisecond)
+			p.Timestamp = time.Unix(0, t*int64(time.Millisecond)+nano)
 		}
 	} else {
 		return errors.New("missing timestamp in point")

@@ -3,7 +3,6 @@ package models
 import (
 	. "github.com/smartystreets/goconvey/convey"
 	"reflect"
-	"strconv"
 	"testing"
 	"time"
 )
@@ -27,8 +26,7 @@ func TestChannel(t *testing.T) {
 		So(p.Format, ShouldEqual, "url")
 		So(p.Raw, ShouldEqual, raw)
 		So(reflect.DeepEqual(p.Tags, map[string]string{"city": "sf", "country": "us", "state": "ca"}), ShouldBeTrue)
-		t, err := strconv.ParseInt("1448094788939", 10, 64)
-		So(p.Timestamp.Equal(time.Unix(0, t*int64(time.Millisecond))), ShouldBeTrue)
+		So(p.Timestamp.UnixNano()/int64(time.Millisecond), ShouldEqual, 1448094788939)
 		So(p.Fields["temp"], ShouldEqual, 67.8)
 		So(p.Fields["count"], ShouldEqual, 19)
 		So(p.Fields["on"], ShouldEqual, false)
@@ -73,8 +71,7 @@ func TestChannel(t *testing.T) {
 		So(p.Format, ShouldEqual, "json")
 		So(p.Raw, ShouldEqual, raw)
 		So(reflect.DeepEqual(p.Tags, map[string]string{"city": "sf", "country": "us", "state": "ca"}), ShouldBeTrue)
-		t, err := strconv.ParseInt("1448094788939", 10, 64)
-		So(p.Timestamp.Equal(time.Unix(0, t*int64(time.Millisecond))), ShouldBeTrue)
+		So(p.Timestamp.UnixNano()/int64(time.Millisecond), ShouldEqual, 1448094788939)
 		So(p.Fields["temp"], ShouldEqual, 67.8)
 		So(p.Fields["count"], ShouldEqual, 19)
 		So(p.Fields["on"], ShouldEqual, false)

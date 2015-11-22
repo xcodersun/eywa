@@ -9,7 +9,6 @@ import (
 
 var SupportedDataTypes = []string{"float", "int", "boolean", "string"}
 
-// use channel to query
 type Channel struct {
 	Name        string            `json:"name"`
 	Description string            `json:"description"`
