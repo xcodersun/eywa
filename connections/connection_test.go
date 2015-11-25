@@ -133,7 +133,7 @@ func TestConnection(t *testing.T) {
 		So(ok, ShouldBeTrue)
 		So(err.Error(), ShouldContainSubstring, fmt.Sprintf("invalid message type %d, expected %d", 0, ResponseMessage))
 
-		conn.close()
+		conn.Close()
 		msg.MessageType = AsyncRequestMessage
 		err = conn.SendAsyncRequest(msg)
 		err, ok = err.(*MessageSendingError)

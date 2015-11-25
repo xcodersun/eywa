@@ -81,11 +81,11 @@ func (cm *InMemoryConnectionManager) NewConnection(identifier string, ws wsConn,
 	})
 
 	if err := cm.registerConnection(conn); err != nil {
-		conn.close()
+		conn.Close()
 		return nil, err
 	}
 
-	go conn.listen(h)
+	go conn.Listen(h)
 	return conn, nil
 }
 
@@ -144,7 +144,7 @@ func (cm *InMemoryConnectionManager) Close() error {
 	cm.closed = true
 
 	for _, c := range cm.connections {
-		c.signalClose()
+		c.SignalClose()
 	}
 
 	return nil

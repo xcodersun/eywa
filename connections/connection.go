@@ -41,9 +41,9 @@ type Connection interface {
 	SendSyncRequest(*Message) (*Message, error)
 	SendResponse(*Message) error
 
-	listen(MessageHandler)
-	close() error
-	signalClose()
+	Listen(MessageHandler)
+	Close() error
+	SignalClose()
 }
 
 type connection struct {
@@ -88,7 +88,7 @@ func (c *connection) Closed() bool {
 	return c.closed
 }
 
-func (c *connection) signalClose() {
+func (c *connection) SignalClose() {
 	c.closeChan <- true
 }
 
@@ -235,7 +235,7 @@ func (c *connection) unlock() {
 	c.wm.Unlock()
 }
 
-func (c *connection) close() (err error) {
+func (c *connection) Close() (err error) {
 	err = nil
 
 	c.lock()
@@ -272,23 +272,23 @@ func (c *connection) close() (err error) {
 	return
 }
 
-func (c *connection) listen(h MessageHandler) {
+func (c *connection) Listen(h MessageHandler) {
 	for {
 		select {
 		case <-c.closeChan:
-			c.close()
+			c.Close()
 			return
 		default:
 			message, err := c.readMessage()
 			if err != nil {
 				h(c, nil, err)
 				if _, ok := err.(*WebsocketError); ok {
-					c.close()
+					c.Close()
 					return
 				}
 			} else if message.MessageType == CloseMessage {
 				h(c, message, nil)
-				c.close()
+				c.Close()
 				return
 			} else if message.MessageType == ResponseMessage {
 				ch, found := c.findMessageChan(message.MessageId)

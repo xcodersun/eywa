@@ -3,15 +3,20 @@ package models
 import (
 	"errors"
 	"fmt"
+	"github.com/vivowares/octopus/connections"
 	. "github.com/vivowares/octopus/utils"
 	"strings"
 )
 
 var SupportedDataTypes = []string{"float", "int", "boolean", "string"}
 
+// we don't support nested data structures
+var SupportedPointFormat = []string{"json", "url"}
+
 type Channel struct {
 	Name        string            `json:"name"`
 	Description string            `json:"description"`
+	Format      string            `json:"format"`
 	Tags        []string          `json:"tags"`
 	Fields      map[string]string `json:"fields"`
 }
@@ -24,6 +29,14 @@ func (c *Channel) Validate() (map[string]error, bool) {
 
 	if len(c.Description) == 0 {
 		ers["description"] = errors.New("empty channel description")
+	}
+
+	if len(c.Format) == 0 {
+		ers["format"] = errors.New("empty channel format")
+	}
+
+	if !StringSliceContains(SupportedPointFormat, c.Format) {
+		ers["format"] = errors.New(fmt.Sprintf("unsupported point format %s, supported formats are %s", c.Format, strings.Join(SupportedPointFormat, ",")))
 	}
 
 	if len(c.Tags) > 255 {
@@ -42,7 +55,7 @@ func (c *Channel) Validate() (map[string]error, bool) {
 
 	for k, v := range c.Fields {
 		if !StringSliceContains(SupportedDataTypes, v) {
-			ers["fields"] = errors.New(fmt.Sprintf("supported datatype on %s: %s, supported datatypes are %s", k, v, strings.Join(SupportedDataTypes, ",")))
+			ers["fields"] = errors.New(fmt.Sprintf("unsupported datatype on %s: %s, supported datatypes are %s", k, v, strings.Join(SupportedDataTypes, ",")))
 		}
 	}
 
@@ -87,11 +100,11 @@ func (c *Channel) Delete() error {
 	return MStore.DeleteChannel(c)
 }
 
-func (c *Channel) NewPoint(format, raw string) (*Point, error) {
+func (c *Channel) NewPoint(conn connections.Connection, raw string) (*Point, error) {
 	p := &Point{
-		Format:  format,
 		Raw:     raw,
 		channel: c,
+		conn:    conn,
 	}
 
 	err := p.parseRaw()

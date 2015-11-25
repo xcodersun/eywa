@@ -26,6 +26,7 @@ func TestMetaStore(t *testing.T) {
 
 		ch := &Channel{
 			Name:        "test",
+			Format:      "url",
 			Description: "This is a test",
 			Tags:        []string{"lat", "long", "country", "city"},
 			Fields:      map[string]string{"temp": "float", "order": "int"},
@@ -46,6 +47,7 @@ func TestMetaStore(t *testing.T) {
 
 		ch := &Channel{
 			Name:        "test",
+			Format:      "json",
 			Description: "This is a test",
 			Tags:        []string{"lat", "long", "country", "city"},
 			Fields:      map[string]string{"temp": "float", "order": "int"},
@@ -61,6 +63,7 @@ func TestMetaStore(t *testing.T) {
 
 		ch1 := &Channel{
 			Name:        "test1",
+			Format:      "url",
 			Description: "This is test1",
 			Tags:        []string{"lat", "long", "country", "city"},
 			Fields:      map[string]string{"temp": "float", "order": "int"},
@@ -68,6 +71,7 @@ func TestMetaStore(t *testing.T) {
 		MStore.InsertChannel(ch1)
 		ch2 := &Channel{
 			Name:        "test2",
+			Format:      "json",
 			Description: "This is test2",
 			Tags:        []string{"lat", "long", "country", "city"},
 			Fields:      map[string]string{"temp": "float", "order": "int"},

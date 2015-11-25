@@ -4,22 +4,21 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/vivowares/octopus/connections"
 	"net/url"
 	"strconv"
 	"strings"
 	"time"
 )
 
-// we don't support nested data structures
-var SupportedPointFormat = []string{"json", "url"}
-
 // use point to write
 // point data is stored in influxdb or elasticsearch
 // we also only support unix time epoch as timestamp
 type Point struct {
-	Format    string   // goes to archive
-	Raw       string   // goes to archive
-	channel   *Channel // goes to archive with name
+	channel *Channel // goes to archive with name
+	conn    connections.Connection
+	Raw     string // goes to archive
+
 	Timestamp time.Time
 	Tags      map[string]string
 	Fields    map[string]interface{}
@@ -51,7 +50,7 @@ func (m mapGetter) Get(key string) string {
 
 func (p *Point) parseRaw() error {
 	var sg stringGetter
-	switch p.Format {
+	switch p.channel.Format {
 	case "url":
 		urlValues, err := url.ParseQuery(p.Raw)
 		if err != nil {
@@ -89,6 +88,7 @@ func (p *Point) parseRaw() error {
 			tags[tag] = sg.Get(tag)
 		}
 	}
+	tags["connection_id"] = p.conn.Identifier()
 	p.Tags = tags
 
 	fields := make(map[string]interface{})

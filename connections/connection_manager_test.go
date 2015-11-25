@@ -75,7 +75,7 @@ func TestConnectionManager(t *testing.T) {
 		So(err, ShouldBeNil)
 		So(CM.ConnectionCount(), ShouldEqual, 1)
 
-		conn1.close()
+		conn1.Close()
 		So(CM.ConnectionCount(), ShouldEqual, 1)
 		So(ws2.closed, ShouldBeFalse)
 
