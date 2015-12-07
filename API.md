@@ -1,13 +1,13 @@
 ***
 
-##Channels API’s:
+##Channels API’s
 ###*List all defined channels*
-**request:**
+**request**
 
 ```
 GET /channels
 ```
-**response:**
+**response**
 
 ```
 200 OK
@@ -22,12 +22,12 @@ GET /channels
 ```
 
 ###*Show details of defined channel*
-**request:**
+**request**
 
 ```
 GET /channels/1
 ```
-**response:**
+**response**
 
 ```
 200 OK
@@ -51,7 +51,7 @@ Or, if not found
 ```
 
 ###*Create a channel*
-**request:**
+**request**
 
 ```
 POST /channels
@@ -78,14 +78,14 @@ POST /channels
 
 `4. Tag names or field names should be unique.`
 
-**response:**
+**response**
 
-on success:
+on success
 
 ```
 200 OK
 ```
-on failure:
+on failure
 
 ```
 400 Bad Request
@@ -99,7 +99,7 @@ on failure:
 
 
 ###*Update existing channel*
-**request:**
+**request**
 
 ```
 PUT /channels/1
@@ -124,14 +124,14 @@ PUT /channels/1
 
 `2. Adding new fields or tags.`
 
-**response:**
+**response**
 
-on success:
+on success
 
 ```
 200 OK
 ```
-on failure:
+on failure
 
 ```
 400 Bad Request
@@ -143,21 +143,21 @@ on failure:
 ```
 
 ###*Delete an existing channel*
-**request:**
+**request**
 
 ```
 DELETE /channels/1
 ```
 
-**response:**
+**response**
 
-on success:
+on success
 
 ```
 200 OK
 ```
 
-on failure:
+on failure
 
 ```
 500 Internal Service Error
@@ -170,15 +170,15 @@ on failure:
 
 ***
 
-##Dashboards API’s:
+##Dashboards API’s
 ###*List all defined dashboards*
-**request:**
+**request**
 
 ```
 GET /dashboards
 ```
 
-**response:**
+**response**
 
 ```
 200 OK
@@ -193,13 +193,13 @@ GET /dashboards
 ```
 
 ###*Show details of defined dashboard*
-**request:**
+**request**
 
 ```
 GET /dashboards/1
 ```
 
-response:
+response
 
 ```
 200 OK
@@ -219,7 +219,7 @@ Or, if not found
 `Dashboard definition currently is a big stringified json.`
 
 ###*Create a dashboard*
-**request:**
+**request**
 
 ```
 POST /dashboards
@@ -235,15 +235,15 @@ POST /dashboards
 
 `2. Some other checks need to be done on front end to make sense of the dashboards.`
 
-**response:**
+**response**
 
-on success:
+on success
 
 ```
 201 Created
 ```
 
-on failure:
+on failure
 
 ```
 400 Bad Request
@@ -255,7 +255,7 @@ on failure:
 ```
 
 ###*Update an existing dashboard*
-**request:**
+**request**
 
 ```
 PUT /dashboards/1
@@ -272,15 +272,15 @@ PUT /dashboards/1
 ```
 `If you want to update the dashboard definition, you need to send along the entire stringified json.`
 
-**response:**
+**response**
 
-on success:
+on success
 
 ```
 200 OK
 ```
 
-on failure:
+on failure
 
 ```
 404 Bad Request
@@ -292,20 +292,20 @@ on failure:
 ```
 
 ###*Delete an existing dashboard*
-**request:**
+**request**
 
 ```
 DELETE /dashboards/1
 ```
-**response:**
+**response**
 
-on success:
+on success
 
 ```
 200 OK
 ```
 
-on failure:
+on failure
 
 ```
 500 Internal Service Error
