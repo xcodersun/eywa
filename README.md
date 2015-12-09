@@ -11,7 +11,7 @@ GET /channels
 200 OK
 [
   {
-    "id": 1,
+    "id": "aCe1z-3itbqS0k_t",
     "name": "yang's channel",
     "description": "this is yang's first channel."
   },
@@ -19,18 +19,20 @@ GET /channels
 ]
 ```
 
+As you can see here, the id's that are used there are not numeric id's. In fact we use a decentralized algorithm to generate ID's. The schema is called FLAKE. 
+
 ###*Show details of defined channel*
 **request**
 
 ```
-GET /channels/1
+GET /channels/aCe1z-3itbqS0k_t
 ```
 **response**
 
 ```
 200 OK
 {
-  "id": 1,
+  "id": "aCe1z-3itbqS0k_t",
   "name": "yang's channel",
   "description": "this is yang's first channel.",
   "tags": ["ip","device_id","product","brand","part_num"],
@@ -105,7 +107,7 @@ Response returns detailed error messages on failure.
 **request**
 
 ```
-PUT /channels/1
+PUT /channels/aCe1z-3itbqS0k_t
 {
   "name": "yang's channel **updated**",
   "description": "",
@@ -151,7 +153,7 @@ on failure
 **request**
 
 ```
-DELETE /channels/1
+DELETE /channels/aCe1z-3itbqS0k_t
 ```
 
 `Front end should show warning as the user tries to delete a channel. Deleting a channel means, any device that tries to connect to this server will be rejected.`
@@ -191,7 +193,7 @@ GET /dashboards
 200 OK
 [
   {
-    "id": 1,
+    "id": "bq1C3ik_etzat-S0",
     "name": "yang's dashboard",
     "description": "this is yang's first dashboard."
   },
@@ -203,7 +205,7 @@ GET /dashboards
 **request**
 
 ```
-GET /dashboards/1
+GET /dashboards/bq1C3ik_etzat-S0
 ```
 
 response
@@ -211,7 +213,7 @@ response
 ```
 200 OK
 {
-  "id": 1,
+  "id": "bq1C3ik_etzat-S0",
   "name": "yang's dashboard",
   "description": "this is yang's first dashboard",
   "definition": "..."
@@ -266,7 +268,7 @@ on failure
 **request**
 
 ```
-PUT /dashboards/1
+PUT /dashboards/bq1C3ik_etzat-S0
 {
   "name": "yang's dashboard updated"
 }
@@ -305,7 +307,7 @@ on failure
 **request**
 
 ```
-DELETE /dashboards/1
+DELETE /dashboards/bq1C3ik_etzat-S0
 ```
 **response**
 
