@@ -39,7 +39,8 @@ GET /channels/1
     "count": "int",
     "status": "string",
     "on_off": "boolean"
-  }
+  },
+  "access_tokens": ["test_token1", "test_token2"]
 }
 ```
 Or, if not found
@@ -62,7 +63,8 @@ POST /channels
     "count": "int",
     "status": "string",
     "on_off": "boolean"
-  }
+  },
+  "access_tokens": ["test_token1", "test_token2"]
 }
 ```
 
@@ -75,6 +77,8 @@ Some validations need to be done here:
 3. Only four data types are allowed in fields: float, int, string, boolean.
 
 4. Tag names or field names should be unique.
+
+5. At least access token is provided. Device will need to carry this access token in their header when they setup the webocket connection. `Front end should have a javascript that generates a random string to be used a access toekn.`
 
 **response**
 
@@ -123,6 +127,8 @@ So to easier address these issues, what we can do is to allow only following upd
 
 2. Adding new fields or tags.
 
+3. Adding/Removing access tokens. But at least one access token will be needed.
+
 **response**
 
 on success
@@ -147,6 +153,8 @@ on failure
 ```
 DELETE /channels/1
 ```
+
+`Front end should show warning as the user tries to delete a channel. Deleting a channel means, any device that tries to connect to this server will be rejected.`
 
 **response**
 
