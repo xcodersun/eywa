@@ -1,31 +1,30 @@
 package connections
 
 import (
-	"bytes"
 	. "github.com/smartystreets/goconvey/convey"
-	"github.com/spf13/viper"
+	. "github.com/vivowares/octopus/configs"
 	"strconv"
 	"testing"
 	"time"
 )
 
 func TestConnectionManager(t *testing.T) {
-	viper.SetConfigType("yaml")
 
-	var yaml = []byte(`
-    connections:
-      store: memory
-      expiry: &expiry 1s
-      timeouts:
-        write: 2s
-        read: *expiry
-        response: 8s
-      buffer_sizes:
-        read: 1024
-        write: 1024
-  `)
-
-	viper.ReadConfig(bytes.NewBuffer(yaml))
+	Config = &Conf{
+		Connections: &ConnectionConf{
+			Store:  "memory",
+			Expiry: 1 * time.Second,
+			Timeouts: &ConnectionTimeoutConf{
+				Write:    2 * time.Second,
+				Read:     1 * time.Second,
+				Response: 8 * time.Second,
+			},
+			BufferSizes: &ConnectionBufferSizeConf{
+				Write: 1024,
+				Read:  1024,
+			},
+		},
+	}
 
 	var h = func(c Connection, m *Message, e error) {
 	}

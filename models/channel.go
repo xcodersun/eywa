@@ -3,113 +3,85 @@ package models
 import (
 	"errors"
 	"fmt"
-	"github.com/vivowares/octopus/connections"
 	. "github.com/vivowares/octopus/utils"
 	"strings"
 )
 
 var SupportedDataTypes = []string{"float", "int", "boolean", "string"}
 
-// we don't support nested data structures
-var SupportedPointFormat = []string{"json", "url"}
-
 type Channel struct {
-	Name        string            `json:"name"`
-	Description string            `json:"description"`
-	Format      string            `json:"format"`
-	Tags        []string          `json:"tags"`
-	Fields      map[string]string `json:"fields"`
+	Id           int         `sql:"type:integer" json:"id"`
+	Name         string      `sql:"type:varchar(255)" json:"name"`
+	Description  string      `sql:"type:text" json:"description"`
+	Tags         StringSlice `sql:"type:text" json:"tags"`
+	Fields       StringMap   `sql:"type:text" json:"fields"`
+	AccessTokens StringSlice `sql:"type:text" json:"access_tokens"`
 }
 
-func (c *Channel) Validate() (map[string]error, bool) {
-	ers := make(map[string]error)
+func (c *Channel) BeforeSave() error {
 	if len(c.Name) == 0 {
-		ers["name"] = errors.New("empty channel name")
+		return errors.New("name is empty")
 	}
 
 	if len(c.Description) == 0 {
-		ers["description"] = errors.New("empty channel description")
+		return errors.New("description is empty")
 	}
 
-	if len(c.Format) == 0 {
-		ers["format"] = errors.New("empty channel format")
+	if len(c.AccessTokens) == 0 {
+		return errors.New("access_tokens are empty")
 	}
 
-	if !StringSliceContains(SupportedPointFormat, c.Format) {
-		ers["format"] = errors.New(fmt.Sprintf("unsupported point format %s, supported formats are %s", c.Format, strings.Join(SupportedPointFormat, ",")))
+	if len(c.Tags) > 128 {
+		return errors.New("too many tags, at most 128 tags are supported")
 	}
 
-	if len(c.Tags) > 255 {
-		ers["tags"] = errors.New("too many tags, max 255 supported")
-	}
+	tagMap := make(map[string]bool, 0)
 
 	for _, tagName := range c.Tags {
-		if v, found := c.Fields[tagName]; found {
-			ers["tags"] = errors.New(fmt.Sprintf("conflicting tag name: %s defined in fields too", v))
+		if !AlphaNumeric(tagName) {
+			return errors.New("invalid tag name, only letters, numbers and underscores are allowed")
+		}
+
+		if _, found := tagMap[tagName]; found {
+			return errors.New(fmt.Sprintf("duplicate tag name: %s", tagName))
+		} else {
+			tagMap[tagName] = true
+
+			if v, found := c.Fields[tagName]; found {
+				return errors.New(fmt.Sprintf("conflicting tag name: %s defined in fields too", v))
+			}
 		}
 	}
 
-	if len(c.Fields) > 255 || len(c.Fields) == 0 {
-		ers["fields"] = errors.New(fmt.Sprintf("the number of fields must be between 1 ~ 255 instead of %d", len(c.Fields)))
+	if len(c.Fields) == 0 {
+		return errors.New("fields are empty")
+	}
+
+	if len(c.Fields) > 128 {
+		return errors.New("too many fields, at most 128 fields are supported")
 	}
 
 	for k, v := range c.Fields {
+		if !AlphaNumeric(k) {
+			return errors.New("invalid field name, only letters, numbers and underscores are allowed")
+		}
+
 		if !StringSliceContains(SupportedDataTypes, v) {
-			ers["fields"] = errors.New(fmt.Sprintf("unsupported datatype on %s: %s, supported datatypes are %s", k, v, strings.Join(SupportedDataTypes, ",")))
+			return errors.New(fmt.Sprintf("unsupported datatype on %s: %s, supported datatypes are %s", k, v, strings.Join(SupportedDataTypes, ",")))
 		}
 	}
 
-	return ers, len(ers) == 0
+	return nil
 }
 
-func (c *Channel) Insert() (map[string]error, bool) {
-	if ers, valid := c.Validate(); !valid {
-		return ers, false
-	}
-
-	err := MStore.InsertChannel(c)
-	if err != nil {
-		return map[string]error{"datastore": err}, false
-	}
-
-	return map[string]error{}, true
-}
-
-func (c *Channel) Update() (map[string]error, bool) {
-	if ers, valid := c.Validate(); !valid {
-		return ers, false
-	}
-
-	err := MStore.UpdateChannel(c)
-	if err != nil {
-		return map[string]error{"datastore": err}, false
-	}
-
-	return map[string]error{}, true
-}
-
-func FindChannelByName(name string) (*Channel, bool) {
-	return MStore.FindChannelByName(name)
-}
-
-func FindChannels() ([]*Channel, error) {
-	return MStore.FindChannels()
+func (c *Channel) Create() error {
+	return DB.Create(c).Error
 }
 
 func (c *Channel) Delete() error {
-	return MStore.DeleteChannel(c)
+	return DB.Delete(c).Error
 }
 
-func (c *Channel) NewPoint(conn connections.Connection, raw string) (*Point, error) {
-	p := &Point{
-		Raw:     raw,
-		channel: c,
-		conn:    conn,
-	}
-
-	err := p.parseRaw()
-	if err != nil {
-		return nil, err
-	}
-	return p, nil
+func (c *Channel) Update() error {
+	return DB.Save(c).Error
 }

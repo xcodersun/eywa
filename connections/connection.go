@@ -2,13 +2,12 @@ package connections
 
 import (
 	"fmt"
+	"github.com/gorilla/websocket"
+	. "github.com/vivowares/octopus/configs"
 	"io"
 	"net"
 	"sync"
 	"time"
-
-	"github.com/gorilla/websocket"
-	"github.com/spf13/viper"
 )
 
 type wsConn interface {
@@ -81,7 +80,7 @@ func (c *connection) Host() string {
 }
 
 func (c *connection) IsLocal() bool {
-	return c.cm.Host() == viper.GetString("host")
+	return c.cm.Host() == Config.Service.Host
 }
 
 func (c *connection) Closed() bool {
@@ -100,7 +99,7 @@ func (c *connection) readMessage() (*Message, error) {
 		return nil, &MessageReadingError{message: "connection is closed"}
 	}
 
-	if err := c.ws.SetReadDeadline(time.Now().Add(viper.GetDuration("connections.timeouts.read"))); err != nil {
+	if err := c.ws.SetReadDeadline(time.Now().Add(Config.Connections.Timeouts.Read)); err != nil {
 		return nil, &WebsocketError{
 			message: fmt.Sprintf("error setting read deadline, %s", err.Error()),
 		}
@@ -139,7 +138,7 @@ func (c *connection) sendMessage(message *Message) error {
 		return &MessageSendingError{message: "connection closed"}
 	}
 
-	err := c.ws.SetWriteDeadline(time.Now().Add(viper.GetDuration("connections.timeouts.write")))
+	err := c.ws.SetWriteDeadline(time.Now().Add(Config.Connections.Timeouts.Write))
 	if err != nil {
 		return &WebsocketError{message: "error setting write deadline, " + err.Error()}
 	}
@@ -216,9 +215,9 @@ func (c *connection) SendSyncRequest(message *Message) (*Message, error) {
 	}
 
 	select {
-	case <-time.After(viper.GetDuration("connections.timeouts.response")):
+	case <-time.After(Config.Connections.Timeouts.Response):
 		return nil, &ResponseTimeoutError{
-			message: fmt.Sprintf("response timed out for %s", viper.GetDuration("connections.timeouts.response")),
+			message: fmt.Sprintf("response timed out for %s", Config.Connections.Timeouts.Response),
 		}
 	case resp := <-ch:
 		return resp, nil
@@ -246,7 +245,7 @@ func (c *connection) Close() (err error) {
 	}
 
 	c.closed = true
-	if err = c.ws.SetWriteDeadline(time.Now().Add(viper.GetDuration("connections.timeouts.write"))); err != nil {
+	if err = c.ws.SetWriteDeadline(time.Now().Add(Config.Connections.Timeouts.Write)); err != nil {
 		err = &ConnectionCloseError{
 			message: fmt.Sprintf("error setting write deadline, %s", err.Error()),
 		}

@@ -1,6 +1,7 @@
-host: "localhost"
-http_port: 8080
-ws_port: 8081
+service:
+  host: "localhost"
+  http_port: 8080
+  ws_port: 8081
 connections:
   store: memory
   expiry: &expiry 300s
@@ -11,14 +12,14 @@ connections:
   buffer_sizes:
     read: 1024
     write: 1024
-persistence:
-  store: bolt
-  db_file: octopus.db
 indices:
-  store: influxdb
   host: localhost
   port: 8086
-  database: test
+  db_name: test
+database:
+  db_type: sqlite3
+  db_file: /var/octopus/octopus_production.db
+
 
 
 

@@ -2,7 +2,7 @@ package connections
 
 import (
 	"github.com/gorilla/websocket"
-	"github.com/spf13/viper"
+	. "github.com/vivowares/octopus/configs"
 	"os"
 	"strconv"
 	"sync"
@@ -17,8 +17,7 @@ func InitializeCM() error {
 		return err
 	}
 
-	cmType := viper.GetString("connections.store")
-	switch cmType {
+	switch Config.Connections.Store {
 	case "memory":
 		CM = &InMemoryConnectionManager{
 			host:        hostname,
@@ -76,7 +75,7 @@ func (cm *InMemoryConnectionManager) NewConnection(identifier string, ws wsConn,
 		err := conn.ws.WriteControl(
 			websocket.PongMessage,
 			[]byte(strconv.FormatInt(time.Now().UnixNano()/int64(time.Millisecond), 10)),
-			time.Now().Add(viper.GetDuration("connections.timeouts.write")))
+			time.Now().Add(Config.Connections.Timeouts.Write))
 		return err
 	})
 

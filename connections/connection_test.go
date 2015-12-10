@@ -1,11 +1,10 @@
 package connections
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
 	. "github.com/smartystreets/goconvey/convey"
-	"github.com/spf13/viper"
+	. "github.com/vivowares/octopus/configs"
 	"io"
 	"net"
 	"testing"
@@ -71,22 +70,22 @@ func (f *fakeWsConn) UnderlyingConn() net.Conn {
 }
 
 func TestConnection(t *testing.T) {
-	viper.SetConfigType("yaml")
 
-	var yaml = []byte(`
-    connections:
-      store: memory
-      expiry: &expiry 300s
-      timeouts:
-        write: 2s
-        read: *expiry
-        response: 8s
-      buffer_sizes:
-        read: 1024
-        write: 1024
-  `)
-
-	viper.ReadConfig(bytes.NewBuffer(yaml))
+	Config = &Conf{
+		Connections: &ConnectionConf{
+			Store:  "memory",
+			Expiry: 300 * time.Second,
+			Timeouts: &ConnectionTimeoutConf{
+				Write:    2 * time.Second,
+				Read:     300 * time.Second,
+				Response: 8 * time.Second,
+			},
+			BufferSizes: &ConnectionBufferSizeConf{
+				Write: 1024,
+				Read:  1024,
+			},
+		},
+	}
 
 	Convey("checks/sends async request and response.", t, func() {
 		InitializeCM()
