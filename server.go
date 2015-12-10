@@ -69,11 +69,11 @@ func HttpRouter() http.Handler {
 	httpRouter.Use(middleware.AutomaticOptions)
 	httpRouter.Get("/heartbeat", handlers.HeartBeatHttp)
 
-	// httpRouter.Get("/channels", handlers.ListChannels)
-	// httpRouter.Post("/channels", handlers.CreateChannel)
-	// httpRouter.Get("/channels/:name", handlers.GetChannel)
-	// httpRouter.Delete("/channels/:name", handlers.DeleteChannel)
-	// httpRouter.Put("/channels/:name", handlers.UpdateChannel)
+	httpRouter.Get("/channels", handlers.ListChannels)
+	httpRouter.Post("/channels", handlers.CreateChannel)
+	httpRouter.Get("/channels/:id", handlers.GetChannel)
+	httpRouter.Delete("/channels/:id", handlers.DeleteChannel)
+	httpRouter.Put("/channels/:id", handlers.UpdateChannel)
 
 	httpRouter.Compile()
 

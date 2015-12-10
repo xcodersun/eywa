@@ -85,3 +85,8 @@ func (c *Channel) Delete() error {
 func (c *Channel) Update() error {
 	return DB.Save(c).Error
 }
+
+func (c *Channel) FindById(id int) bool {
+	DB.First(c, id)
+	return DB.NewRecord(c)
+}
