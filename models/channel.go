@@ -31,8 +31,8 @@ func (c *Channel) BeforeSave() error {
 		return errors.New("access_tokens are empty")
 	}
 
-	if len(c.Tags) > 128 {
-		return errors.New("too many tags, at most 128 tags are supported")
+	if len(c.Tags) > 64 {
+		return errors.New("too many tags, at most 64 tags are supported")
 	}
 
 	tagMap := make(map[string]bool, 0)
@@ -47,8 +47,8 @@ func (c *Channel) BeforeSave() error {
 		} else {
 			tagMap[tagName] = true
 
-			if v, found := c.Fields[tagName]; found {
-				return errors.New(fmt.Sprintf("conflicting tag name: %s defined in fields too", v))
+			if _, found = c.Fields[tagName]; found {
+				return errors.New(fmt.Sprintf("conflicting tag name: %s defined in fields", tagName))
 			}
 		}
 	}
