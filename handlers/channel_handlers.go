@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	. "github.com/vivowares/octopus/models"
 	. "github.com/vivowares/octopus/presenters"
@@ -28,9 +29,15 @@ func CreateChannel(c web.C, w http.ResponseWriter, r *http.Request) {
 }
 
 func UpdateChannel(c web.C, w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.Atoi(c.URLParams["id"])
+	asBytes, err := base64.URLEncoding.DecodeString(c.URLParams["id"])
 	if err != nil {
-		Render.JSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	id, err := strconv.Atoi(string(asBytes))
+	if err != nil {
+		w.WriteHeader(http.StatusNotFound)
 		return
 	}
 
@@ -70,26 +77,40 @@ func ListChannels(c web.C, w http.ResponseWriter, r *http.Request) {
 }
 
 func GetChannel(c web.C, w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.Atoi(c.URLParams["id"])
+	asBytes, err := base64.URLEncoding.DecodeString(c.URLParams["id"])
 	if err != nil {
-		Render.JSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+		w.WriteHeader(http.StatusNotFound)
 		return
 	}
+
+	id, err := strconv.Atoi(string(asBytes))
+	if err != nil {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
 	ch := &Channel{}
 	found := ch.FindById(id)
 	if !found {
 		w.WriteHeader(http.StatusNotFound)
 	} else {
-		Render.JSON(w, http.StatusOK, ch)
+		Render.JSON(w, http.StatusOK, NewChannelDetail(ch))
 	}
 }
 
 func DeleteChannel(c web.C, w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.Atoi(c.URLParams["id"])
+	asBytes, err := base64.URLEncoding.DecodeString(c.URLParams["id"])
 	if err != nil {
-		Render.JSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+		w.WriteHeader(http.StatusNotFound)
 		return
 	}
+
+	id, err := strconv.Atoi(string(asBytes))
+	if err != nil {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
 	ch := &Channel{Id: id}
 	err = ch.Delete()
 	if err != nil {

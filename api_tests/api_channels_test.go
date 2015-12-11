@@ -19,8 +19,19 @@ import (
 	"testing"
 )
 
+// import "github.com/kr/pretty"
+
 var ApiServer string
 var ConfigFile string
+
+type ChannelResp struct {
+	Id           string            `json:"id"`
+	Name         string            `json:"name"`
+	Description  string            `json:"description"`
+	Tags         []string          `json:"tags"`
+	Fields       map[string]string `json:"fields"`
+	AccessTokens []string          `json:"access_tokens"`
+}
 
 func init() {
 	pwd, err := os.Getwd()
@@ -35,8 +46,8 @@ func ListChannelPath() string {
 	return fmt.Sprintf("%s/%s", ApiServer, "channels")
 }
 
-func GetChannelPath(id int64) string {
-	return fmt.Sprintf("%s/%s/%d", ApiServer, "channels", id)
+func GetChannelPath(base64Id string) string {
+	return fmt.Sprintf("%s/%s/%s", ApiServer, "channels", base64Id)
 }
 
 func TestApiChannels(t *testing.T) {
@@ -69,20 +80,28 @@ func TestApiChannels(t *testing.T) {
 
 		f = frisby.Create("list channels").Get(ListChannelPath()).Send()
 
-		var chId int64
+		var chId string
 		f.ExpectStatus(http.StatusOK).
 			AfterJson(func(F *frisby.Frisby, js *simplejson.Json, err error) {
 			So(len(js.MustArray()), ShouldEqual, 1)
 			ch := js.MustArray()[0].(map[string]interface{})
-			chId, _ = ch["id"].(json.Number).Int64()
+			chId, _ = ch["id"].(string)
 		})
 
+		expResp := &ChannelResp{
+			Id:           chId,
+			Name:         reqBody.Name,
+			Description:  reqBody.Description,
+			Tags:         reqBody.Tags,
+			Fields:       reqBody.Fields,
+			AccessTokens: reqBody.AccessTokens,
+		}
+
 		f = frisby.Create("get channel").Get(GetChannelPath(chId)).Send()
-		reqBody.Id = 1
 		f.ExpectStatus(http.StatusOK).AfterContent(func(F *frisby.Frisby, resp []byte, err error) {
-			ch := Channel{}
-			json.Unmarshal(resp, &ch)
-			So(reflect.DeepEqual(ch, reqBody), ShouldBeTrue)
+			ch := &ChannelResp{}
+			json.Unmarshal(resp, ch)
+			So(reflect.DeepEqual(ch, expResp), ShouldBeTrue)
 		})
 
 		f = frisby.Create("update channel").Put(GetChannelPath(chId))
@@ -91,11 +110,11 @@ func TestApiChannels(t *testing.T) {
 		f.ExpectStatus(http.StatusOK)
 
 		f = frisby.Create("get channel").Get(GetChannelPath(chId)).Send()
-		reqBody.Name = "updated name"
+		expResp.Name = "updated name"
 		f.ExpectStatus(http.StatusOK).AfterContent(func(F *frisby.Frisby, resp []byte, err error) {
-			ch := Channel{}
-			json.Unmarshal(resp, &ch)
-			So(reflect.DeepEqual(ch, reqBody), ShouldBeTrue)
+			ch := &ChannelResp{}
+			json.Unmarshal(resp, ch)
+			So(reflect.DeepEqual(ch, expResp), ShouldBeTrue)
 		})
 
 		f = frisby.Create("delete channel").Delete(GetChannelPath(chId)).Send()

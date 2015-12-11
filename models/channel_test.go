@@ -1,5 +1,3 @@
-// +build all model unit
-
 package models
 
 import (
