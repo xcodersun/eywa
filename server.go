@@ -12,6 +12,7 @@ import (
 	"github.com/zenazn/goji/graceful"
 	"github.com/zenazn/goji/web"
 	"github.com/zenazn/goji/web/middleware"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -59,6 +60,10 @@ func main() {
 	graceful.PostHook(func() { models.CloseDB() })
 	graceful.PostHook(func() { models.CloseIndexDB() })
 	graceful.PostHook(func() { log.Printf("Goji stopped") })
+	graceful.PostHook(func() { removePidFile() })
+
+	createPidFile()
+
 	graceful.Wait()
 }
 
@@ -86,4 +91,13 @@ func HttpRouter() http.Handler {
 	httpRouter.Compile()
 
 	return httpRouter
+}
+
+func createPidFile() error {
+	pid := os.Getpid()
+	return ioutil.WriteFile(configs.Config.Service.PidFile, []byte(strconv.Itoa(pid)), 0644)
+}
+
+func removePidFile() error {
+	return os.Remove(configs.Config.Service.PidFile)
 }

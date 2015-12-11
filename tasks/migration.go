@@ -17,7 +17,7 @@ func main() {
 	} else {
 		pwd, err := os.Getwd()
 		PanicIfErr(err)
-		*configFile = path.Join(pwd, "configs", "octopus_development.yml")
+		*configFile = path.Join(path.Dir(pwd), "configs", "octopus_development.yml")
 		PanicIfErr(configs.InitializeConfig(*configFile))
 	}
 

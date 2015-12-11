@@ -1,3 +1,5 @@
+// +build integration
+
 package api_tests
 
 import (
@@ -18,13 +20,13 @@ import (
 )
 
 var ApiServer string
+var ConfigFile string
 
 func init() {
 	pwd, err := os.Getwd()
 	PanicIfErr(err)
-	PanicIfErr(
-		InitializeConfig(path.Join(path.Dir(pwd), "configs", "octopus_test.yml")),
-	)
+	ConfigFile = path.Join(path.Dir(pwd), "configs", "octopus_test.yml")
+	PanicIfErr(InitializeConfig(ConfigFile))
 
 	ApiServer = "http://" + Config.Service.Host + ":" + strconv.Itoa(Config.Service.HttpPort)
 }
@@ -38,6 +40,7 @@ func GetChannelPath(id int64) string {
 }
 
 func TestApiChannels(t *testing.T) {
+
 	InitializeDB()
 	DB.DropTableIfExists(&Channel{})
 	DB.AutoMigrate(&Channel{})

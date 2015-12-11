@@ -24,6 +24,7 @@ func InitializeConfig(filename string) error {
 		Host:     viper.GetString("service.host"),
 		HttpPort: viper.GetInt("service.http_port"),
 		WsPort:   viper.GetInt("service.ws_port"),
+		PidFile:  viper.GetString("service.pid_file"),
 	}
 
 	dbConfig := &DbConf{
@@ -83,6 +84,7 @@ type ServiceConf struct {
 	Host     string
 	HttpPort int
 	WsPort   int
+	PidFile  string
 }
 
 type ConnectionConf struct {

@@ -2,6 +2,7 @@ service:
   host: localhost
   http_port: 8080
   ws_port: 8081
+  pid_file: /var/octopus/octopus_test.pid
 connections:
   store: memory
   expiry: &expiry 300s

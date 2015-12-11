@@ -1,3 +1,5 @@
+// +build all connections
+
 package connections
 
 import (
