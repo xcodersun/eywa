@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	. "github.com/vivowares/octopus/models"
+	. "github.com/vivowares/octopus/presenters"
 	. "github.com/vivowares/octopus/utils"
 	"github.com/zenazn/goji/web"
 	"net/http"
@@ -60,7 +61,12 @@ func ListChannels(c web.C, w http.ResponseWriter, r *http.Request) {
 	chs := []*Channel{}
 	DB.Find(&chs)
 
-	Render.JSON(w, http.StatusOK, chs)
+	cs := []*ChannelBrief{}
+	for _, ch := range chs {
+		cs = append(cs, NewChannelBrief(ch))
+	}
+
+	Render.JSON(w, http.StatusOK, cs)
 }
 
 func GetChannel(c web.C, w http.ResponseWriter, r *http.Request) {
