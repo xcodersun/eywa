@@ -1,6 +1,6 @@
 .DS_Store
 octopus
 dump.rdb
-log/*/*.log
+*.log
 tests/tests
-octopus.db
+*.db
