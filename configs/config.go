@@ -2,14 +2,19 @@ package configs
 
 import (
 	"github.com/spf13/viper"
+	"path"
 	"time"
 )
 
 var Config *Conf
 
-func InitializeConfig(configPath string) error {
-	viper.SetConfigName("octopus")
-	viper.AddConfigPath(configPath)
+func InitializeConfig(filename string) error {
+	ext := path.Ext(filename)
+	filePath := path.Dir(filename)
+	filename = path.Base(filename[0 : len(filename)-len(ext)])
+
+	viper.SetConfigName(filename)
+	viper.AddConfigPath(filePath)
 	err := viper.ReadInConfig()
 	if err != nil {
 		return err

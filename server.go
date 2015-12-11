@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"github.com/gorilla/mux"
 	"github.com/vivowares/octopus/configs"
 	"github.com/vivowares/octopus/connections"
@@ -19,10 +20,17 @@ import (
 )
 
 func main() {
-	pwd, err := os.Getwd()
-	PanicIfErr(err)
-	configPath := path.Join(pwd, "configs")
-	PanicIfErr(configs.InitializeConfig(configPath))
+	configFile := flag.String("conf", "", "config file location")
+	flag.Parse()
+	if len(*configFile) > 0 {
+		PanicIfErr(configs.InitializeConfig(*configFile))
+	} else {
+		pwd, err := os.Getwd()
+		PanicIfErr(err)
+		*configFile = path.Join(pwd, "configs", "octopus_development.yml")
+		PanicIfErr(configs.InitializeConfig(*configFile))
+	}
+
 	PanicIfErr(models.InitializeDB())
 	PanicIfErr(models.InitializeIndexDB())
 	PanicIfErr(connections.InitializeCM())

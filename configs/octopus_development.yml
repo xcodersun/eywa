@@ -1,0 +1,21 @@
+service:
+  host: localhost
+  http_port: 8080
+  ws_port: 8081
+connections:
+  store: memory
+  expiry: &expiry 300s
+  timeouts:
+    write: 2s
+    read: *expiry
+    response: 8s
+  buffer_sizes:
+    read: 1024
+    write: 1024
+indices:
+  host: localhost
+  port: 8086
+  db_name: octopus_development
+database:
+  db_type: sqlite3
+  db_file: /var/octopus/octopus_development.db

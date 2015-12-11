@@ -88,5 +88,5 @@ func (c *Channel) Update() error {
 
 func (c *Channel) FindById(id int) bool {
 	DB.First(c, id)
-	return DB.NewRecord(c)
+	return !DB.NewRecord(c)
 }

@@ -1,5 +1,5 @@
 service:
-  host: "localhost"
+  host: localhost
   http_port: 8080
   ws_port: 8081
 connections:
@@ -15,11 +15,7 @@ connections:
 indices:
   host: localhost
   port: 8086
-  db_name: test
+  db_name: octopus_test
 database:
   db_type: sqlite3
-  db_file: /var/octopus/octopus_production.db
-
-
-
-
+  db_file: /var/octopus/octopus_test.db
