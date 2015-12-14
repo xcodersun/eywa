@@ -21,21 +21,17 @@ func TestMessageSerializations(t *testing.T) {
 	})
 
 	Convey("message unmarshalling returns proper errors", t, func() {
-		msgErr := &MessageParsingError{}
 		raw := "1|test"
 		_, err := Unmarshal(raw)
 
-		So(err, ShouldHaveSameTypeAs, msgErr)
 		So(err.Error(), ShouldContainSubstring, "fields")
 
 		raw = "2||"
 		_, err = Unmarshal(raw)
-		So(err, ShouldHaveSameTypeAs, msgErr)
-		So(err.Error(), ShouldContainSubstring, "empty messageid")
+		So(err.Error(), ShouldContainSubstring, "empty MessageId")
 
 		raw = "0|test|this is a test message"
 		_, err = Unmarshal(raw)
-		So(err, ShouldHaveSameTypeAs, msgErr)
-		So(err.Error(), ShouldContainSubstring, "invalid messagetype")
+		So(err.Error(), ShouldContainSubstring, "invalid MessageType")
 	})
 }

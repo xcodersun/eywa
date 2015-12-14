@@ -1,6 +1,7 @@
 package connections
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -19,6 +20,16 @@ type Message struct {
 	Payload     string
 }
 
+type MessageResp struct {
+	msg *Message
+	err error
+}
+
+type MessageReq struct {
+	msg    *Message
+	respCh chan *MessageResp
+}
+
 func (m *Message) String() string {
 	return fmt.Sprintf("%d|%s|%s", m.MessageType, m.MessageId, m.Payload)
 }
@@ -34,17 +45,13 @@ func Marshal(m *Message) string {
 func Unmarshal(raw string) (*Message, error) {
 	fields := strings.SplitN(raw, "|", 3)
 	if len(fields) != 3 {
-		return nil, &MessageParsingError{
-			message: fmt.Sprintf("expected 3 fields instead of %d, raw: %s", len(fields), raw),
-		}
+		return nil, errors.New(fmt.Sprintf("expected 3 fields instead of %d, raw: %s in message", len(fields), raw))
 	}
 
 	msgType, err := strconv.Atoi(fields[0])
 	if err != nil || (msgType != AsyncRequestMessage &&
 		msgType != SyncRequestMessage && msgType != ResponseMessage && msgType != CloseMessage) {
-		return nil, &MessageParsingError{
-			message: fmt.Sprintf("invalid messagetype, raw: %s", raw),
-		}
+		return nil, errors.New(fmt.Sprintf("invalid MessageType, raw: %s", raw))
 	}
 
 	m := &Message{
@@ -53,9 +60,7 @@ func Unmarshal(raw string) (*Message, error) {
 		Payload:     fields[2],
 	}
 	if len(m.MessageId) == 0 && msgType != CloseMessage {
-		return nil, &MessageParsingError{
-			message: fmt.Sprintf("empty messageid, raw: %s", raw),
-		}
+		return nil, errors.New("empty MessageId")
 	}
 
 	return m, nil

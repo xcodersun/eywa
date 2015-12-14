@@ -43,7 +43,7 @@ func TestMiddlewares(t *testing.T) {
 		m1 := &Middleware{
 			name: "m1",
 			middleware: func(h MessageHandler) MessageHandler {
-				fn := func(c Connection, m *Message, e error) {
+				fn := func(c *Connection, m *Message, e error) {
 					array = append(array, "<m1>")
 					h(c, m, e)
 					array = append(array, "</m1>")
@@ -55,7 +55,7 @@ func TestMiddlewares(t *testing.T) {
 		m2 := &Middleware{
 			name: "m1",
 			middleware: func(h MessageHandler) MessageHandler {
-				fn := func(c Connection, m *Message, e error) {
+				fn := func(c *Connection, m *Message, e error) {
 					array = append(array, "<m2>")
 					h(c, m, e)
 					array = append(array, "</m2>")
@@ -66,7 +66,7 @@ func TestMiddlewares(t *testing.T) {
 
 		ms.Use(m1)
 		ms.InsertBefore(m2, m1)
-		h := func(c Connection, m *Message, e error) {
+		h := func(c *Connection, m *Message, e error) {
 			array = append(array, "h")
 		}
 		ms.Chain(MessageHandler(h))(nil, nil, nil)

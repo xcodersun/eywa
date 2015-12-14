@@ -2,153 +2,115 @@ package connections
 
 import (
 	"github.com/gorilla/websocket"
+	"github.com/spaolacci/murmur3"
 	. "github.com/vivowares/octopus/configs"
-	"os"
 	"strconv"
 	"sync"
 	"time"
 )
 
-var CM ConnectionManager
+var CM *ConnectionManager
 
 func InitializeCM() error {
-	hostname, err := os.Hostname()
-	if err != nil {
-		return err
-	}
+	cm, err := NewConnectionManager()
+	CM = cm
+	return err
+}
 
-	switch Config.Connections.Store {
+func NewConnectionManager() (*ConnectionManager, error) {
+	cm := &ConnectionManager{}
+	switch Config.Connections.Registry {
 	case "memory":
-		CM = &InMemoryConnectionManager{
-			host:        hostname,
-			connections: make(map[string]Connection),
-		}
-		return nil
+		cm.Registry = &InMemoryRegistry{}
 	default:
-		CM = &InMemoryConnectionManager{
-			host:        hostname,
-			connections: make(map[string]Connection),
-		}
-		return nil
+		cm.Registry = &InMemoryRegistry{}
 	}
-}
-
-type ConnectionManager interface {
-	Close() error
-	Wait()
-	Host() string
-	NewConnection(string, wsConn, MessageHandler) (Connection, error)
-	ConnectionCount() int
-
-	registerConnection(Connection) error
-	unregisterConnection(Connection) error
-	refreshConnectionRegistry(Connection, time.Time) error
-}
-
-type InMemoryConnectionManager struct {
-	host        string
-	connections map[string]Connection
-	closed      bool
-
-	wg sync.WaitGroup
-	m  sync.RWMutex
-}
-
-func (cm *InMemoryConnectionManager) Host() string {
-	return cm.host
-}
-
-func (cm *InMemoryConnectionManager) NewConnection(identifier string, ws wsConn, h MessageHandler) (Connection, error) {
-	t := time.Now()
-	conn := &connection{
-		identifier:   identifier,
-		createdAt:    t,
-		lastPingedAt: t,
-		closed:       false,
-		closeChan:    make(chan bool, 1),
-		msgChans:     make(map[string]chan *Message),
-		ws:           ws,
-		cm:           cm,
-	}
-	ws.SetPingHandler(func(payload string) error {
-		conn.lastPingedAt = time.Now()
-		err := conn.ws.WriteControl(
-			websocket.PongMessage,
-			[]byte(strconv.FormatInt(time.Now().UnixNano()/int64(time.Millisecond), 10)),
-			time.Now().Add(Config.Connections.Timeouts.Write))
-		return err
-	})
-
-	if err := cm.registerConnection(conn); err != nil {
-		conn.Close()
+	if err := cm.Registry.Ping(); err != nil {
 		return nil, err
 	}
 
-	go conn.Listen(h)
+	cm.shards = make([]*shard, Config.Connections.NShards)
+	for i := 0; i < Config.Connections.NShards; i++ {
+		cm.shards[i] = &shard{
+			cm:    cm,
+			conns: make(map[string]*Connection, Config.Connections.InitShardSize),
+		}
+	}
+
+	return cm, nil
+}
+
+type ConnectionManager struct {
+	shards   []*shard
+	Registry Registry
+}
+
+func (cm *ConnectionManager) Close() error {
+	var wg sync.WaitGroup
+	wg.Add(len(cm.shards))
+	for _, sh := range cm.shards {
+		go func(s *shard) {
+			s.Close()
+			wg.Done()
+		}(sh)
+	}
+	wg.Wait()
+	return cm.Registry.Close()
+}
+
+func (cm *ConnectionManager) NewConnection(id string, ws wsConn, h MessageHandler, meta map[string]interface{}) (*Connection, error) {
+	hasher := murmur3.New32()
+	hasher.Write([]byte(id))
+	shard := cm.shards[hasher.Sum32()%uint32(len(cm.shards))]
+
+	t := time.Now()
+	conn := &Connection{
+		shard:        shard,
+		ws:           ws,
+		identifier:   id,
+		createdAt:    t,
+		lastPingedAt: t,
+		h:            h,
+		Metadata:     meta,
+
+		wch: make(chan *MessageReq, Config.Connections.RequestQueueSize),
+		msgChans: &syncRespChanMap{
+			m: make(map[string]chan *MessageResp),
+		},
+		closewch: make(chan bool, 1),
+		rch:      make(chan struct{}),
+	}
+
+	ws.SetPingHandler(func(payload string) error {
+		conn.lastPingedAt = time.Now()
+		conn.shard.updateRegistry(conn)
+		return ws.WriteControl(
+			websocket.PongMessage,
+			[]byte(strconv.FormatInt(time.Now().UnixNano()/int64(time.Millisecond), 10)),
+			time.Now().Add(Config.Connections.Timeouts.Write))
+	})
+
+	conn.Start()
+	if err := shard.register(conn); err != nil {
+		conn.Close()
+		conn.Wait()
+		return nil, err
+	}
+
 	return conn, nil
 }
 
-func (cm *InMemoryConnectionManager) registerConnection(conn Connection) error {
-	cm.wg.Add(1)
+func (cm *ConnectionManager) FindConnection(id string) (*Connection, bool) {
+	hasher := murmur3.New32()
+	hasher.Write([]byte(id))
+	shard := cm.shards[hasher.Sum32()%uint32(len(cm.shards))]
+	return shard.findConnection(id)
+}
 
-	cm.m.Lock()
-	defer cm.m.Unlock()
-
-	if cm.closed {
-		return &ConnectionRegisterError{
-			message: "connection manager closed",
-		}
+func (cm *ConnectionManager) Count() int {
+	sum := 0
+	for _, sh := range cm.shards {
+		sum += sh.Count()
 	}
-
-	cm.connections[conn.Identifier()] = conn
-
-	return nil
-}
-
-func (cm *InMemoryConnectionManager) unregisterConnection(conn Connection) error {
-	cm.m.Lock()
-
-	if c, found := cm.connections[conn.Identifier()]; found {
-		if conn.CreatedAt().Equal(c.CreatedAt()) {
-			delete(cm.connections, conn.Identifier())
-		}
-	}
-
-	cm.m.Unlock()
-
-	cm.wg.Done()
-
-	return nil
-}
-
-func (cm *InMemoryConnectionManager) ConnectionCount() int {
-	cm.m.RLock()
-	defer cm.m.RUnlock()
-
-	return len(cm.connections)
-}
-
-func (cm *InMemoryConnectionManager) refreshConnectionRegistry(conn Connection, t time.Time) error {
-	return nil
-}
-
-func (cm *InMemoryConnectionManager) Close() error {
-	cm.m.Lock()
-	defer cm.m.Unlock()
-
-	if cm.closed {
-		return nil
-	}
-
-	cm.closed = true
-
-	for _, c := range cm.connections {
-		c.SignalClose()
-	}
-
-	return nil
-}
-
-func (cm *InMemoryConnectionManager) Wait() {
-	cm.wg.Wait()
+	return sum
 }
