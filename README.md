@@ -420,7 +420,7 @@ Since the value is aggregated according to `summary_type`, the returned value wo
 **request**
 
 ```
-GET /channels/<channel_id>/query?field=<field>&tags=<tagging expression>&filters=<filtering expression>&summary_type=<summary_type>&group_by=<group_by>&time_range=<time_range expression>
+GET /channels/<channel_id>/?field=<field>&tags=<tagging expression>&filters=<filtering expression>&summary_type=<summary_type>&group_by=<group_by>&time_range=<time_range expression>
 ```
 
 `field` and `summary_type` are required.
@@ -430,7 +430,7 @@ GET /channels/<channel_id>/query?field=<field>&tags=<tagging expression>&filters
 **example**
 
 ```
-GET /channels/1/query?field=depth&tags=reporter:eq:yang&filters=width:gt:4,width:le:10&group_by=location,weather&summary_type=avg&time_range=1449436224077:
+GET /channels/1/?field=depth&tags=reporter:eq:yang&filters=width:gt:4,width:le:10&group_by=location,weather&summary_type=avg&time_range=1449436224077:
 ```
 
 Notice that the selected field is `depth`, but the filters are on width. They can be different, as long as they are all defined on the channel.
@@ -458,7 +458,7 @@ Notice that the selected field is `depth`, but the filters are on width. They ca
 If queried without `group_by`, such as:
 
 ```
-GET /channels/1/query?field=depth&tags=reporter:eq:yang&filters=width:gt:4,width:le:10&summary_type=avg&time_range=1449436224077:
+GET /channels/1/?field=depth&tags=reporter:eq:yang&filters=width:gt:4,width:le:10&summary_type=avg&time_range=1449436224077:
 ```
 **response**
 
