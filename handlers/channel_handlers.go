@@ -3,10 +3,10 @@ package handlers
 import (
 	"encoding/base64"
 	"encoding/json"
+	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/zenazn/goji/web"
 	. "github.com/vivowares/octopus/models"
 	. "github.com/vivowares/octopus/presenters"
 	. "github.com/vivowares/octopus/utils"
-	"github.com/zenazn/goji/web"
 	"net/http"
 	"strconv"
 )

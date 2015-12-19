@@ -4,8 +4,8 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 	"errors"
-	"github.com/jinzhu/gorm"
-	_ "github.com/mattn/go-sqlite3"
+	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/jinzhu/gorm"
+	_ "github.com/vivowares/octopus/Godeps/_workspace/src/github.com/mattn/go-sqlite3"
 	. "github.com/vivowares/octopus/configs"
 	"strings"
 )

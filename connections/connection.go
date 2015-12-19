@@ -3,7 +3,7 @@ package connections
 import (
 	"errors"
 	"fmt"
-	"github.com/gorilla/websocket"
+	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/gorilla/websocket"
 	. "github.com/vivowares/octopus/configs"
 	"io"
 	"net"

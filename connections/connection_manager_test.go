@@ -1,7 +1,7 @@
 package connections
 
 import (
-	. "github.com/smartystreets/goconvey/convey"
+	. "github.com/vivowares/octopus/Godeps/_workspace/src/github.com/smartystreets/goconvey/convey"
 	. "github.com/vivowares/octopus/configs"
 	"testing"
 	"time"

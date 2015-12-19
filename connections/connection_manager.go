@@ -1,8 +1,8 @@
 package connections
 
 import (
-	"github.com/gorilla/websocket"
-	"github.com/spaolacci/murmur3"
+	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/gorilla/websocket"
+	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/spaolacci/murmur3"
 	. "github.com/vivowares/octopus/configs"
 	"strconv"
 	"sync"
