@@ -104,6 +104,12 @@ func HttpRouter() http.Handler {
 	httpRouter.Delete("/channels/:id", handlers.DeleteChannel)
 	httpRouter.Put("/channels/:id", handlers.UpdateChannel)
 
+	httpRouter.Get("/dashboards", handlers.ListDashboards)
+	httpRouter.Post("/dashboards", handlers.CreateDashboard)
+	httpRouter.Get("/dashboards/:id", handlers.GetDashboard)
+	httpRouter.Delete("/dashboards/:id", handlers.DeleteDashboard)
+	httpRouter.Put("/dashboards/:id", handlers.UpdateDashboard)
+
 	httpRouter.Compile()
 
 	return httpRouter
