@@ -169,9 +169,11 @@ func TestRaceConditions(t *testing.T) {
 			}(i)
 		}
 
-		time.Sleep(time.Duration(1+rand.Intn(3)) * time.Second)
+		time.Sleep(time.Duration(200+rand.Intn(500)) * time.Millisecond)
 		cm.Close()
 		So(cm.Count(), ShouldEqual, 0)
+
+		time.Sleep(time.Duration(1+rand.Intn(3)) * time.Second)
 		allClosed := true
 		for i, ws := range wss {
 			if errs[i] == nil && ws.closed == false {
