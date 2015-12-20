@@ -25,5 +25,6 @@ func main() {
 
 	DB.AutoMigrate(
 		&Channel{},
+		&Dashboard{},
 	)
 }
