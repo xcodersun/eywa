@@ -2,25 +2,28 @@ package main
 
 import (
 	"flag"
-	"github.com/gorilla/mux"
+	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/zenazn/goji/bind"
+	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/zenazn/goji/graceful"
+	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/zenazn/goji/web"
+	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/zenazn/goji/web/middleware"
 	"github.com/vivowares/octopus/configs"
 	"github.com/vivowares/octopus/connections"
 	"github.com/vivowares/octopus/handlers"
 	"github.com/vivowares/octopus/models"
 	. "github.com/vivowares/octopus/utils"
-	"github.com/zenazn/goji/bind"
-	"github.com/zenazn/goji/graceful"
-	"github.com/zenazn/goji/web"
-	"github.com/zenazn/goji/web/middleware"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 	"path"
+	"runtime"
 	"strconv"
+	"time"
 )
 
 func main() {
+	runtime.GOMAXPROCS(runtime.NumCPU())
+
 	configFile := flag.String("conf", "", "config file location")
 	flag.Parse()
 	if len(*configFile) > 0 {
@@ -37,7 +40,8 @@ func main() {
 	PanicIfErr(connections.InitializeCM())
 
 	go func() {
-		log.Printf("Goji started listenning to port %s", configs.Config.Service.Host)
+		log.Printf("Octopus started listenning to port %s", configs.Config.Service.Host)
+
 		graceful.Serve(
 			bind.Socket(":"+strconv.Itoa(configs.Config.Service.HttpPort)),
 			HttpRouter(),
@@ -46,20 +50,25 @@ func main() {
 
 	go func() {
 		log.Printf("Connection Manager started listenning to port %d", configs.Config.Service.WsPort)
-		http.ListenAndServe(":"+strconv.Itoa(configs.Config.Service.WsPort), WsRouter())
+		// http.ListenAndServe(":"+strconv.Itoa(configs.Config.Service.WsPort), WsRouter())
+		graceful.Serve(
+			bind.Socket(":"+strconv.Itoa(configs.Config.Service.WsPort)),
+			WsRouter(),
+		)
 	}()
 
 	graceful.HandleSignals()
-	graceful.PreHook(func() { log.Printf("Goji received signal, gracefully stopping") })
-	graceful.PreHook(func() { connections.CM.Close() })
+	graceful.PreHook(func() { log.Printf("Octopus received signal, gracefully stopping...") })
 
 	graceful.PostHook(func() {
-		connections.CM.Wait()
-		log.Printf("Connection Manager closed")
+		connections.CM.Close()
+		log.Printf("Waiting for websockets to drain...")
+		time.Sleep(3 * time.Second)
+		log.Printf("Connection Manager closed.")
 	})
 	graceful.PostHook(func() { models.CloseDB() })
 	graceful.PostHook(func() { models.CloseIndexDB() })
-	graceful.PostHook(func() { log.Printf("Goji stopped") })
+	graceful.PostHook(func() { log.Printf("Octopus stopped") })
 	graceful.PostHook(func() { removePidFile() })
 
 	createPidFile()
@@ -68,9 +77,16 @@ func main() {
 }
 
 func WsRouter() http.Handler {
-	wsRouter := mux.NewRouter()
-	// wsRouter.HandleFunc("/ws/{channel_id}/{device_id}", handlers.WsHandler)
-	wsRouter.HandleFunc("/heartbeat", handlers.HeartBeatWs)
+	wsRouter := web.New()
+	wsRouter.Use(middleware.RequestID)
+	wsRouter.Use(middleware.Logger)
+	wsRouter.Use(middleware.Recoverer)
+	wsRouter.Use(middleware.AutomaticOptions)
+	wsRouter.Get("/heartbeat", handlers.HeartBeatWs)
+	// wsRouter.Get("/ws/:channel_id/:device_id", handlers.WsHandler)
+
+	wsRouter.Compile()
+
 	return wsRouter
 }
 

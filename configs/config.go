@@ -1,7 +1,7 @@
 package configs
 
 import (
-	"github.com/spf13/viper"
+	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/spf13/viper"
 	"path"
 	"time"
 )
@@ -39,11 +39,15 @@ func InitializeConfig(filename string) error {
 	}
 
 	connConfig := &ConnectionConf{
-		Store:  viper.GetString("connections.store"),
-		Expiry: viper.GetDuration("connections.expiry"),
+		Registry:         viper.GetString("connections.registry"),
+		NShards:          viper.GetInt("connections.nshards"),
+		InitShardSize:    viper.GetInt("connections.init_shard_size"),
+		RequestQueueSize: viper.GetInt("connections.request_queue_size"),
+		Expiry:           viper.GetDuration("connections.expiry"),
 		Timeouts: &ConnectionTimeoutConf{
 			Write:    viper.GetDuration("connections.timeouts.write"),
 			Read:     viper.GetDuration("connections.timeouts.read"),
+			Request:  viper.GetDuration("connections.timeouts.request"),
 			Response: viper.GetDuration("connections.timeouts.response"),
 		},
 		BufferSizes: &ConnectionBufferSizeConf{
@@ -88,15 +92,19 @@ type ServiceConf struct {
 }
 
 type ConnectionConf struct {
-	Store       string
-	Expiry      time.Duration
-	Timeouts    *ConnectionTimeoutConf
-	BufferSizes *ConnectionBufferSizeConf
+	Registry         string
+	NShards          int
+	InitShardSize    int
+	RequestQueueSize int
+	Expiry           time.Duration
+	Timeouts         *ConnectionTimeoutConf
+	BufferSizes      *ConnectionBufferSizeConf
 }
 
 type ConnectionTimeoutConf struct {
 	Write    time.Duration
 	Read     time.Duration
+	Request  time.Duration
 	Response time.Duration
 }
 

@@ -2,9 +2,9 @@ package models
 
 import (
 	"fmt"
-	influx "github.com/influxdb/influxdb/client/v2"
+	influx "github.com/vivowares/octopus/Godeps/_workspace/src/github.com/influxdb/influxdb/client/v2"
 	. "github.com/vivowares/octopus/configs"
-	"net/url"
+	// "net/url"
 )
 
 var IndexDB influx.Client
@@ -14,18 +14,8 @@ func CloseIndexDB() error {
 }
 
 func InitializeIndexDB() error {
-	host, err := url.Parse(
-		fmt.Sprintf("http://%s:%d",
-			Config.Indices.Host,
-			Config.Indices.Port,
-		),
-	)
-	if err != nil {
-		return err
-	}
-
-	conf := influx.Config{URL: host}
-	IndexDB = influx.NewClient(conf)
-
-	return nil
+	url := fmt.Sprintf("%s:%d", Config.Indices.Host, Config.Indices.Port)
+	client, err := influx.NewUDPClient(influx.UDPConfig{Addr: url})
+	IndexDB = client
+	return err
 }

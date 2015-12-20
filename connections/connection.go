@@ -1,14 +1,58 @@
 package connections
 
 import (
+	"errors"
 	"fmt"
-	"github.com/gorilla/websocket"
+	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/gorilla/websocket"
 	. "github.com/vivowares/octopus/configs"
 	"io"
 	"net"
+	"strconv"
 	"sync"
 	"time"
 )
+
+type WebsocketError struct {
+	message string
+}
+
+func (e *WebsocketError) Error() string {
+	return fmt.Sprintf("WebsocketError: %s", e.message)
+}
+
+type syncRespChanMap struct {
+	sync.Mutex
+	m map[string]chan *MessageResp
+}
+
+func (sm *syncRespChanMap) put(msgId string, ch chan *MessageResp) {
+	sm.Lock()
+	defer sm.Unlock()
+
+	sm.m[msgId] = ch
+}
+
+func (sm *syncRespChanMap) find(msgId string) (chan *MessageResp, bool) {
+	sm.Lock()
+	defer sm.Unlock()
+
+	ch, found := sm.m[msgId]
+	return ch, found
+}
+
+func (sm *syncRespChanMap) delete(msgId string) {
+	sm.Lock()
+	defer sm.Unlock()
+
+	delete(sm.m, msgId)
+}
+
+func (sm *syncRespChanMap) len() int {
+	sm.Lock()
+	defer sm.Unlock()
+
+	return len(sm.m)
+}
 
 type wsConn interface {
 	Subprotocol() string
@@ -28,77 +72,154 @@ type wsConn interface {
 	UnderlyingConn() net.Conn
 }
 
-type Connection interface {
-	Host() string
-	IsLocal() bool
-	Identifier() string
-	Closed() bool
-	CreatedAt() time.Time
-	LastPingedAt() time.Time
-
-	SendAsyncRequest(*Message) error
-	SendSyncRequest(*Message) (*Message, error)
-	SendResponse(*Message) error
-
-	Listen(MessageHandler)
-	Close() error
-	SignalClose()
-}
-
-type connection struct {
+type Connection struct {
+	shard        *shard
+	ws           wsConn
 	createdAt    time.Time
 	lastPingedAt time.Time
 	identifier   string
-	cm           ConnectionManager
-	closeChan    chan bool
-	closed       bool
-	msgChans     map[string]chan *Message
-	ws           wsConn
+	h            MessageHandler
+	Metadata     map[string]interface{}
 
-	rm  sync.Mutex
-	wm  sync.Mutex
-	chm sync.RWMutex
-	wg  sync.WaitGroup
+	wg        sync.WaitGroup
+	closeOnce sync.Once
+	closed    bool
+
+	// there is a chance for this msgChan to grow,
+	// in extreme race condition. no plan to fix it.
+	// simple solution is to limit the size of it,
+	// close the connection when it blows up.
+	msgChans *syncRespChanMap
+
+	wch      chan *MessageReq // size=?
+	closewch chan bool        // size=1
+	rch      chan struct{}    // size=0
 }
 
-func (c *connection) Identifier() string {
-	return c.identifier
+func (c *Connection) Identifier() string { return c.identifier }
+
+func (c *Connection) CreatedAt() time.Time { return c.createdAt }
+
+func (c *Connection) LastPingedAt() time.Time { return c.lastPingedAt }
+
+func (c *Connection) Closed() bool { return c.closed }
+
+func (c *Connection) SendAsyncRequest(msg string) error {
+	_, err := c.sendMessage(AsyncRequestMessage, msg)
+	return err
 }
 
-func (c *connection) CreatedAt() time.Time {
-	return c.createdAt
+func (c *Connection) SendResponse(msg string) error {
+	_, err := c.sendMessage(ResponseMessage, msg)
+	return err
 }
 
-func (c *connection) LastPingedAt() time.Time {
-	c.rm.Lock()
-	defer c.rm.Unlock()
-	return c.lastPingedAt
+func (c *Connection) SendSyncRequest(msg string) (string, error) {
+	return c.sendMessage(SyncRequestMessage, msg)
 }
 
-func (c *connection) Host() string {
-	return c.cm.Host()
-}
+func (c *Connection) sendMessage(messageType int, payload string) (respMsg string, err error) {
+	respMsg = ""
 
-func (c *connection) IsLocal() bool {
-	return c.cm.Host() == Config.Service.Host
-}
+	defer func() {
+		if r := recover(); r != nil {
+			err = errors.New("connection is closed")
+		}
+	}()
 
-func (c *connection) Closed() bool {
-	return c.closed
-}
-
-func (c *connection) SignalClose() {
-	c.closeChan <- true
-}
-
-func (c *connection) readMessage() (*Message, error) {
-	c.rm.Lock()
-	defer c.rm.Unlock()
-
-	if c.closed {
-		return nil, &MessageReadingError{message: "connection is closed"}
+	msgId := strconv.FormatInt(time.Now().UnixNano(), 16)
+	msg := &Message{
+		MessageType: messageType,
+		MessageId:   msgId,
+		Payload:     payload,
 	}
 
+	respCh := make(chan *MessageResp, 1)
+
+	timeout := Config.Connections.Timeouts.Request
+	select {
+	case <-time.After(timeout):
+		err = errors.New(fmt.Sprintf("request timed out for %s", timeout))
+		return
+	case c.wch <- &MessageReq{
+		msg:    msg,
+		respCh: respCh,
+	}:
+	}
+
+	if messageType == SyncRequestMessage {
+		defer func() {
+			c.msgChans.delete(msgId)
+		}()
+
+		timeout = Config.Connections.Timeouts.Response
+	}
+
+	select {
+	case <-time.After(timeout):
+		err = errors.New(fmt.Sprintf("response timed out for %s", timeout))
+		return
+	case resp := <-respCh:
+		if resp.msg != nil {
+			respMsg = resp.msg.Payload
+		}
+		err = resp.err
+		return
+	}
+
+}
+
+func (c *Connection) wListen() {
+	defer c.wg.Done()
+	for {
+		req, more := <-c.wch
+		if more {
+			err := c.sendWsMessage(req.msg)
+			if err != nil {
+				req.respCh <- &MessageResp{
+					msg: nil,
+					err: err,
+				}
+
+				if _, ok := err.(*WebsocketError); ok {
+					c.Close()
+				}
+			} else {
+				if req.msg.MessageType == SyncRequestMessage {
+					c.msgChans.put(req.msg.MessageId, req.respCh)
+				} else {
+					req.respCh <- &MessageResp{}
+				}
+			}
+		} else {
+			<-c.closewch
+			c.sendWsMessage(&Message{MessageType: CloseMessage})
+			return
+		}
+	}
+}
+
+func (c *Connection) sendWsMessage(message *Message) error {
+	err := c.ws.SetWriteDeadline(time.Now().Add(Config.Connections.Timeouts.Write))
+	if err != nil {
+		return &WebsocketError{message: "error setting write deadline, " + err.Error()}
+	}
+
+	if message.MessageType == CloseMessage {
+		err = c.ws.WriteMessage(websocket.CloseMessage, []byte(message.Payload))
+		err = c.ws.Close()
+	} else {
+		err = c.ws.WriteMessage(websocket.TextMessage, []byte(message.Marshal()))
+	}
+
+	if err != nil {
+		err = &WebsocketError{message: err.Error()}
+	}
+
+	return err
+}
+
+func (c *Connection) readWsMessage() (*Message, error) {
 	if err := c.ws.SetReadDeadline(time.Now().Add(Config.Connections.Timeouts.Read)); err != nil {
 		return nil, &WebsocketError{
 			message: fmt.Sprintf("error setting read deadline, %s", err.Error()),
@@ -113,7 +234,7 @@ func (c *connection) readMessage() (*Message, error) {
 	}
 
 	c.lastPingedAt = time.Now()
-	c.cm.refreshConnectionRegistry(c, c.lastPingedAt)
+	c.shard.updateRegistry(c)
 
 	if messageType == websocket.CloseMessage {
 		return &Message{
@@ -124,184 +245,56 @@ func (c *connection) readMessage() (*Message, error) {
 	return Unmarshal(string(messageBody))
 }
 
-func (c *connection) sendMessage(message *Message) error {
-	if len(message.MessageId) == 0 {
-		return &MessageIdError{
-			message: "empty message id",
-		}
-	}
-
-	c.wm.Lock()
-	defer c.wm.Unlock()
-
-	if c.closed {
-		return &MessageSendingError{message: "connection closed"}
-	}
-
-	err := c.ws.SetWriteDeadline(time.Now().Add(Config.Connections.Timeouts.Write))
-	if err != nil {
-		return &WebsocketError{message: "error setting write deadline, " + err.Error()}
-	}
-
-	if message.MessageType == CloseMessage {
-		err = c.ws.WriteMessage(websocket.CloseMessage, []byte(message.Payload))
-	} else {
-		err = c.ws.WriteMessage(websocket.TextMessage, []byte(message.Marshal()))
-	}
-
-	if err != nil {
-		err = &WebsocketError{message: err.Error()}
-	}
-
-	return err
-}
-
-func (c *connection) SendAsyncRequest(message *Message) error {
-	if message.MessageType != AsyncRequestMessage {
-		return &MessageSendingError{
-			message: fmt.Sprintf("invalid message type %d, expected %d", message.MessageType, AsyncRequestMessage),
-		}
-	}
-
-	return c.sendMessage(message)
-}
-
-func (c *connection) SendResponse(message *Message) error {
-	if message.MessageType != ResponseMessage {
-		return &MessageSendingError{
-			message: fmt.Sprintf("invalid message type %d, expected %d", message.MessageType, ResponseMessage),
-		}
-	}
-
-	return c.sendMessage(message)
-}
-
-func (c *connection) createMessageChan(messageId string) chan *Message {
-	msgChan := make(chan *Message, 1)
-	c.chm.Lock()
-	c.msgChans[messageId] = msgChan
-	c.chm.Unlock()
-	c.wg.Add(1)
-	return msgChan
-}
-
-func (c *connection) removeMessageChan(messageId string) {
-	c.chm.Lock()
-	delete(c.msgChans, messageId)
-	c.chm.Unlock()
-	c.wg.Done()
-}
-
-func (c *connection) findMessageChan(messageId string) (chan *Message, bool) {
-	c.chm.RLock()
-	defer c.chm.RUnlock()
-	m, found := c.msgChans[messageId]
-	return m, found
-}
-
-func (c *connection) SendSyncRequest(message *Message) (*Message, error) {
-	if message.MessageType != SyncRequestMessage {
-		return nil, &MessageSendingError{
-			message: fmt.Sprintf("invalid message type %d, expected %d", message.MessageType, SyncRequestMessage),
-		}
-	}
-
-	ch := c.createMessageChan(message.MessageId)
-	defer c.removeMessageChan(message.MessageId)
-
-	err := c.sendMessage(message)
-	if err != nil {
-		return nil, err
-	}
-
-	select {
-	case <-time.After(Config.Connections.Timeouts.Response):
-		return nil, &ResponseTimeoutError{
-			message: fmt.Sprintf("response timed out for %s", Config.Connections.Timeouts.Response),
-		}
-	case resp := <-ch:
-		return resp, nil
-	}
-}
-
-func (c *connection) lock() {
-	c.wm.Lock()
-	c.rm.Lock()
-}
-
-func (c *connection) unlock() {
-	c.rm.Unlock()
-	c.wm.Unlock()
-}
-
-func (c *connection) Close() (err error) {
-	err = nil
-
-	c.lock()
-
-	if c.closed {
-		c.unlock()
-		return
-	}
-
-	c.closed = true
-	if err = c.ws.SetWriteDeadline(time.Now().Add(Config.Connections.Timeouts.Write)); err != nil {
-		err = &ConnectionCloseError{
-			message: fmt.Sprintf("error setting write deadline, %s", err.Error()),
-		}
-	} else {
-		if err = c.ws.WriteMessage(websocket.CloseMessage, []byte{}); err != nil {
-			err = &ConnectionCloseError{
-				message: fmt.Sprintf("error writing close control, %s", err.Error()),
-			}
-		}
-	}
-
-	if err = c.ws.Close(); err != nil {
-		err = &ConnectionCloseError{
-			message: fmt.Sprintf("error closing websocket, %s", err.Error()),
-		}
-	}
-	c.unlock()
-
-	c.cm.unregisterConnection(c)
-
-	c.wg.Wait()
-
-	return
-}
-
-func (c *connection) Listen(h MessageHandler) {
+func (c *Connection) rListen() {
+	defer c.wg.Done()
 	for {
 		select {
-		case <-c.closeChan:
-			c.Close()
+		case <-c.rch:
 			return
 		default:
-			message, err := c.readMessage()
+			message, err := c.readWsMessage()
 			if err != nil {
-				h(c, nil, err)
+				c.h(c, nil, err)
 				if _, ok := err.(*WebsocketError); ok {
 					c.Close()
 					return
 				}
 			} else if message.MessageType == CloseMessage {
-				h(c, message, nil)
+				c.h(c, message, nil)
 				c.Close()
 				return
 			} else if message.MessageType == ResponseMessage {
-				ch, found := c.findMessageChan(message.MessageId)
+				ch, found := c.msgChans.find(message.MessageId)
 				if found {
-					ch <- message
+					c.msgChans.delete(message.MessageId)
+					ch <- &MessageResp{msg: message}
 					DefaultMiddlewares.Chain(nil)(c, message, nil)
 				} else {
-					h(c, message, &MessageResponseError{
-						message: "unexpected response messages received, probably due to connection reset?",
-					})
+					c.h(c, message, errors.New("unexpected response messages received, probably due to response timeout?"))
 				}
 			} else {
-				h(c, message, nil)
+				c.h(c, message, nil)
 			}
 		}
 	}
+}
+
+func (c *Connection) Close() {
+	c.closeOnce.Do(func() {
+		c.closed = true
+		close(c.wch)
+		close(c.rch)
+		c.closewch <- true
+		c.shard.unregister(c)
+	})
+}
+
+func (c *Connection) Wait() {
+	c.wg.Wait()
+}
+
+func (c *Connection) Start() {
+	c.wg.Add(2)
+	go c.rListen()
+	go c.wListen()
 }

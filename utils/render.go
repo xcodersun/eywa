@@ -1,7 +1,7 @@
 package utils
 
 import (
-	"github.com/unrolled/render"
+	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/unrolled/render"
 )
 
 var Render *render.Render

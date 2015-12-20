@@ -11,7 +11,7 @@ var DefaultMiddlewares = &Middlewares{
 var Logger = &Middleware{
 	name: "logger",
 	middleware: func(h MessageHandler) MessageHandler {
-		fn := func(c Connection, m *Message, e error) {
+		fn := func(c *Connection, m *Message, e error) {
 			if e != nil {
 				// fmt.Errorf("Error: %s\n", e.Error())
 			} else {

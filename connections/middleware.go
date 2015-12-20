@@ -4,7 +4,7 @@ import (
 	"sync"
 )
 
-type MessageHandler func(Connection, *Message, error)
+type MessageHandler func(*Connection, *Message, error)
 
 type Middleware struct {
 	name       string
@@ -21,7 +21,7 @@ type Middlewares struct {
 // We don't encouge using this method concurrently with other methods
 func (ms *Middlewares) Chain(h MessageHandler) MessageHandler {
 	if h == nil {
-		h = func(Connection, *Message, error) {}
+		h = func(*Connection, *Message, error) {}
 	}
 
 	for i := len(ms.middlewares) - 1; i >= 0; i-- {

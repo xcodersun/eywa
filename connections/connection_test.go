@@ -3,10 +3,14 @@ package connections
 import (
 	"errors"
 	"fmt"
-	. "github.com/smartystreets/goconvey/convey"
+	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/gorilla/websocket"
+	. "github.com/vivowares/octopus/Godeps/_workspace/src/github.com/smartystreets/goconvey/convey"
 	. "github.com/vivowares/octopus/configs"
 	"io"
+	"math/rand"
 	"net"
+	"strings"
+	"sync"
 	"testing"
 	"time"
 )
@@ -28,12 +32,14 @@ type fakeWsConn struct {
 	closeErr         error
 	writeErr         error
 	writeDeadlineErr error
-	readErr          error
 	readDeadlineErr  error
 	pingHandler      func(string) error
 	readMessageType  int
 	readMessageBuf   []byte
 	readMessageErr   error
+	randomErr        bool
+	message          string
+	sync.Mutex
 }
 
 func (f *fakeWsConn) Subprotocol() string { return "" }
@@ -45,7 +51,14 @@ func (f *fakeWsConn) LocalAddr() net.Addr                             { return n
 func (f *fakeWsConn) RemoteAddr() net.Addr                            { return nil }
 func (f *fakeWsConn) WriteControl(i int, b []byte, t time.Time) error { return nil }
 func (f *fakeWsConn) NextWriter(i int) (io.WriteCloser, error)        { return nil, nil }
-func (f *fakeWsConn) WriteMessage(int, []byte) error {
+func (f *fakeWsConn) WriteMessage(msgType int, msg []byte) error {
+	f.Lock()
+	f.message = string(msg)
+	f.Unlock()
+	time.Sleep(time.Duration(rand.Intn(200)) * time.Millisecond)
+	if f.randomErr && rand.Intn(3) == 0 {
+		f.writeErr = errors.New("write err")
+	}
 	return f.writeErr
 }
 func (f *fakeWsConn) SetWriteDeadline(t time.Time) error {
@@ -55,6 +68,18 @@ func (f *fakeWsConn) NextReader() (int, io.Reader, error) {
 	return 0, nil, nil
 }
 func (f *fakeWsConn) ReadMessage() (int, []byte, error) {
+	time.Sleep(time.Duration(rand.Intn(200)) * time.Millisecond)
+	f.Lock()
+	m := f.message
+	f.Unlock()
+	if strings.HasSuffix(m, "sync") {
+		msg, _ := Unmarshal(m)
+		return websocket.TextMessage, []byte(fmt.Sprintf("%d|%s|sync response", ResponseMessage, msg.MessageId)), nil
+	}
+
+	if f.randomErr && rand.Intn(3) == 0 {
+		f.readMessageErr = errors.New("read err")
+	}
 	return f.readMessageType, f.readMessageBuf, f.readMessageErr
 }
 func (f *fakeWsConn) SetReadDeadline(t time.Time) error {
@@ -69,16 +94,20 @@ func (f *fakeWsConn) UnderlyingConn() net.Conn {
 	return &fakeNetConn{}
 }
 
-func TestConnection(t *testing.T) {
+func TestConnections(t *testing.T) {
 
 	Config = &Conf{
 		Connections: &ConnectionConf{
-			Store:  "memory",
-			Expiry: 300 * time.Second,
+			Registry:         "memory",
+			NShards:          2,
+			InitShardSize:    8,
+			RequestQueueSize: 8,
+			Expiry:           300 * time.Second,
 			Timeouts: &ConnectionTimeoutConf{
 				Write:    2 * time.Second,
 				Read:     300 * time.Second,
-				Response: 8 * time.Second,
+				Request:  1 * time.Second,
+				Response: 2 * time.Second,
 			},
 			BufferSizes: &ConnectionBufferSizeConf{
 				Write: 1024,
@@ -87,83 +116,82 @@ func TestConnection(t *testing.T) {
 		},
 	}
 
-	Convey("checks/sends async request and response.", t, func() {
-		InitializeCM()
+	h := func(c *Connection, m *Message, e error) {}
+	meta := make(map[string]interface{})
 
-		var h = func(c Connection, m *Message, e error) {
+	Convey("errors out for request/response timeout", t, func() {
+		conn := &Connection{
+			ws:         &fakeWsConn{},
+			identifier: "test",
+			h:          h,
+			wch:        make(chan *MessageReq, 1),
 		}
-		ws := &fakeWsConn{}
-		conn, err := CM.NewConnection("test", ws, h)
-		So(err, ShouldBeNil)
 
-		msg := &Message{
-			MessageType: 0,
-			MessageId:   "",
-			Payload:     "",
-		}
-		err = conn.SendAsyncRequest(msg)
-		err, ok := err.(*MessageSendingError)
-		So(ok, ShouldBeTrue)
-		So(err.Error(), ShouldContainSubstring, fmt.Sprintf("invalid message type %d, expected %d", 0, AsyncRequestMessage))
+		err := conn.SendResponse("resp")
+		So(err, ShouldNotBeNil)
+		So(err.Error(), ShouldContainSubstring, "response timed out")
 
-		msg.MessageType = AsyncRequestMessage
-		err = conn.SendAsyncRequest(msg)
-		err, ok = err.(*MessageIdError)
-		So(ok, ShouldBeTrue)
-		So(err.Error(), ShouldContainSubstring, "empty message id")
+		err = conn.SendAsyncRequest("async")
+		So(err, ShouldNotBeNil)
+		So(err.Error(), ShouldContainSubstring, "request timed out")
+	})
 
-		msg.MessageId = "test id"
-		ws.writeDeadlineErr = errors.New("test error")
-		err = conn.SendAsyncRequest(msg)
-		err, ok = err.(*WebsocketError)
-		So(ok, ShouldBeTrue)
-		So(err.Error(), ShouldContainSubstring, "error setting write deadline")
-
-		ws.writeDeadlineErr = nil
-		ws.writeErr = errors.New("test write error")
-		err = conn.SendAsyncRequest(msg)
-		err, ok = err.(*WebsocketError)
-		So(ok, ShouldBeTrue)
-		So(err.Error(), ShouldContainSubstring, "test write error")
-
-		msg.MessageType = 0
-		err = conn.SendResponse(msg)
-		err, ok = err.(*MessageSendingError)
-		So(ok, ShouldBeTrue)
-		So(err.Error(), ShouldContainSubstring, fmt.Sprintf("invalid message type %d, expected %d", 0, ResponseMessage))
+	Convey("errors out closed connection", t, func() {
+		cm, _ := NewConnectionManager()
+		defer cm.Close()
+		conn, _ := cm.NewConnection("test", &fakeWsConn{}, h, meta)
+		So(cm.Count(), ShouldEqual, 1)
 
 		conn.Close()
-		msg.MessageType = AsyncRequestMessage
-		err = conn.SendAsyncRequest(msg)
-		err, ok = err.(*MessageSendingError)
-		So(ok, ShouldBeTrue)
-		So(err.Error(), ShouldContainSubstring, "connection closed")
-
-		CM.Close()
-		CM.Wait()
+		conn.Wait()
+		So(cm.Count(), ShouldEqual, 0)
+		err := conn.SendAsyncRequest("async")
+		So(err, ShouldNotBeNil)
+		So(err.Error(), ShouldContainSubstring, "connection is closed")
 	})
 
-	Convey("checks/sends sync request.", t, func() {
-		InitializeCM()
+	Convey("closes connection after write/read error", t, func() {
+		cm, _ := NewConnectionManager()
+		defer cm.Close()
+		ws := &fakeWsConn{writeErr: errors.New("write err")}
+		conn, _ := cm.NewConnection("test write err", ws, h, meta)
+		So(cm.Count(), ShouldEqual, 1)
 
-		var h = func(c Connection, m *Message, e error) {
-		}
-		ws := &fakeWsConn{
-			readMessageBuf: []byte(fmt.Sprintf("%d|%s|response", ResponseMessage, "test_sync")),
-		}
-		conn, err := CM.NewConnection("test", ws, h)
-		So(err, ShouldBeNil)
+		err := conn.SendAsyncRequest("async")
+		So(err, ShouldNotBeNil)
+		So(err.Error(), ShouldContainSubstring, "WebsocketError")
+		conn.Wait()
+		So(ws.closed, ShouldBeTrue)
+		So(cm.Count(), ShouldEqual, 0)
 
-		msg := &Message{
-			MessageType: SyncRequestMessage,
-			MessageId:   "test_sync",
-			Payload:     "request",
-		}
-		resp, err := conn.SendSyncRequest(msg)
-		So(err, ShouldBeNil)
-		So(resp.Payload, ShouldEqual, "response")
+		ws = &fakeWsConn{readMessageErr: errors.New("read err")}
+		conn, _ = cm.NewConnection("test read err", ws, h, meta)
 
-		CM.Close()
-		CM.Wait()
+		conn.Wait()
+		So(ws.closed, ShouldBeTrue)
+		So(cm.Count(), ShouldEqual, 0)
 	})
+
+	Convey("successfully sends async messages", t, func() {
+		cm, _ := NewConnectionManager()
+		defer cm.Close()
+		conn, _ := cm.NewConnection("test", &fakeWsConn{}, h, meta)
+		So(cm.Count(), ShouldEqual, 1)
+
+		err := conn.SendAsyncRequest("async")
+		So(err, ShouldBeNil)
+	})
+
+	Convey("successfully sends sync messages", t, func() {
+		cm, _ := NewConnectionManager()
+		defer cm.Close()
+		conn, _ := cm.NewConnection("test", &fakeWsConn{}, h, meta)
+		So(cm.Count(), ShouldEqual, 1)
+
+		msg, err := conn.SendSyncRequest("sync")
+		So(err, ShouldBeNil)
+		So(msg, ShouldContainSubstring, "sync response")
+		So(conn.msgChans.len(), ShouldEqual, 0)
+	})
+
 }
