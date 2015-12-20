@@ -19,9 +19,6 @@ import (
 	"testing"
 )
 
-var ApiServer string
-var ConfigFile string
-
 type DashboardResp struct {
 	Id           string            `json:"id"`
 	Name         string            `json:"name"`
@@ -29,21 +26,12 @@ type DashboardResp struct {
 	Definition   string            `json:"definition"`
 }
 
-func init() {
-	pwd, err := os.Getwd()
-	PanicIfErr(err)
-	ConfigFile = path.Join(path.Dir(pwd), "configs", "octopus_test.yml")
-	PanicIfErr(InitializeConfig(ConfigFile))
-
-	ApiServer = "http://" + Config.Service.Host + ":" + strconv.Itoa(Config.Service.HttpPort)
-}
-
 func ListDashboardPath() string {
-	return fmt.Sprintf("%s/%s", ApiServer, "channels")
+	return fmt.Sprintf("%s/%s", ApiServer, "dashboards")
 }
 
 func GetDashboardPath(base64Id string) string {
-	return fmt.Sprintf("%s/%s/%s", ApiServer, "channels", base64Id)
+	return fmt.Sprintf("%s/%s/%s", ApiServer, "dashboards", base64Id)
 }
 
 func TestApiDashboards(t *testing.T) {

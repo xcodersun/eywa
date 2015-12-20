@@ -10,7 +10,6 @@ type DashboardBrief struct {
 	ID          string `json:"id"`
 	Name        string `json:"name"`
 	Description string `json:"description"`
-	Definition  string `json:"definition"`
 }
 
 type DashboardDetail struct {
@@ -23,7 +22,6 @@ func NewDashboardBrief(d *Dashboard) *DashboardBrief {
 		ID:          base64.URLEncoding.EncodeToString([]byte(strconv.Itoa(d.Id))),
 		Name:        d.Name,
 		Description: d.Description,
-		Definition:  d.Definition,
 	}
 }
 
