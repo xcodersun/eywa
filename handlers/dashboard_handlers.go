@@ -1,12 +1,12 @@
 package handlers
 
-import(
+import (
 	"encoding/base64"
 	"encoding/json"
+	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/zenazn/goji/web"
 	. "github.com/vivowares/octopus/models"
 	. "github.com/vivowares/octopus/presenters"
 	. "github.com/vivowares/octopus/utils"
-	"github.com/zenazn/goji/web"
 	"net/http"
 	"strconv"
 )
@@ -30,7 +30,7 @@ func CreateDashboard(c web.C, w http.ResponseWriter, r *http.Request) {
 
 func UpdateDashboard(c web.C, w http.ResponseWriter, r *http.Request) {
 	asBytes, err := base64.URLEncoding.DecodeString(c.URLParams["id"])
-		if err != nil {
+	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}

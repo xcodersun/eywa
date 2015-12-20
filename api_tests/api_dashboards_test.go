@@ -5,25 +5,20 @@ package api_tests
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/bitly/go-simplejson"
-	. "github.com/smartystreets/goconvey/convey"
-	"github.com/verdverm/frisby"
-	. "github.com/vivowares/octopus/configs"
+	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/bitly/go-simplejson"
+	. "github.com/vivowares/octopus/Godeps/_workspace/src/github.com/smartystreets/goconvey/convey"
+	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/verdverm/frisby"
 	. "github.com/vivowares/octopus/models"
-	. "github.com/vivowares/octopus/utils"
 	"net/http"
-	"os"
-	"path"
 	"reflect"
-	"strconv"
 	"testing"
 )
 
 type DashboardResp struct {
-	Id           string            `json:"id"`
-	Name         string            `json:"name"`
-	Description  string            `json:"description"`
-	Definition   string            `json:"definition"`
+	Id          string `json:"id"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	Definition  string `json:"definition"`
 }
 
 func ListDashboardPath() string {
@@ -51,9 +46,9 @@ func TestApiDashboards(t *testing.T) {
 		})
 
 		reqBody := Dashboard{
-			Name:         "test",
-			Description:  "desc",
-			Definition:   "definition",
+			Name:        "test",
+			Description: "desc",
+			Definition:  "definition",
 		}
 		f = frisby.Create("create dashboard").Post(ListDashboardPath())
 		f.SetJson(reqBody).Send()
@@ -71,10 +66,10 @@ func TestApiDashboards(t *testing.T) {
 		})
 
 		expResp := &DashboardResp{
-			Id:           chId,
-			Name:         reqBody.Name,
-			Description:  reqBody.Description,
-			Definition:   reqBody.Definition,
+			Id:          chId,
+			Name:        reqBody.Name,
+			Description: reqBody.Description,
+			Definition:  reqBody.Definition,
 		}
 
 		f = frisby.Create("get dashboard").Get(GetDashboardPath(chId)).Send()
