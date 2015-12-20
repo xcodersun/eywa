@@ -25,9 +25,9 @@ func TestDashboard(t *testing.T) {
 
 	Convey("creates/updates/deletes dashboard", t, func() {
 		d := &Dashboard{
-			Name:         "test",
-			Description:  "desc",
-			Definition: "definition",
+			Name:        "test",
+			Description: "desc",
+			Definition:  "definition",
 		}
 
 		d.Create()
@@ -49,9 +49,9 @@ func TestDashboard(t *testing.T) {
 
 	Convey("validates dashboard before saving", t, func() {
 		d := &Dashboard{
-			Name:         "",
-			Description:  "desc",
-			Definition: "def",
+			Name:        "",
+			Description: "desc",
+			Definition:  "def",
 		}
 		err := d.Create()
 		So(err.Error(), ShouldContainSubstring, "name is empty")

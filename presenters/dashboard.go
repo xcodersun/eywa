@@ -27,7 +27,7 @@ func NewDashboardBrief(d *Dashboard) *DashboardBrief {
 
 func NewDashboardDetail(d *Dashboard) *DashboardDetail {
 	return &DashboardDetail{
-		ID:      base64.URLEncoding.EncodeToString([]byte(strconv.Itoa(d.Id))),
+		ID:        base64.URLEncoding.EncodeToString([]byte(strconv.Itoa(d.Id))),
 		Dashboard: d,
 	}
 }

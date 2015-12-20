@@ -19,7 +19,7 @@ GET /channels
 ]
 ```
 
-As you can see here, the id's that are used there are not numeric id's. In fact we use a decentralized algorithm to generate ID's. The schema is called [FLAKE](http://www.bmc.com/blogs/). 
+As you can see here, the id's that are used there are not numeric id's. In fact we use a decentralized algorithm to generate ID's. The schema is called [FLAKE](http://www.bmc.com/blogs/).
 
 ###*Show details of defined channel*
 **request**
