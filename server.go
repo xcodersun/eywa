@@ -83,7 +83,7 @@ func WsRouter() http.Handler {
 	wsRouter.Use(middleware.Recoverer)
 	wsRouter.Use(middleware.AutomaticOptions)
 	wsRouter.Get("/heartbeat", handlers.HeartBeatWs)
-	// wsRouter.Get("/ws/:channel_id/:device_id", handlers.WsHandler)
+	wsRouter.Get("/ws/channels/:channel_id/devices/:device_id", handlers.WsHandler)
 
 	wsRouter.Compile()
 

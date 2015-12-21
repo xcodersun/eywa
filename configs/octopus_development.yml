@@ -19,7 +19,7 @@ connections:
     write: 1024
 indices:
   host: localhost
-  port: 8086
+  port: 9200
   db_name: octopus_development
 database:
   db_type: sqlite3

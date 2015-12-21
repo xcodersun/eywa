@@ -1,15 +1,11 @@
-package connections
+package handlers
 
 import (
-// "fmt"
+	. "github.com/vivowares/octopus/connections"
 )
 
-var DefaultMiddlewares = &Middlewares{
-	middlewares: []*Middleware{Logger},
-}
-
-var Logger = &Middleware{
-	name: "logger",
+var Indexer = &Middleware{
+	name: "indexer",
 	middleware: func(h MessageHandler) MessageHandler {
 		fn := func(c *Connection, m *Message, e error) {
 			if e != nil {

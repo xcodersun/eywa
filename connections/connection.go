@@ -268,7 +268,7 @@ func (c *Connection) rListen() {
 				if found {
 					c.msgChans.delete(message.MessageId)
 					ch <- &MessageResp{msg: message}
-					DefaultMiddlewares.Chain(nil)(c, message, nil)
+					c.h(c, message, nil)
 				} else {
 					c.h(c, message, errors.New("unexpected response messages received, probably due to response timeout?"))
 				}

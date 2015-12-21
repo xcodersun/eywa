@@ -2,20 +2,27 @@ package models
 
 import (
 	"fmt"
-	influx "github.com/vivowares/octopus/Godeps/_workspace/src/github.com/influxdb/influxdb/client/v2"
 	. "github.com/vivowares/octopus/configs"
-	// "net/url"
+	. "gopkg.in/olivere/elastic.v3"
 )
 
-var IndexDB influx.Client
+var IndexClient *Client
 
-func CloseIndexDB() error {
-	return IndexDB.Close()
+func CloseIndexClient() error {
+	return nil
 }
 
-func InitializeIndexDB() error {
-	url := fmt.Sprintf("%s:%d", Config.Indices.Host, Config.Indices.Port)
-	client, err := influx.NewUDPClient(influx.UDPConfig{Addr: url})
-	IndexDB = client
-	return err
+func InitializeIndexClient() error {
+	client, err := NewClient(
+		SetURL(fmt.Sprintf("http://%s:%d", Config.Indices.Host, Config.Indices.Port)),
+	)
+	if err != nil {
+		return err
+	}
+	_, _, err = client.Ping().Do()
+	if err != nil {
+		return err
+	}
+	IndexClient = client
+	return nil
 }

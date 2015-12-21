@@ -10,12 +10,13 @@ import (
 var SupportedDataTypes = []string{"float", "int", "boolean", "string"}
 
 type Channel struct {
-	Id           int         `sql:"type:integer" json:"-"`
-	Name         string      `sql:"type:varchar(255)" json:"name"`
-	Description  string      `sql:"type:text" json:"description"`
-	Tags         StringSlice `sql:"type:text" json:"tags"`
-	Fields       StringMap   `sql:"type:text" json:"fields"`
-	AccessTokens StringSlice `sql:"type:text" json:"access_tokens"`
+	Id              int         `sql:"type:integer" json:"-"`
+	Name            string      `sql:"type:varchar(255)" json:"name"`
+	Description     string      `sql:"type:text" json:"description"`
+	Tags            StringSlice `sql:"type:text" json:"tags"`
+	Fields          StringMap   `sql:"type:text" json:"fields"`
+	MessageHandlers StringSlice `sql:"type:text" json:"message_handlers"`
+	AccessTokens    StringSlice `sql:"type:text" json:"access_tokens"`
 }
 
 func (c *Channel) BeforeSave() error {

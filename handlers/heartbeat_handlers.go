@@ -10,6 +10,6 @@ func HeartBeatHttp(c web.C, w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, "OK")
 }
 
-func HeartBeatWs(w http.ResponseWriter, r *http.Request) {
+func HeartBeatWs(c web.C, w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, "OK")
 }
