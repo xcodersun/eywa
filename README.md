@@ -397,79 +397,43 @@ Logical grouping on these expressions is not currently supported. Comma separate
 
 avg/mean, min, max, median, sum, count, last, first, top_n, percentile_n
 
-###*Summary Grouping Syntax*
-
-Some times even the gauges need to be grouped by tags, example would be:
-
-```
-group_by=location,weather
-```
-
-The order in the `group_by` parameter matters.
-
-Only tags can be grouped.
-
-###*Query for Field Values*
+###*Query for Field Value*
 
 This is used to query for a single value matching all the expressions, applied with summary_type.
-
-Adding `group_by` will result in one value per group.
 
 Since the value is aggregated according to `summary_type`, the returned value won't have a timestamp attached to it.
 
 **request**
 
 ```
-GET /channels/<channel_id>/query?field=<field>&tags=<tagging expression>&filters=<filtering expression>&summary_type=<summary_type>&group_by=<group_by>&time_range=<time_range expression>
+GET /channels/<channel_id>/query?field=<field>&tags=<tagging expression>&filters=<filtering expression>&summary_type=<summary_type>&time_range=<time_range expression>
 ```
 
 `field` and `summary_type` are required.
 
-`tags`, `filters`, `group_by` and `time_range` are optional.
+`tags`, `filters`, `time_range` are optional.
 
 **example**
 
 ```
-GET /channels/1/query?field=depth&tags=reporter:eq:yang&filters=width:gt:4,width:le:10&group_by=location,weather&summary_type=avg&time_range=1449436224077:
+GET /channels/1/query?field=depth&tags=reporter:eq:yang&filters=depth:gt:4&summary_type=avg&time_range=1449436224077:
 ```
-
-Notice that the selected field is `depth`, but the filters are on width. They can be different, as long as they are all defined on the channel.
 
 **response**
 
 ```
-{
-  "water_level": {
-    "depth": {
-      "avg": {
-        "china": {
-          "sunny": { "value": 112 }
-        },
-        "us": {
-          "sunny": { "value": 143 },
-          "cloudy": { "value": 153 }
-        }
-      }
-    }
-  }
-}
+{ "value" : 12.5 }
 ```
 
-If queried without `group_by`, such as:
+For querying gauges, 
 
 ```
-GET /channels/1/query?field=depth&tags=reporter:eq:yang&filters=width:gt:4,width:le:10&summary_type=avg&time_range=1449436224077:
+GET /channels/1/query?field=depth&tags=reporter:eq:yang&summary_type=last
 ```
 **response**
 
 ```
-{
-  "water_level": {
-    "depth": {
-      "avg": { "value": 136 }
-    }
-  }
-}
+{ "value" : 17.6 }
 ```
 
 ###*Query for Time Serials*
@@ -479,88 +443,38 @@ This is used to query for a serial of timestamped values with applied summaries 
 **request**
 
 ```
-GET /channels/<channel_id>/serials?field=<field>&tags=<tagging expression>&filters=<filtering expression>&summary_type=<summary_type>&group_by=<group_by>&time_range=<time_range expression>&time_interval=<interval expression>
+GET /channels/<channel_id>/serials?field=<field>&tags=<tagging expression>&filters=<filtering expression>&summary_type=<summary_type>&time_range=<time_range expression>&time_interval=<interval expression>
 ```
 
 `field`, `time_range`, `time_interval`, `summary_type` are required.
 
-`tags`, `filters`, `group_by` are optional.
+`tags`, `filters` are optional.
 
 **example**
 
 ```
-GET /channels/1/serials?field=depth&tags=reporter:eq:yang&filters=width:gt:4,width:le:10&group_by=location&summary_type=avg&time_range=1449436224077:1449436235379&time_interval=1s
+GET /channels/1/serials?field=depth&tags=reporter:eq:yang&filters=depth:gt:15&summary_type=avg&time_range=1449436224077:1449436235379&time_interval=1s
 ```
 
 **response**
 
 ```
-{
-  "water_level": {
-    "depth": {
-      "avg": {
-        "china": [
-          { "timestamp": 1449456213000, "value": null },
-          { "timestamp": 1449456214000, "value": null },
-          { "timestamp": 1449456215000, "value": 112 },
-          { "timestamp": 1449456216000, "value": 109 },
-          { "timestamp": 1449456217000, "value": null },
-          { "timestamp": 1449456218000, "value": null },
-          { "timestamp": 1449456219000, "value": null },
-          { "timestamp": 1449456220000, "value": 155 },
-          { "timestamp": 1449456221000, "value": 120 },
-          { "timestamp": 1449456222000, "value": 173 }
-        ],
-        "us": [
-          { "timestamp": 1449456213000, "value": null },
-          { "timestamp": 1449456214000, "value": 130 },
-          { "timestamp": 1449456215000, "value": null },
-          { "timestamp": 1449456216000, "value": null },
-          { "timestamp": 1449456217000, "value": 167 },
-          { "timestamp": 1449456218000, "value": 143 },
-          { "timestamp": 1449456219000, "value": 153 },
-          { "timestamp": 1449456220000, "value": null },
-          { "timestamp": 1449456221000, "value": null },
-          { "timestamp": 1449456222000, "value": null }
-        ]
-      }
-    }
-  }
-}
+[
+  { "timestamp": 1449456213000, "value": null },
+  { "timestamp": 1449456214000, "value": null },
+  { "timestamp": 1449456215000, "value": 112 },
+  { "timestamp": 1449456216000, "value": 109 },
+  { "timestamp": 1449456217000, "value": null },
+  { "timestamp": 1449456218000, "value": null },
+  { "timestamp": 1449456219000, "value": null },
+  { "timestamp": 1449456220000, "value": 155 },
+  { "timestamp": 1449456221000, "value": 120 },
+  { "timestamp": 1449456222000, "value": 173 }
+]        
 ```
 
 The timestamp returned in response is always unix milliseconds from epoch.
 
-Most of the time, grouping is not necessary.
-
-**example**
-
-```
-GET /channels/1/serials?field=depth&tags=reporter:eq:yang&filters=width:gt:4,width:le:10&summary_type=avg&time_range=1449436224077:1449436235379&time_interval=1s
-```
-
-**response**
-
-```
-{
-  "water_level": {
-    "depth": {
-      "avg": [
-        { "timestamp": 1449456213000, "value": null },
-        { "timestamp": 1449456214000, "value": 130 },
-        { "timestamp": 1449456215000, "value": 112 },
-        { "timestamp": 1449456216000, "value": 109 },
-        { "timestamp": 1449456217000, "value": 167 },
-        { "timestamp": 1449456218000, "value": 143 },
-        { "timestamp": 1449456219000, "value": 153 },
-        { "timestamp": 1449456220000, "value": 155 },
-        { "timestamp": 1449456221000, "value": 120 },
-        { "timestamp": 1449456222000, "value": 173 }
-      ]
-    }
-  }
-}
-```
 
 ###*Query for Raw Data*
 
@@ -576,9 +490,9 @@ GET /channels/<channel_id>/raw?fields=<fields>&tags=<tagging expression>&filters
 
 `tags`, `filters`, `order`, `limit` and `offset` are optional.
 
-`summary_type`, `time_interval` and `group_by` are omitted.
+`summary_type`, and `time_interval` are omitted.
 
-`fields` can include multiple fields to be returned at a time.
+`fields` can include multiple fields to be returned at a time, use `*` to return all fields.
 
 **example**
 
@@ -590,17 +504,16 @@ GET /channels/1/raw?fields=depth,width&tags=reporter:eq:yang&filters=width:gt:4,
 
 ```
 {
-  "water_level": {
-    "depth": [
-      { "timestamp": 1449456219387, "value": 153 },
-      { "timestamp": 1449456218385, "value": 143 },
-      { "timestamp": 1449456217385, "value": 167 }
-    ],
-    "width": [
-      { "timestamp": 1449456219387, "value": 10 },
-      { "timestamp": 1449456218385, "value": 9 },
-      { "timestamp": 1449456217385, "value": 4 }
-    ]
-  }
+  "depth": [
+    { "timestamp": 1449456219387, "value": 153 },
+    { "timestamp": 1449456218385, "value": 143 },
+    { "timestamp": 1449456217385, "value": 167 }
+  ],
+  "width": [
+    { "timestamp": 1449456219387, "value": 10 },
+    { "timestamp": 1449456218385, "value": 9 },
+    { "timestamp": 1449456217385, "value": 4 }
+  ]
 }
 ```
+
