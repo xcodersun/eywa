@@ -9,15 +9,15 @@ import (
 
 func TestMiddlewares(t *testing.T) {
 	Convey("stack the middlewares in the correct order", t, func() {
-		m1 := &Middleware{name: "m1", middleware: nil}
-		m2 := &Middleware{name: "m2", middleware: nil}
-		m3 := &Middleware{name: "m3", middleware: nil}
-		m4 := &Middleware{name: "m4", middleware: nil}
-		m5 := &Middleware{name: "m5", middleware: nil}
-		m6 := &Middleware{name: "m6", middleware: nil}
-		m7 := &Middleware{name: "m7", middleware: nil}
+		m1 := &Middleware{name: "m1", handlerFunc: nil}
+		m2 := &Middleware{name: "m2", handlerFunc: nil}
+		m3 := &Middleware{name: "m3", handlerFunc: nil}
+		m4 := &Middleware{name: "m4", handlerFunc: nil}
+		m5 := &Middleware{name: "m5", handlerFunc: nil}
+		m6 := &Middleware{name: "m6", handlerFunc: nil}
+		m7 := &Middleware{name: "m7", handlerFunc: nil}
 
-		ms := &Middlewares{middlewares: []*Middleware{m2}}
+		ms := &MiddlewareStack{middlewares: []*Middleware{m2}}
 
 		ms.Use(m1)
 		ms.InsertBefore(m7, m1)
@@ -37,12 +37,12 @@ func TestMiddlewares(t *testing.T) {
 	})
 
 	Convey("chain the middlewares in the correct order", t, func() {
-		ms := &Middlewares{middlewares: []*Middleware{}}
+		ms := &MiddlewareStack{middlewares: []*Middleware{}}
 		array := []string{}
 
 		m1 := &Middleware{
 			name: "m1",
-			middleware: func(h MessageHandler) MessageHandler {
+			handlerFunc: func(h MessageHandler) MessageHandler {
 				fn := func(c *Connection, m *Message, e error) {
 					array = append(array, "<m1>")
 					h(c, m, e)
@@ -54,7 +54,7 @@ func TestMiddlewares(t *testing.T) {
 
 		m2 := &Middleware{
 			name: "m1",
-			middleware: func(h MessageHandler) MessageHandler {
+			handlerFunc: func(h MessageHandler) MessageHandler {
 				fn := func(c *Connection, m *Message, e error) {
 					array = append(array, "<m2>")
 					h(c, m, e)

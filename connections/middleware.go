@@ -7,11 +7,11 @@ import (
 type MessageHandler func(*Connection, *Message, error)
 
 type Middleware struct {
-	name       string
-	middleware func(MessageHandler) MessageHandler
+	name        string
+	handlerFunc func(MessageHandler) MessageHandler
 }
 
-type Middlewares struct {
+type MiddlewareStack struct {
 	m           sync.Mutex
 	middlewares []*Middleware
 }
@@ -19,25 +19,25 @@ type Middlewares struct {
 // Not thread safe!
 // This is implimented without thread safty intentionally.
 // We don't encouge using this method concurrently with other methods
-func (ms *Middlewares) Chain(h MessageHandler) MessageHandler {
+func (ms *MiddlewareStack) Chain(h MessageHandler) MessageHandler {
 	if h == nil {
 		h = func(*Connection, *Message, error) {}
 	}
 
 	for i := len(ms.middlewares) - 1; i >= 0; i-- {
-		h = ms.middlewares[i].middleware(h)
+		h = ms.middlewares[i].handlerFunc(h)
 	}
 	return h
 }
 
-func (ms *Middlewares) Use(m *Middleware) {
+func (ms *MiddlewareStack) Use(m *Middleware) {
 	ms.m.Lock()
 	defer ms.m.Unlock()
 
 	ms.middlewares = append(ms.middlewares, m)
 }
 
-func (ms *Middlewares) InsertBefore(m, before *Middleware) {
+func (ms *MiddlewareStack) InsertBefore(m, before *Middleware) {
 	ms.m.Lock()
 	defer ms.m.Unlock()
 
@@ -51,7 +51,7 @@ func (ms *Middlewares) InsertBefore(m, before *Middleware) {
 	}
 }
 
-func (ms *Middlewares) findMiddleware(find *Middleware) int {
+func (ms *MiddlewareStack) findMiddleware(find *Middleware) int {
 	idx := -1
 	for i, m := range ms.middlewares {
 		if m.name == find.name {
@@ -62,7 +62,7 @@ func (ms *Middlewares) findMiddleware(find *Middleware) int {
 	return idx
 }
 
-func (ms *Middlewares) InsertAfter(m, after *Middleware) {
+func (ms *MiddlewareStack) InsertAfter(m, after *Middleware) {
 	ms.m.Lock()
 	defer ms.m.Unlock()
 
@@ -76,7 +76,7 @@ func (ms *Middlewares) InsertAfter(m, after *Middleware) {
 	}
 }
 
-func (ms *Middlewares) Remove(m *Middleware) {
+func (ms *MiddlewareStack) Remove(m *Middleware) {
 	ms.m.Lock()
 	defer ms.m.Unlock()
 
