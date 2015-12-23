@@ -36,7 +36,7 @@ func main() {
 	}
 
 	PanicIfErr(models.InitializeDB())
-	PanicIfErr(models.InitializeIndexDB())
+	PanicIfErr(models.InitializeIndexClient())
 	PanicIfErr(connections.InitializeCM())
 
 	go func() {
@@ -67,7 +67,7 @@ func main() {
 		log.Printf("Connection Manager closed.")
 	})
 	graceful.PostHook(func() { models.CloseDB() })
-	graceful.PostHook(func() { models.CloseIndexDB() })
+	graceful.PostHook(func() { models.CloseIndexClient() })
 	graceful.PostHook(func() { log.Printf("Octopus stopped") })
 	graceful.PostHook(func() { removePidFile() })
 

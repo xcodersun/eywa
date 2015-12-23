@@ -1,13 +1,16 @@
 package handlers
 
 import (
+	"encoding/base64"
 	"github.com/gorilla/websocket"
 	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/zenazn/goji/web"
 	. "github.com/vivowares/octopus/configs"
 	"github.com/vivowares/octopus/connections"
+	. "github.com/vivowares/octopus/handlers/message_handlers"
 	. "github.com/vivowares/octopus/models"
 	. "github.com/vivowares/octopus/utils"
 	"net/http"
+	"strconv"
 )
 
 var upgrader = websocket.Upgrader{
@@ -47,13 +50,24 @@ func WsHandler(c web.C, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	md := connections.NewMiddlewareStack()
+	for _, hStr := range ch.MessageHandlers {
+		if m, found := SupportedMessageHandlers[hStr]; found {
+			md.Use(m)
+		} else {
+			Render.JSON(w, http.StatusBadRequest, map[string]string{"error": "unsupported message handler: " + hStr})
+			return
+		}
+	}
+	h := md.Chain(nil)
+
 	ws, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		Render.JSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
 		return
 	}
 
-	_, err = connections.CM.NewConnection(deviceId, ws, nil, map[string]interface{}{"channel": ch})
+	_, err = connections.CM.NewConnection(deviceId, ws, h, map[string]interface{}{"channel": ch})
 	if err != nil {
 		Render.JSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
 	}

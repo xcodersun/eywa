@@ -19,10 +19,10 @@ func InitializeIndexClient() error {
 	if err != nil {
 		return err
 	}
-	_, _, err = client.Ping().Do()
-	if err != nil {
-		return err
-	}
+	// _, _, err = client.Ping().Do()
+	// if err != nil {
+	// 	return err
+	// }
 	IndexClient = client
 	return nil
 }

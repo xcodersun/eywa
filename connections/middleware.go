@@ -85,3 +85,14 @@ func (ms *MiddlewareStack) Remove(m *Middleware) {
 		ms.middlewares = append(ms.middlewares[:idx], ms.middlewares[idx+1:]...)
 	}
 }
+
+func NewMiddlewareStack() *MiddlewareStack {
+	return &MiddlewareStack{middlewares: make([]*Middleware, 0)}
+}
+
+func NewMiddleware(name string, h func(MessageHandler) MessageHandler) *Middleware {
+	return &Middleware{
+		name:        name,
+		handlerFunc: h,
+	}
+}
