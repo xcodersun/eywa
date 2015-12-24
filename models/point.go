@@ -4,8 +4,13 @@ import (
 	"encoding/json"
 	"errors"
 	. "github.com/vivowares/octopus/connections"
+	"net/url"
+	"strconv"
 	"time"
 )
+
+var jsonParsingErr = errors.New("json parsing err")
+var urlParsingErr = errors.New("url parsing err")
 
 type Point struct {
 	ch   *Channel
@@ -53,7 +58,7 @@ func (p *Point) parseJson() error {
 	jsonValues := make(map[string]json.RawMessage)
 	err := json.Unmarshal([]byte(p.msg.Payload), &jsonValues)
 	if err != nil {
-		return err
+		return jsonParsingErr
 	}
 
 	if _, found := jsonValues["timestamp"]; found {
@@ -120,6 +125,64 @@ func (p *Point) parseJson() error {
 	return nil
 }
 
+func (p *Point) parseUrl() error {
+	urlValues, err := url.ParseQuery(p.msg.Payload)
+	if err != nil {
+		return urlParsingErr
+	}
+
+	if ts := urlValues.Get("timestamp"); len(ts) > 0 {
+		timestamp, err := strconv.ParseInt(ts, 10, 64)
+		if err != nil {
+			return err
+		}
+		sec := (timestamp * 1000000) / int64(time.Second)
+		nano := (timestamp * 1000000) % int64(time.Second)
+		p.Timestamp = time.Unix(sec, nano)
+	} else {
+		return errors.New("missing timestamp")
+	}
+
+	p.Tags = make(map[string]string)
+	for _, tag := range p.ch.Tags {
+		if tagV := urlValues.Get(tag); len(tagV) > 0 {
+			p.Tags[tag] = tagV
+		}
+	}
+
+	p.Fields = make(map[string]interface{})
+	for fieldName, fieldType := range p.ch.Fields {
+		if fieldValue := urlValues.Get(fieldName); len(fieldValue) > 0 {
+			switch fieldType {
+			case "string":
+				p.Fields[fieldName] = fieldValue
+			case "int":
+				v, err := strconv.ParseInt(fieldValue, 10, 64)
+				if err != nil {
+					return err
+				}
+				p.Fields[fieldName] = v
+			case "float":
+				v, err := strconv.ParseFloat(fieldValue, 64)
+				if err != nil {
+					return err
+				}
+				p.Fields[fieldName] = v
+			case "boolean":
+				if fieldValue == "true" {
+					p.Fields[fieldName] = true
+				} else if fieldValue == "false" {
+					p.Fields[fieldName] = false
+				} else {
+					return errors.New("invalid boolean value: " + fieldValue)
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
 func NewPoint(id string, ch *Channel, conn *Connection, m *Message) (*Point, error) {
 	p := &Point{
 		ch:   ch,
@@ -127,7 +190,11 @@ func NewPoint(id string, ch *Channel, conn *Connection, m *Message) (*Point, err
 		msg:  m,
 		Id:   id,
 	}
+
 	err := p.parseJson()
+	if err != nil && err == jsonParsingErr {
+		err = p.parseUrl()
+	}
 	if err != nil {
 		return nil, err
 	}
