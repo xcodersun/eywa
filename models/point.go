@@ -62,7 +62,9 @@ func (p *Point) parseJson() error {
 		if err != nil {
 			return err
 		}
-		p.Timestamp = time.Unix(timestamp, 0)
+		sec := (timestamp * 1000000) / int64(time.Second)
+		nano := (timestamp * 1000000) % int64(time.Second)
+		p.Timestamp = time.Unix(sec, nano)
 	} else {
 		return errors.New("missing timestamp")
 	}

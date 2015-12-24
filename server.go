@@ -111,6 +111,7 @@ func HttpRouter() http.Handler {
 	httpRouter.Delete("/dashboards/:id", handlers.DeleteDashboard)
 	httpRouter.Put("/dashboards/:id", handlers.UpdateDashboard)
 
+	httpRouter.Get("/connections/_count", handlers.ConnectionCounts)
 	httpRouter.Compile()
 
 	return httpRouter

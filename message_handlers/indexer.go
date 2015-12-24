@@ -8,6 +8,8 @@ import (
 	"time"
 )
 
+import "github.com/kr/pretty"
+
 var SupportedMessageHandlers = map[string]*Middleware{"indexer": Indexer}
 
 var Indexer = NewMiddleware("indexer", func(h MessageHandler) MessageHandler {
@@ -18,14 +20,19 @@ var Indexer = NewMiddleware("indexer", func(h MessageHandler) MessageHandler {
 				id := uuid.NewV1().String()
 				p, err := NewPoint(id, ch, c, m)
 				if err == nil {
-					_, err := IndexClient.Index().
+					resp, err := IndexClient.Index().
 						Index(timedIndexName(ch, p.Timestamp)).
 						Type("messages").
 						Id(id).
 						BodyJson(p).
 						Do()
 					if err != nil {
+						pretty.Println(err)
+					} else {
+						pretty.Println(resp)
 					}
+				} else {
+					pretty.Println(err)
 				}
 			}
 		}
@@ -36,5 +43,6 @@ var Indexer = NewMiddleware("indexer", func(h MessageHandler) MessageHandler {
 })
 
 func timedIndexName(ch *Channel, ts time.Time) string {
-	return fmt.Sprintf("channels:%s:%s", ch.Base64Id(), ts.Weekday().String())
+	year, week := ts.ISOWeek()
+	return fmt.Sprintf("channels.%d.%d-%d", ch.Id, year, week)
 }
