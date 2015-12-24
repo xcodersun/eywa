@@ -13,9 +13,13 @@ import (
 	"strconv"
 )
 
-var upgrader = websocket.Upgrader{
-	ReadBufferSize:  Config.Connections.BufferSizes.Read,
-	WriteBufferSize: Config.Connections.BufferSizes.Write,
+var upgrader *websocket.Upgrader
+
+func InitWsUpgrader() {
+	upgrader = &websocket.Upgrader{
+		ReadBufferSize:  Config.Connections.BufferSizes.Read,
+		WriteBufferSize: Config.Connections.BufferSizes.Write,
+	}
 }
 
 func WsHandler(c web.C, w http.ResponseWriter, r *http.Request) {

@@ -38,6 +38,7 @@ func main() {
 	PanicIfErr(models.InitializeDB())
 	PanicIfErr(models.InitializeIndexClient())
 	PanicIfErr(connections.InitializeCM())
+	handlers.InitWsUpgrader()
 
 	go func() {
 		log.Printf("Octopus started listenning to port %s", configs.Config.Service.Host)

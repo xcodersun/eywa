@@ -5,6 +5,7 @@ import (
 	. "github.com/vivowares/octopus/configs"
 	"os"
 	"path"
+	"reflect"
 	"strconv"
 	"testing"
 )
@@ -26,11 +27,12 @@ func TestChannel(t *testing.T) {
 
 	Convey("creates/updates/deletes channel", t, func() {
 		c := &Channel{
-			Name:         "test",
-			Description:  "desc",
-			Tags:         []string{"tag1", "tag2"},
-			Fields:       map[string]string{"field1": "int"},
-			AccessTokens: []string{"token1"},
+			Name:            "test",
+			Description:     "desc",
+			Tags:            []string{"tag1", "tag2"},
+			Fields:          map[string]string{"field1": "int"},
+			MessageHandlers: []string{"logger", "indexer"},
+			AccessTokens:    []string{"token1"},
 		}
 
 		c.Create()
@@ -121,6 +123,45 @@ func TestChannel(t *testing.T) {
 		var count int
 		DB.Model(&Channel{}).Count(&count)
 		So(count, ShouldEqual, 0)
+	})
+
+	Convey("does not allow removing tags/fields or updating fields' types", t, func() {
+		c := &Channel{
+			Name:            "test",
+			Description:     "desc",
+			Tags:            []string{"tag1", "tag2"},
+			Fields:          map[string]string{"field1": "int"},
+			MessageHandlers: []string{"logger", "indexer"},
+			AccessTokens:    []string{"token1"},
+		}
+
+		c.Create()
+		var count int
+		DB.Model(&Channel{}).Count(&count)
+		So(count, ShouldEqual, 1)
+
+		c.Tags = []string{"tag2", "tag3"}
+		err := c.Update()
+		So(err.Error(), ShouldContainSubstring, "removing a tag is not allowed: tag1")
+
+		c.Tags = []string{"tag1", "tag2"}
+		c.Fields = map[string]string{"field2": "float"}
+		err = c.Update()
+		So(err.Error(), ShouldContainSubstring, "removing a field is not allowed: field1")
+
+		c.Fields = map[string]string{"field1": "float"}
+		err = c.Update()
+		So(err.Error(), ShouldContainSubstring, "changing a field type is not allowed: field1")
+
+		c.Tags = []string{"tag1", "tag2", "tag3"}
+		c.Fields = map[string]string{"field1": "int", "field2": "boolean"}
+		err = c.Update()
+		So(err, ShouldBeNil)
+
+		_c := &Channel{}
+		_c.FindById(c.Id)
+		So(reflect.DeepEqual(_c.Tags, c.Tags), ShouldBeTrue)
+		So(reflect.DeepEqual(_c.Fields, c.Fields), ShouldBeTrue)
 	})
 
 	CloseDB()
