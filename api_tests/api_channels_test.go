@@ -170,7 +170,7 @@ func TestApiChannels(t *testing.T) {
 		})
 
 		f = frisby.Create("remove field").Put(GetChannelPath(chId))
-		f.SetJson(map[string]map[string]string{"fields": nil}).Send()
+		f.SetJson(map[string]map[string]string{"fields": map[string]string{"field2": "string"}}).Send()
 
 		f.ExpectStatus(http.StatusBadRequest).AfterContent(func(F *frisby.Frisby, resp []byte, err error) {
 			So(string(resp), ShouldContainSubstring, "removing a field is not allowed: field1")

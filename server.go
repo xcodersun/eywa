@@ -41,7 +41,7 @@ func main() {
 	handlers.InitWsUpgrader()
 
 	go func() {
-		log.Printf("Octopus started listenning to port %s", configs.Config.Service.Host)
+		log.Printf("Octopus started listenning to port %d", configs.Config.Service.HttpPort)
 
 		graceful.Serve(
 			bind.Socket(":"+strconv.Itoa(configs.Config.Service.HttpPort)),

@@ -33,13 +33,17 @@ func UpdateChannel(c web.C, w http.ResponseWriter, r *http.Request) {
 	if !found {
 		w.WriteHeader(http.StatusNotFound)
 	} else {
+		fields := ch.Fields
+		ch.Fields = nil
 		decoder := json.NewDecoder(r.Body)
 		err := decoder.Decode(ch)
 		if err != nil {
 			Render.JSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
 			return
 		}
-
+		if ch.Fields == nil {
+			ch.Fields = fields
+		}
 		err = ch.Update()
 		if err != nil {
 			Render.JSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
