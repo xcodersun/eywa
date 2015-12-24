@@ -20,7 +20,10 @@ connections:
 indices:
   host: localhost
   port: 9200
-  db_name: octopus_development
+  number_of_shards: 8
+  number_of_replicas: 1
+  ttl_enabled: true
+  ttl: '336h'
 database:
   db_type: sqlite3
   db_file: /var/octopus/octopus_development.db

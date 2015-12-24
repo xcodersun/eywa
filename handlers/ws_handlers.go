@@ -6,7 +6,7 @@ import (
 	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/zenazn/goji/web"
 	. "github.com/vivowares/octopus/configs"
 	"github.com/vivowares/octopus/connections"
-	. "github.com/vivowares/octopus/handlers/message_handlers"
+	. "github.com/vivowares/octopus/message_handlers"
 	. "github.com/vivowares/octopus/models"
 	. "github.com/vivowares/octopus/utils"
 	"net/http"
@@ -31,8 +31,7 @@ func WsHandler(c web.C, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ch := &Channel{}
-	found := ch.FindById(id)
+	ch, found := FetchCachedChannelById(id)
 	if !found {
 		w.WriteHeader(http.StatusNotFound)
 		return
@@ -54,9 +53,6 @@ func WsHandler(c web.C, w http.ResponseWriter, r *http.Request) {
 	for _, hStr := range ch.MessageHandlers {
 		if m, found := SupportedMessageHandlers[hStr]; found {
 			md.Use(m)
-		} else {
-			Render.JSON(w, http.StatusBadRequest, map[string]string{"error": "unsupported message handler: " + hStr})
-			return
 		}
 	}
 	h := md.Chain(nil)

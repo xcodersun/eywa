@@ -29,39 +29,24 @@ func CreateChannel(c web.C, w http.ResponseWriter, r *http.Request) {
 }
 
 func UpdateChannel(c web.C, w http.ResponseWriter, r *http.Request) {
-	asBytes, err := base64.URLEncoding.DecodeString(c.URLParams["id"])
-	if err != nil {
-		w.WriteHeader(http.StatusNotFound)
-		return
-	}
-
-	id, err := strconv.Atoi(string(asBytes))
-	if err != nil {
-		w.WriteHeader(http.StatusNotFound)
-		return
-	}
-
-	ch := &Channel{}
-	found := ch.FindById(id)
+	ch, found := findChannel(c)
 	if !found {
 		w.WriteHeader(http.StatusNotFound)
-		return
-	}
-
-	decoder := json.NewDecoder(r.Body)
-	err = decoder.Decode(ch)
-	if err != nil {
-		Render.JSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
-		return
-	}
-
-	err = ch.Update()
-	if err != nil {
-		Render.JSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
 	} else {
-		w.WriteHeader(http.StatusOK)
-	}
+		decoder := json.NewDecoder(r.Body)
+		err := decoder.Decode(ch)
+		if err != nil {
+			Render.JSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+			return
+		}
 
+		err = ch.Update()
+		if err != nil {
+			Render.JSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+		} else {
+			w.WriteHeader(http.StatusOK)
+		}
+	}
 }
 
 func ListChannels(c web.C, w http.ResponseWriter, r *http.Request) {
@@ -77,20 +62,8 @@ func ListChannels(c web.C, w http.ResponseWriter, r *http.Request) {
 }
 
 func GetChannel(c web.C, w http.ResponseWriter, r *http.Request) {
-	asBytes, err := base64.URLEncoding.DecodeString(c.URLParams["id"])
-	if err != nil {
-		w.WriteHeader(http.StatusNotFound)
-		return
-	}
+	ch, found := findChannel(c)
 
-	id, err := strconv.Atoi(string(asBytes))
-	if err != nil {
-		w.WriteHeader(http.StatusNotFound)
-		return
-	}
-
-	ch := &Channel{}
-	found := ch.FindById(id)
 	if !found {
 		w.WriteHeader(http.StatusNotFound)
 	} else {
@@ -99,23 +72,32 @@ func GetChannel(c web.C, w http.ResponseWriter, r *http.Request) {
 }
 
 func DeleteChannel(c web.C, w http.ResponseWriter, r *http.Request) {
+	ch, found := findChannel(c)
+	if !found {
+		w.WriteHeader(http.StatusNotFound)
+	} else {
+		err := ch.Delete()
+		if err != nil {
+			Render.JSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+		} else {
+			w.WriteHeader(http.StatusOK)
+		}
+	}
+}
+
+func findChannel(c web.C) (*Channel, bool) {
 	asBytes, err := base64.URLEncoding.DecodeString(c.URLParams["id"])
 	if err != nil {
-		w.WriteHeader(http.StatusNotFound)
-		return
+		return nil, false
 	}
 
 	id, err := strconv.Atoi(string(asBytes))
 	if err != nil {
-		w.WriteHeader(http.StatusNotFound)
-		return
+		return nil, false
 	}
 
-	ch := &Channel{Id: id}
-	err = ch.Delete()
-	if err != nil {
-		Render.JSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
-	} else {
-		w.WriteHeader(http.StatusOK)
-	}
+	ch := &Channel{}
+	found := ch.FindById(id)
+
+	return ch, found
 }

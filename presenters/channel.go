@@ -1,9 +1,7 @@
 package presenters
 
 import (
-	"encoding/base64"
 	. "github.com/vivowares/octopus/models"
-	"strconv"
 )
 
 type ChannelBrief struct {
@@ -19,7 +17,7 @@ type ChannelDetail struct {
 
 func NewChannelBrief(c *Channel) *ChannelBrief {
 	return &ChannelBrief{
-		ID:          base64.URLEncoding.EncodeToString([]byte(strconv.Itoa(c.Id))),
+		ID:          c.Base64Id(),
 		Name:        c.Name,
 		Description: c.Description,
 	}
@@ -27,7 +25,7 @@ func NewChannelBrief(c *Channel) *ChannelBrief {
 
 func NewChannelDetail(c *Channel) *ChannelDetail {
 	return &ChannelDetail{
-		ID:      base64.URLEncoding.EncodeToString([]byte(strconv.Itoa(c.Id))),
+		ID:      c.Base64Id(),
 		Channel: c,
 	}
 }

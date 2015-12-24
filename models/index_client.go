@@ -13,16 +13,17 @@ func CloseIndexClient() error {
 }
 
 func InitializeIndexClient() error {
+	url := fmt.Sprintf("http://%s:%d", Config.Indices.Host, Config.Indices.Port)
 	client, err := NewClient(
-		SetURL(fmt.Sprintf("http://%s:%d", Config.Indices.Host, Config.Indices.Port)),
+		SetURL(url),
 	)
 	if err != nil {
 		return err
 	}
-	// _, _, err = client.Ping().Do()
-	// if err != nil {
-	// 	return err
-	// }
+	_, _, err = client.Ping(url).Do()
+	if err != nil {
+		return err
+	}
 	IndexClient = client
 	return nil
 }

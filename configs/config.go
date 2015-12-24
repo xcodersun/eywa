@@ -33,9 +33,12 @@ func InitializeConfig(filename string) error {
 	}
 
 	indexConfig := &IndexConf{
-		Host:   viper.GetString("indices.host"),
-		Port:   viper.GetInt("indices.port"),
-		DbName: viper.GetString("indices.db_name"),
+		Host:             viper.GetString("indices.host"),
+		Port:             viper.GetInt("indices.port"),
+		NumberOfShards:   viper.GetInt("indices.number_of_shards"),
+		NumberOfReplicas: viper.GetInt("indices.number_of_replicas"),
+		TTLEnabled:       viper.GetBool("indices.ttl_enabled"),
+		TTL:              viper.GetDuration("indices.ttl"),
 	}
 
 	connConfig := &ConnectionConf{
@@ -79,9 +82,12 @@ type DbConf struct {
 }
 
 type IndexConf struct {
-	Host   string
-	Port   int
-	DbName string
+	Host             string
+	Port             int
+	NumberOfShards   int
+	NumberOfReplicas int
+	TTLEnabled       bool
+	TTL              time.Duration
 }
 
 type ServiceConf struct {

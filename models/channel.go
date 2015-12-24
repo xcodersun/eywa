@@ -1,10 +1,13 @@
 package models
 
 import (
+	"encoding/base64"
 	"errors"
 	"fmt"
 	. "github.com/vivowares/octopus/utils"
+	"strconv"
 	"strings"
+	"time"
 )
 
 var SupportedDataTypes = []string{"float", "int", "boolean", "string"}
@@ -19,7 +22,7 @@ type Channel struct {
 	AccessTokens    StringSlice `sql:"type:text" json:"access_tokens"`
 }
 
-func (c *Channel) BeforeSave() error {
+func (c *Channel) validate() error {
 	if len(c.Name) == 0 {
 		return errors.New("name is empty")
 	}
@@ -27,6 +30,29 @@ func (c *Channel) BeforeSave() error {
 	if len(c.Description) == 0 {
 		return errors.New("description is empty")
 	}
+
+	if c.Tags == nil {
+		c.Tags = StringSlice(make([]string, 0))
+	}
+
+	if c.Fields == nil {
+		c.Fields = StringMap(make(map[string]string, 0))
+	}
+
+	if c.MessageHandlers == nil {
+		c.MessageHandlers = StringSlice(make([]string, 0))
+	}
+
+	if c.AccessTokens == nil {
+		c.AccessTokens = StringSlice(make([]string, 0))
+	}
+
+	// skip this validation for now
+	// for _, h := range c.MessageHandlers {
+	// 	if _, found := SupportedMessageHandlers[h]; !found {
+	// 		return errors.New("unsupported message handler: " + h)
+	// 	}
+	// }
 
 	if len(c.AccessTokens) == 0 {
 		return errors.New("access_tokens are empty")
@@ -75,6 +101,35 @@ func (c *Channel) BeforeSave() error {
 	return nil
 }
 
+func (c *Channel) BeforeCreate() error {
+	return c.validate()
+}
+
+func (c *Channel) BeforeUpdate() error {
+	ch := &Channel{}
+	if found := ch.FindById(c.Id); !found {
+		return errors.New("record not found")
+	}
+
+	//removing a tag is not allowed
+	for _, t := range ch.Tags {
+		if !StringSliceContains(c.Tags, t) {
+			return errors.New("removing a tag is not allowed: " + t)
+		}
+	}
+
+	// removing or modifying a field is not allowed
+	for k, v := range ch.Fields {
+		if fv, found := c.Fields[k]; !found {
+			return errors.New("removing a field is not allowed: " + k)
+		} else if v != fv {
+			return errors.New("changing a field type is not allowed: " + k)
+		}
+	}
+
+	return c.validate()
+}
+
 func (c *Channel) Create() error {
 	return DB.Create(c).Error
 }
@@ -90,4 +145,27 @@ func (c *Channel) Update() error {
 func (c *Channel) FindById(id int) bool {
 	DB.First(c, id)
 	return !DB.NewRecord(c)
+}
+
+func (c *Channel) Base64Id() string {
+	return base64.URLEncoding.EncodeToString([]byte(strconv.Itoa(c.Id)))
+}
+
+func FetchCachedChannelById(id int) (*Channel, bool) {
+	cacheKey := fmt.Sprintf("cache.channel:%d", id)
+	ch, err := Cache.Fetch(cacheKey, 1*time.Minute, func() (interface{}, error) {
+		c := &Channel{}
+		found := c.FindById(id)
+		if found {
+			return c, nil
+		} else {
+			return nil, errors.New("channel not found")
+		}
+	})
+
+	if err == nil {
+		return ch.(*Channel), true
+	} else {
+		return nil, false
+	}
 }
