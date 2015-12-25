@@ -2,8 +2,8 @@ package models
 
 import (
 	"fmt"
+	. "github.com/vivowares/octopus/Godeps/_workspace/src/gopkg.in/olivere/elastic.v3"
 	. "github.com/vivowares/octopus/configs"
-	. "gopkg.in/olivere/elastic.v3"
 )
 
 var IndexClient *Client

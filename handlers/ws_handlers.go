@@ -2,7 +2,7 @@ package handlers
 
 import (
 	"encoding/base64"
-	"github.com/gorilla/websocket"
+	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/gorilla/websocket"
 	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/zenazn/goji/web"
 	. "github.com/vivowares/octopus/configs"
 	"github.com/vivowares/octopus/connections"
@@ -23,21 +23,9 @@ func InitWsUpgrader() {
 }
 
 func WsHandler(c web.C, w http.ResponseWriter, r *http.Request) {
-	asBytes, err := base64.URLEncoding.DecodeString(c.URLParams["channel_id"])
-	if err != nil {
-		w.WriteHeader(http.StatusNotFound)
-		return
-	}
-
-	id, err := strconv.Atoi(string(asBytes))
-	if err != nil {
-		w.WriteHeader(http.StatusNotFound)
-		return
-	}
-
-	ch, found := FetchCachedChannelById(id)
+	ch, found := findCachedChannel(c, "channel_id")
 	if !found {
-		w.WriteHeader(http.StatusNotFound)
+		Render.JSON(w, http.StatusNotFound, map[string]string{"error": "channel not found"})
 		return
 	}
 
@@ -71,4 +59,19 @@ func WsHandler(c web.C, w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		Render.JSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
 	}
+}
+
+func findCachedChannel(c web.C, idName string) (*Channel, bool) {
+	asBytes, err := base64.URLEncoding.DecodeString(c.URLParams[idName])
+	if err != nil {
+		return nil, false
+	}
+
+	id, err := strconv.Atoi(string(asBytes))
+	if err != nil {
+		return nil, false
+	}
+
+	ch, found := FetchCachedChannelById(id)
+	return ch, found
 }

@@ -20,21 +20,6 @@
 			"Rev": "527637c0f38a8035d7856bb758e56f7ee2c704a9"
 		},
 		{
-			"ImportPath": "github.com/influxdb/influxdb/client/v2",
-			"Comment": "v0.9.6-rc1-155-g146f36c",
-			"Rev": "146f36c3d59681346a523d45470bfb97023fe8b6"
-		},
-		{
-			"ImportPath": "github.com/influxdb/influxdb/models",
-			"Comment": "v0.9.6-rc1-155-g146f36c",
-			"Rev": "146f36c3d59681346a523d45470bfb97023fe8b6"
-		},
-		{
-			"ImportPath": "github.com/influxdb/influxdb/pkg/escape",
-			"Comment": "v0.9.6-rc1-155-g146f36c",
-			"Rev": "146f36c3d59681346a523d45470bfb97023fe8b6"
-		},
-		{
 			"ImportPath": "github.com/jinzhu/gorm",
 			"Rev": "8ee49893d1428fda97e2a2f8e5ce55a824b112c7"
 		},
@@ -78,6 +63,15 @@
 			"ImportPath": "github.com/mozillazg/request",
 			"Comment": "v0.5.0",
 			"Rev": "c7b9b28d405aea75359a0a5dfb89f52a84632f6d"
+		},
+		{
+			"ImportPath": "github.com/olivere/elastic/uritemplates",
+			"Comment": "v2.0.23-27-ga8215e0",
+			"Rev": "a8215e0b307af4727033f0cbc52e42600c5baebc"
+		},
+		{
+			"ImportPath": "github.com/satori/go.uuid",
+			"Rev": "d41af8bb6a7704f00bc3b7cba9355ae6a5a80048"
 		},
 		{
 			"ImportPath": "github.com/smartystreets/assertions",
@@ -140,6 +134,11 @@
 		{
 			"ImportPath": "golang.org/x/net/publicsuffix",
 			"Rev": "1796f9b8b7178e3c7587dff118d3bb9d37f9b0b3"
+		},
+		{
+			"ImportPath": "gopkg.in/olivere/elastic.v3",
+			"Comment": "v3.0.14",
+			"Rev": "33747b6d450839d8186edd535f36ae1c90e75730"
 		},
 		{
 			"ImportPath": "gopkg.in/yaml.v2",

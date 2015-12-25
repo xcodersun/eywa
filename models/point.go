@@ -3,7 +3,9 @@ package models
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	. "github.com/vivowares/octopus/connections"
+	. "github.com/vivowares/octopus/utils"
 	"net/url"
 	"strconv"
 	"time"
@@ -11,6 +13,7 @@ import (
 
 var jsonParsingErr = errors.New("json parsing err")
 var urlParsingErr = errors.New("url parsing err")
+var IndexType = "messages"
 
 type Point struct {
 	ch   *Channel
@@ -67,8 +70,8 @@ func (p *Point) parseJson() error {
 		if err != nil {
 			return err
 		}
-		sec := (timestamp * 1000000) / int64(time.Second)
-		nano := (timestamp * 1000000) % int64(time.Second)
+		sec := MilliSecToSec(timestamp)
+		nano := MilliSecToNano(timestamp)
 		p.Timestamp = time.Unix(sec, nano)
 	} else {
 		return errors.New("missing timestamp")
@@ -136,8 +139,8 @@ func (p *Point) parseUrl() error {
 		if err != nil {
 			return err
 		}
-		sec := (timestamp * 1000000) / int64(time.Second)
-		nano := (timestamp * 1000000) % int64(time.Second)
+		sec := MilliSecToSec(timestamp)
+		nano := MilliSecToNano(timestamp)
 		p.Timestamp = time.Unix(sec, nano)
 	} else {
 		return errors.New("missing timestamp")
@@ -199,4 +202,9 @@ func NewPoint(id string, ch *Channel, conn *Connection, m *Message) (*Point, err
 		return nil, err
 	}
 	return p, nil
+}
+
+func TimedIndexName(ch *Channel, ts time.Time) string {
+	year, week := ts.ISOWeek()
+	return fmt.Sprintf("channels.%d.%d-%d", ch.Id, year, week)
 }
