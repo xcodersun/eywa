@@ -2,6 +2,7 @@ package models
 
 import (
 	"errors"
+	"fmt"
 	"github.com/vivowares/octopus/Godeps/_workspace/src/gopkg.in/olivere/elastic.v3"
 	. "github.com/vivowares/octopus/utils"
 	"strconv"
@@ -9,7 +10,7 @@ import (
 	"time"
 )
 
-var SupportedSummaryTypes = []string{"avg", "min", "max", "sum"}
+var SupportedSummaryTypes = []string{"avg", "min", "max", "sum", "last"}
 var SupportedOperators = []string{"eq", "ne", "lt", "gt", "le", "ge"}
 var ValueAggName = "value_agg"
 
@@ -110,6 +111,10 @@ func (q *ValueQuery) TimedIndices() string {
 	return strings.Join(indices, ",")
 }
 
+func (q *ValueQuery) GlobIndexName() string {
+	return fmt.Sprintf("channels.%d.*", q.Channel.Id)
+}
+
 func (q *ValueQuery) QueryES() (interface{}, error) {
 	filterAgg := elastic.NewFilterAggregation()
 
@@ -143,23 +148,51 @@ func (q *ValueQuery) QueryES() (interface{}, error) {
 	}
 
 	filterAgg.SubAggregation(ValueAggName, agg)
-	resp, err := IndexClient.Search().
-		SearchType("count").
-		Index(q.TimedIndices()).
-		Type(IndexType).
-		Aggregation("name", filterAgg).
-		Do()
-	if err != nil {
-		return nil, err
-	}
-	value, success := resp.Aggregations.Min("name")
-	if !success {
-		return nil, errors.New("error querying indices")
-	}
-	value, success = value.Aggregations.Max(ValueAggName)
-	if !success {
-		return nil, errors.New("error querying indices")
-	}
 
-	return value.Value, nil
+	if q.SummaryType != "last" {
+		resp, err := IndexClient.Search().
+			SearchType("count").
+			Index(q.TimedIndices()).
+			Type(IndexType).
+			Aggregation("name", filterAgg).
+			Do()
+		if err != nil {
+			return nil, err
+		}
+		value, success := resp.Aggregations.Min("name")
+		if !success {
+			return nil, errors.New("error querying indices")
+		}
+		value, success = value.Aggregations.Max(ValueAggName)
+		if !success {
+			return nil, errors.New("error querying indices")
+		}
+
+		return value.Value, nil
+	} else {
+		resp, err := IndexClient.Search().
+			Index(q.GlobIndexName()).
+			Type(IndexType).
+			FetchSource(false).
+			Field(q.Field).
+			Query(boolQ).
+			Sort("timestamp", false).
+			From(0).Size(1).
+			Do()
+
+		if err != nil {
+			return nil, err
+		}
+		if resp.TotalHits() == 0 || resp.Hits == nil ||
+			len(resp.Hits.Hits) == 0 || resp.Hits.Hits[0].Fields[q.Field] == nil {
+			return nil, nil
+		} else {
+			values, ok := resp.Hits.Hits[0].Fields[q.Field].([]interface{})
+			if !ok || len(values) == 0 {
+				return nil, nil
+			} else {
+				return values[0], nil
+			}
+		}
+	}
 }
