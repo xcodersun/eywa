@@ -72,9 +72,9 @@ func (p *Point) parseJson() error {
 		}
 		sec := MilliSecToSec(timestamp)
 		nano := MilliSecToNano(timestamp)
-		p.Timestamp = time.Unix(sec, nano)
+		p.Timestamp = time.Unix(sec, nano).UTC()
 	} else {
-		return errors.New("missing timestamp")
+		p.Timestamp = time.Now().UTC()
 	}
 
 	p.Tags = make(map[string]string)
@@ -141,9 +141,9 @@ func (p *Point) parseUrl() error {
 		}
 		sec := MilliSecToSec(timestamp)
 		nano := MilliSecToNano(timestamp)
-		p.Timestamp = time.Unix(sec, nano)
+		p.Timestamp = time.Unix(sec, nano).UTC()
 	} else {
-		return errors.New("missing timestamp")
+		p.Timestamp = time.Now().UTC()
 	}
 
 	p.Tags = make(map[string]string)
