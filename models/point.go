@@ -186,6 +186,14 @@ func (p *Point) parseUrl() error {
 	return nil
 }
 
+func (p *Point) Metadata(meta map[string]string) {
+	for k, v := range meta {
+		if _, found := p.Tags[k]; !found {
+			p.Tags[k] = v
+		}
+	}
+}
+
 func NewPoint(id string, ch *Channel, conn *Connection, m *Message) (*Point, error) {
 	p := &Point{
 		ch:   ch,

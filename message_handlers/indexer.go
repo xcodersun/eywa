@@ -18,6 +18,10 @@ var Indexer = NewMiddleware("indexer", func(h MessageHandler) MessageHandler {
 				id := uuid.NewV1().String()
 				p, err := NewPoint(id, ch, c, m)
 				if err == nil {
+					if meta, found := c.Metadata["metadata"]; found && meta != nil {
+						p.Metadata(meta.(map[string]string))
+					}
+
 					resp, err := IndexClient.Index().
 						Index(TimedIndexName(ch, p.Timestamp)).
 						Type(IndexType).
