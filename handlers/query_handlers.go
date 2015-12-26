@@ -31,9 +31,7 @@ func QueryValue(c web.C, w http.ResponseWriter, r *http.Request) {
 func queryToMap(q map[string][]string) map[string]string {
 	r := make(map[string]string)
 	for k, v := range q {
-		if len(v) == 0 {
-			r[k] = ""
-		} else {
+		if len(v) > 0 {
 			r[k] = v[0]
 		}
 	}

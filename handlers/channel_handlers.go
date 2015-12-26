@@ -75,6 +75,27 @@ func GetChannel(c web.C, w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func GetChannelStats(c web.C, w http.ResponseWriter, r *http.Request) {
+	ch, found := findCachedChannel(c, "id")
+	if !found {
+		Render.JSON(w, http.StatusNotFound, map[string]string{"error": "channel not found"})
+		return
+	}
+
+	q := &StatsQuery{Channel: ch}
+	err := q.Parse(queryToMap(map[string][]string(r.URL.Query())))
+	if err != nil {
+		Render.JSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+	} else {
+		values, err := q.QueryES()
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+		} else {
+			Render.JSON(w, http.StatusOK, values)
+		}
+	}
+}
+
 func DeleteChannel(c web.C, w http.ResponseWriter, r *http.Request) {
 	ch, found := findChannel(c)
 	if !found {

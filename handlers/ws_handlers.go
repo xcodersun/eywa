@@ -55,17 +55,9 @@ func WsHandler(c web.C, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	params := map[string][]string(r.URL.Query())
-	meta := make(map[string]string)
-	for k, v := range params {
-		if StringSliceContains(ch.Tags, k) && len(v) > 0 {
-			meta[k] = v[0]
-		}
-	}
-
 	_, err = connections.CM.NewConnection(deviceId, ws, h, map[string]interface{}{
 		"channel":  ch,
-		"metadata": meta,
+		"metadata": queryToMap(map[string][]string(r.URL.Query())),
 	})
 	if err != nil {
 		Render.JSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})

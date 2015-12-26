@@ -102,6 +102,7 @@ func HttpRouter() http.Handler {
 	httpRouter.Get("/channels", handlers.ListChannels)
 	httpRouter.Post("/channels", handlers.CreateChannel)
 	httpRouter.Get("/channels/:id", handlers.GetChannel)
+	httpRouter.Get("/channels/:id/stats", handlers.GetChannelStats)
 	httpRouter.Delete("/channels/:id", handlers.DeleteChannel)
 	httpRouter.Put("/channels/:id", handlers.UpdateChannel)
 

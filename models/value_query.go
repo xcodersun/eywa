@@ -94,14 +94,14 @@ func (q *ValueQuery) Parse(params map[string]string) error {
 	return nil
 }
 
-func (q *ValueQuery) TimedIndices() string {
+func TimedIndices(ch *Channel, tStart, tEnd time.Time) string {
 	indices := []string{}
 	oneWeek := 7 * 24 * time.Hour
-	t := q.TimeStart
+	t := tStart
 	for {
-		indices = append(indices, TimedIndexName(q.Channel, t))
+		indices = append(indices, TimedIndexName(ch, t))
 		y, w := t.ISOWeek()
-		ey, ew := q.TimeEnd.ISOWeek()
+		ey, ew := tEnd.ISOWeek()
 		if y > ey || (y == ey && w >= ew) {
 			break
 		} else {
@@ -111,8 +111,8 @@ func (q *ValueQuery) TimedIndices() string {
 	return strings.Join(indices, ",")
 }
 
-func (q *ValueQuery) GlobIndexName() string {
-	return fmt.Sprintf("channels.%d.*", q.Channel.Id)
+func GlobIndexName(ch *Channel) string {
+	return fmt.Sprintf("channels.%d.*", ch.Id)
 }
 
 func (q *ValueQuery) QueryES() (interface{}, error) {
@@ -152,7 +152,7 @@ func (q *ValueQuery) QueryES() (interface{}, error) {
 	if q.SummaryType != "last" {
 		resp, err := IndexClient.Search().
 			SearchType("count").
-			Index(q.TimedIndices()).
+			Index(TimedIndices(q.Channel, q.TimeStart, q.TimeEnd)).
 			Type(IndexType).
 			Aggregation("name", filterAgg).
 			Do()
@@ -171,7 +171,7 @@ func (q *ValueQuery) QueryES() (interface{}, error) {
 		return value.Value, nil
 	} else {
 		resp, err := IndexClient.Search().
-			Index(q.GlobIndexName()).
+			Index(GlobIndexName(q.Channel)).
 			Type(IndexType).
 			FetchSource(false).
 			Field(q.Field).
