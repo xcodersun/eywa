@@ -83,15 +83,15 @@ func GetChannelStats(c web.C, w http.ResponseWriter, r *http.Request) {
 	}
 
 	q := &StatsQuery{Channel: ch}
-	err := q.Parse(queryToMap(map[string][]string(r.URL.Query())))
+	err := q.Parse(QueryToMap(r.URL.Query()))
 	if err != nil {
 		Render.JSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
 	} else {
-		values, err := q.QueryES()
+		stats, err := q.QueryES()
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 		} else {
-			Render.JSON(w, http.StatusOK, values)
+			Render.JSON(w, http.StatusOK, stats)
 		}
 	}
 }

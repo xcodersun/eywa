@@ -2,13 +2,15 @@ package models
 
 import (
 	"errors"
-	// "github.com/vivowares/octopus/Godeps/_workspace/src/gopkg.in/olivere/elastic.v3"
+	"github.com/vivowares/octopus/Godeps/_workspace/src/gopkg.in/olivere/elastic.v3"
 	. "github.com/vivowares/octopus/utils"
 	"regexp"
 	"strconv"
 	"strings"
 	"time"
 )
+
+var SeriesAggName = "series_agg"
 
 type SeriesQuery struct {
 	Channel      *Channel
@@ -17,7 +19,7 @@ type SeriesQuery struct {
 	SummaryType  string
 	TimeStart    time.Time
 	TimeEnd      time.Time
-	TimeInterval time.Duration
+	TimeInterval string
 }
 
 func (q *SeriesQuery) Parse(params map[string]string) error {
@@ -87,32 +89,10 @@ func (q *SeriesQuery) Parse(params map[string]string) error {
 	}
 
 	if itv, found := params["time_interval"]; found {
-		r := regexp.MustCompile(`(?P<number>\d+)(?P<unit>[YMWDhms])`)
-		matches := r.FindStringSubmatch(itv)
-		if len(matches) != 3 {
+		if matched, _ := regexp.MatchString(`\d+[yMwdhms]`, itv); !matched {
 			return errors.New("invalid time_interval format: " + itv)
 		} else {
-			number, err := strconv.Atoi(matches[1])
-			if err != nil {
-				return errors.New("invalid time_interval format: " + itv)
-			}
-
-			switch matches[2] {
-			case "Y":
-				q.TimeInterval = time.Duration(number*365*24) * time.Hour
-			case "M":
-				q.TimeInterval = time.Duration(number*31*24) * time.Hour
-			case "W":
-				q.TimeInterval = time.Duration(number*7*24) * time.Hour
-			case "D":
-				q.TimeInterval = time.Duration(number*24) * time.Hour
-			case "h":
-				q.TimeInterval = time.Duration(number) * time.Hour
-			case "m":
-				q.TimeInterval = time.Duration(number) * time.Minute
-			case "s":
-				q.TimeInterval = time.Duration(number) * time.Second
-			}
+			q.TimeInterval = itv
 		}
 	} else {
 		return errors.New("missing time_interval")
@@ -121,84 +101,90 @@ func (q *SeriesQuery) Parse(params map[string]string) error {
 	return nil
 }
 
-// func (q *ValueQuery) QueryES() (interface{}, error) {
-// 	filterAgg := elastic.NewFilterAggregation()
+func (q *SeriesQuery) QueryES() (interface{}, error) {
+	filterAgg := elastic.NewFilterAggregation()
 
-// 	boolQ := elastic.NewBoolQuery()
+	boolQ := elastic.NewBoolQuery()
 
-// 	termQs := make([]elastic.Query, 0)
-// 	for tagN, tagV := range q.Tags {
-// 		termQs = append(termQs, elastic.NewTermQuery(tagN, tagV))
-// 	}
-// 	boolQ.Must(termQs...)
+	termQs := make([]elastic.Query, 0)
+	for tagN, tagV := range q.Tags {
+		termQs = append(termQs, elastic.NewTermQuery(tagN, tagV))
+	}
+	boolQ.Must(termQs...)
 
-// 	if !q.TimeStart.IsZero() {
-// 		rangeQ := elastic.NewRangeQuery("timestamp").
-// 			From(NanoToMilli(q.TimeStart.UnixNano())).
-// 			To(NanoToMilli(q.TimeEnd.UnixNano()))
-// 		boolQ.Must(rangeQ)
-// 	}
+	rangeQ := elastic.NewRangeQuery("timestamp").
+		From(NanoToMilli(q.TimeStart.UnixNano())).
+		To(NanoToMilli(q.TimeEnd.UnixNano()))
+	boolQ.Must(rangeQ)
 
-// 	filterAgg.Filter(boolQ)
+	filterAgg.Filter(boolQ)
 
-// 	var agg elastic.Aggregation
-// 	switch q.SummaryType {
-// 	case "sum":
-// 		agg = elastic.NewSumAggregation().Field(q.Field)
-// 	case "avg":
-// 		agg = elastic.NewAvgAggregation().Field(q.Field)
-// 	case "min":
-// 		agg = elastic.NewMinAggregation().Field(q.Field)
-// 	case "max":
-// 		agg = elastic.NewMaxAggregation().Field(q.Field)
-// 	}
+	var agg elastic.Aggregation
+	switch q.SummaryType {
+	case "sum":
+		agg = elastic.NewDateHistogramAggregation().
+			Field("timestamp").
+			Interval(q.TimeInterval).
+			SubAggregation(q.SummaryType, elastic.NewSumAggregation().Field(q.Field))
+	case "avg":
+		agg = elastic.NewDateHistogramAggregation().
+			Field("timestamp").
+			Interval(q.TimeInterval).
+			SubAggregation(q.SummaryType, elastic.NewAvgAggregation().Field(q.Field))
+	case "min":
+		agg = elastic.NewDateHistogramAggregation().
+			Field("timestamp").
+			Interval(q.TimeInterval).
+			SubAggregation(q.SummaryType, elastic.NewMinAggregation().Field(q.Field))
+	case "max":
+		agg = elastic.NewDateHistogramAggregation().
+			Field("timestamp").
+			Interval(q.TimeInterval).
+			SubAggregation(q.SummaryType, elastic.NewMaxAggregation().Field(q.Field))
+	}
 
-// 	filterAgg.SubAggregation(ValueAggName, agg)
+	filterAgg.SubAggregation(SeriesAggName, agg)
 
-// 	if q.SummaryType != "last" {
-// 		resp, err := IndexClient.Search().
-// 			SearchType("count").
-// 			Index(TimedIndices(q.Channel, q.TimeStart, q.TimeEnd)).
-// 			Type(IndexType).
-// 			Aggregation("name", filterAgg).
-// 			Do()
-// 		if err != nil {
-// 			return nil, err
-// 		}
-// 		value, success := resp.Aggregations.Min("name")
-// 		if !success {
-// 			return nil, errors.New("error querying indices")
-// 		}
-// 		value, success = value.Aggregations.Max(ValueAggName)
-// 		if !success {
-// 			return nil, errors.New("error querying indices")
-// 		}
+	resp, err := IndexClient.Search().
+		SearchType("count").
+		Index(GlobIndexName(q.Channel)).
+		// Index(TimedIndices(q.Channel, q.TimeStart, q.TimeEnd)).
+		Type(IndexType).
+		Aggregation("name", filterAgg).
+		Do()
+	if err != nil {
+		return nil, err
+	}
+	filteredResp, success := resp.Aggregations.Filter("name")
+	if !success {
+		return nil, errors.New("error querying indices")
+	}
+	SeriesResp, success := filteredResp.Aggregations.DateHistogram(SeriesAggName)
+	if !success {
+		return nil, errors.New("error querying indices")
+	}
 
-// 		return value.Value, nil
-// 	} else {
-// 		resp, err := IndexClient.Search().
-// 			Index(GlobIndexName(q.Channel)).
-// 			Type(IndexType).
-// 			FetchSource(false).
-// 			Field(q.Field).
-// 			Query(boolQ).
-// 			Sort("timestamp", false).
-// 			From(0).Size(1).
-// 			Do()
+	series := make([]map[string]interface{}, 0)
+	for _, bkt := range SeriesResp.Buckets {
+		switch q.SummaryType {
+		case "sum":
+			if sum, found := bkt.Aggregations.Sum(q.SummaryType); found {
+				series = append(series, map[string]interface{}{"timestamp": bkt.Key, "value": sum.Value})
+			}
+		case "avg":
+			if avg, found := bkt.Aggregations.Sum(q.SummaryType); found {
+				series = append(series, map[string]interface{}{"timestamp": bkt.Key, "value": avg.Value})
+			}
+		case "min":
+			if min, found := bkt.Aggregations.Sum(q.SummaryType); found {
+				series = append(series, map[string]interface{}{"timestamp": bkt.Key, "value": min.Value})
+			}
+		case "max":
+			if max, found := bkt.Aggregations.Sum(q.SummaryType); found {
+				series = append(series, map[string]interface{}{"timestamp": bkt.Key, "value": max.Value})
+			}
+		}
+	}
 
-// 		if err != nil {
-// 			return nil, err
-// 		}
-// 		if resp.TotalHits() == 0 || resp.Hits == nil ||
-// 			len(resp.Hits.Hits) == 0 || resp.Hits.Hits[0].Fields[q.Field] == nil {
-// 			return nil, nil
-// 		} else {
-// 			values, ok := resp.Hits.Hits[0].Fields[q.Field].([]interface{})
-// 			if !ok || len(values) == 0 {
-// 				return nil, nil
-// 			} else {
-// 				return values[0], nil
-// 			}
-// 		}
-// 	}
-// }
+	return series, nil
+}

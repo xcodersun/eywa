@@ -180,7 +180,7 @@ func (q *ValueQuery) QueryES() (interface{}, error) {
 			return nil, errors.New("error querying indices")
 		}
 
-		return statsResp.Value, nil
+		return map[string]interface{}{"value": statsResp.Value}, nil
 	} else {
 		resp, err := IndexClient.Search().
 			Index(GlobIndexName(q.Channel)).
@@ -203,7 +203,7 @@ func (q *ValueQuery) QueryES() (interface{}, error) {
 			if !ok || len(values) == 0 {
 				return nil, nil
 			} else {
-				return values[0], nil
+				return map[string]interface{}{"value": values[0]}, nil
 			}
 		}
 	}

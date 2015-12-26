@@ -57,7 +57,7 @@ func WsHandler(c web.C, w http.ResponseWriter, r *http.Request) {
 
 	_, err = connections.CM.NewConnection(deviceId, ws, h, map[string]interface{}{
 		"channel":  ch,
-		"metadata": queryToMap(map[string][]string(r.URL.Query())),
+		"metadata": QueryToMap(r.URL.Query()),
 	})
 	if err != nil {
 		Render.JSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
