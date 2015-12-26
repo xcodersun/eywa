@@ -159,16 +159,28 @@ func (q *ValueQuery) QueryES() (interface{}, error) {
 		if err != nil {
 			return nil, err
 		}
-		value, success := resp.Aggregations.Min("name")
-		if !success {
-			return nil, errors.New("error querying indices")
-		}
-		value, success = value.Aggregations.Max(ValueAggName)
+		filterAggResp, success := resp.Aggregations.Filter("name")
 		if !success {
 			return nil, errors.New("error querying indices")
 		}
 
-		return value.Value, nil
+		var statsResp *elastic.AggregationValueMetric
+		switch q.SummaryType {
+		case "sum":
+			statsResp, success = filterAggResp.Aggregations.Sum(ValueAggName)
+		case "avg":
+			statsResp, success = filterAggResp.Aggregations.Avg(ValueAggName)
+		case "min":
+			statsResp, success = filterAggResp.Aggregations.Min(ValueAggName)
+		case "max":
+			statsResp, success = filterAggResp.Aggregations.Max(ValueAggName)
+		}
+
+		if !success {
+			return nil, errors.New("error querying indices")
+		}
+
+		return statsResp.Value, nil
 	} else {
 		resp, err := IndexClient.Search().
 			Index(GlobIndexName(q.Channel)).

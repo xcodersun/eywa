@@ -2,8 +2,7 @@ package models
 
 import (
 	"errors"
-	"fmt"
-	"github.com/vivowares/octopus/Godeps/_workspace/src/gopkg.in/olivere/elastic.v3"
+	// "github.com/vivowares/octopus/Godeps/_workspace/src/gopkg.in/olivere/elastic.v3"
 	. "github.com/vivowares/octopus/utils"
 	"regexp"
 	"strconv"
@@ -100,19 +99,19 @@ func (q *SeriesQuery) Parse(params map[string]string) error {
 
 			switch matches[2] {
 			case "Y":
-				q.TimeInterval = number * 365 * 24 * time.Hour
+				q.TimeInterval = time.Duration(number*365*24) * time.Hour
 			case "M":
-				q.TimeInterval = number * 31 * 24 * time.Hour
+				q.TimeInterval = time.Duration(number*31*24) * time.Hour
 			case "W":
-				q.TimeInterval = number * 7 * 24 * time.Hour
+				q.TimeInterval = time.Duration(number*7*24) * time.Hour
 			case "D":
-				q.TimeInterval = number * 24 * time.Hour
+				q.TimeInterval = time.Duration(number*24) * time.Hour
 			case "h":
-				q.TimeInterval = number * time.Hour
+				q.TimeInterval = time.Duration(number) * time.Hour
 			case "m":
-				q.TimeInterval = number * time.Minute
+				q.TimeInterval = time.Duration(number) * time.Minute
 			case "s":
-				q.TimeInterval = number * time.Second
+				q.TimeInterval = time.Duration(number) * time.Second
 			}
 		}
 	} else {

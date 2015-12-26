@@ -72,7 +72,7 @@ func (q *StatsQuery) QueryES() (interface{}, error) {
 	if err != nil {
 		return nil, err
 	} else {
-		if agg, found := resp.Aggregations.Stats("name"); found {
+		if agg, found := resp.Aggregations.Filter("name"); found {
 			res := make(map[string]interface{})
 			for _, tag := range q.Channel.Tags {
 				tagStats, found := agg.Aggregations.Terms(tag)
