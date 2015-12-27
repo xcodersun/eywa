@@ -75,7 +75,7 @@ func GetChannel(c web.C, w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func GetChannelStats(c web.C, w http.ResponseWriter, r *http.Request) {
+func GetChannelTagStats(c web.C, w http.ResponseWriter, r *http.Request) {
 	ch, found := findCachedChannel(c, "id")
 	if !found {
 		Render.JSON(w, http.StatusNotFound, map[string]string{"error": "channel not found"})
@@ -93,6 +93,20 @@ func GetChannelStats(c web.C, w http.ResponseWriter, r *http.Request) {
 		} else {
 			Render.JSON(w, http.StatusOK, stats)
 		}
+	}
+}
+
+func GetChannelIndexStats(c web.C, w http.ResponseWriter, r *http.Request) {
+	ch, found := findCachedChannel(c, "id")
+	if !found {
+		Render.JSON(w, http.StatusNotFound, map[string]string{"error": "channel not found"})
+		return
+	}
+	stats, found := FetchCachedChannelIndexStatsById(ch.Id)
+	if !found {
+		Render.JSON(w, http.StatusNotFound, map[string]string{"error": "channel stats not found"})
+	} else {
+		Render.JSON(w, http.StatusOK, stats)
 	}
 }
 

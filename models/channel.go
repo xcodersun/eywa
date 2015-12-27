@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"github.com/vivowares/octopus/Godeps/_workspace/src/gopkg.in/olivere/elastic.v3"
 	. "github.com/vivowares/octopus/utils"
 	"strconv"
 	"strings"
@@ -151,6 +152,21 @@ func (c *Channel) Base64Id() string {
 	return base64.URLEncoding.EncodeToString([]byte(strconv.Itoa(c.Id)))
 }
 
+func (c *Channel) IndexStats() (*elastic.IndicesStatsResponse, error) {
+	return IndexClient.IndexStats().Index(GlobIndexName(c)).Do()
+}
+
+func (c *Channel) Indices() []string {
+	indices := []string{}
+	stats, found := FetchCachedChannelIndexStatsById(c.Id)
+	if found && stats.Indices != nil {
+		for k, _ := range stats.Indices {
+			indices = append(indices, k)
+		}
+	}
+	return indices
+}
+
 func FetchCachedChannelById(id int) (*Channel, bool) {
 	cacheKey := fmt.Sprintf("cache.channel:%d", id)
 	ch, err := Cache.Fetch(cacheKey, 1*time.Minute, func() (interface{}, error) {
@@ -165,6 +181,25 @@ func FetchCachedChannelById(id int) (*Channel, bool) {
 
 	if err == nil {
 		return ch.(*Channel), true
+	} else {
+		return nil, false
+	}
+}
+
+func FetchCachedChannelIndexStatsById(id int) (*elastic.IndicesStatsResponse, bool) {
+	cacheKey := fmt.Sprintf("cache.channel_stats:%d", id)
+	resp, err := Cache.Fetch(cacheKey, 1*time.Minute, func() (interface{}, error) {
+		c := &Channel{}
+		found := c.FindById(id)
+		if !found {
+			return nil, errors.New("channel not found")
+		} else {
+			return c.IndexStats()
+		}
+	})
+
+	if err == nil {
+		return resp.(*elastic.IndicesStatsResponse), true
 	} else {
 		return nil, false
 	}

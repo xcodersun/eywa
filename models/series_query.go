@@ -147,8 +147,7 @@ func (q *SeriesQuery) QueryES() (interface{}, error) {
 
 	resp, err := IndexClient.Search().
 		SearchType("count").
-		Index(GlobIndexName(q.Channel)).
-		// Index(TimedIndices(q.Channel, q.TimeStart, q.TimeEnd)).
+		Index(TimedIndices(q.Channel, q.TimeStart, q.TimeEnd)).
 		Type(IndexType).
 		Aggregation("name", filterAgg).
 		Do()

@@ -95,11 +95,17 @@ func (q *ValueQuery) Parse(params map[string]string) error {
 }
 
 func TimedIndices(ch *Channel, tStart, tEnd time.Time) string {
+	allIndices := ch.Indices()
+
 	indices := []string{}
 	oneWeek := 7 * 24 * time.Hour
 	t := tStart
 	for {
-		indices = append(indices, TimedIndexName(ch, t))
+		index := TimedIndexName(ch, t)
+		if StringSliceContains(allIndices, index) {
+			indices = append(indices, index)
+		}
+
 		y, w := t.ISOWeek()
 		ey, ew := tEnd.ISOWeek()
 		if y > ey || (y == ey && w >= ew) {
