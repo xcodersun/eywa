@@ -51,7 +51,6 @@ func main() {
 
 	go func() {
 		log.Printf("Connection Manager started listenning to port %d", configs.Config.Service.WsPort)
-		// http.ListenAndServe(":"+strconv.Itoa(configs.Config.Service.WsPort), WsRouter())
 		graceful.Serve(
 			bind.Socket(":"+strconv.Itoa(configs.Config.Service.WsPort)),
 			WsRouter(),
