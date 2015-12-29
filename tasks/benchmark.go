@@ -22,8 +22,8 @@ func main() {
 	nm := flag.Int("m", 50, "number of payload messages to send")
 	rw := flag.Duration("r", 15*time.Second, "wait time for reading messages")
 	ww := flag.Duration("w", 2*time.Second, "wait time for writing messages")
-	itv := flag.Int("i", 3, "wait interval between each sends in client, randomized")
-	citv := flag.Int("I", 5, "wait interval between each connection, randomized")
+	itv := flag.Int("i", 5000, "wait milliseconds interval between each sends in client, randomized")
+	citv := flag.Int("I", 1000, "wait milliseconds interval between each connection, randomized")
 
 	flag.Parse()
 
@@ -34,7 +34,7 @@ func main() {
 	wg.Add(*n)
 
 	for i := 0; i < *n; i++ {
-		time.Sleep(time.Duration(rand.Intn(*citv)) * time.Second)
+		time.Sleep(time.Duration(rand.Intn(*citv)) * time.Millisecond)
 		go func(idx int) {
 			defer wg.Done()
 			c := &WsClient{
@@ -197,7 +197,7 @@ func (c *WsClient) StartTest() {
 					}
 				}
 			}
-			time.Sleep(time.Duration(c.Itv) * time.Second)
+			time.Sleep(time.Duration(c.Itv) * time.Millisecond)
 		}
 
 		c.MessageSent = m
