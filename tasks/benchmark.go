@@ -65,12 +65,17 @@ func main() {
 	var pongs int
 	var closeErrs int
 	var msgErrs int
+	var msgSent int
+	var pingSent int
+
 	for _, c := range clients {
 		pings += c.NPing
 		msgs += c.NMessage
 		pongs += c.Pongs
 		msgErrs += c.MessageErr
 		pingErrs += c.PingErr
+		msgSent += c.MessageSent
+		pingSent += c.PingSent
 
 		if c.ConnErr != nil {
 			connErrs += 1
@@ -88,6 +93,8 @@ func main() {
 	report["total_pongs"] = pongs
 	report["total_msgs"] = msgs
 	report["total_msg_errs"] = msgErrs
+	report["total_msg_sent"] = msgSent
+	report["total_ping_sent"] = pingSent
 
 	js, _ := json.MarshalIndent(report, "", "  ")
 	pretty.Println(string(js))
@@ -111,6 +118,8 @@ type WsClient struct {
 	Pongs           int
 	MessageErr      int
 	MessageCloseErr error
+	MessageSent     int
+	PingSent        int
 }
 
 func (c *WsClient) StartTest() {
@@ -173,6 +182,9 @@ func (c *WsClient) StartTest() {
 		}
 		time.Sleep(c.Itv)
 	}
+
+	c.MessageSent = m
+	c.PingSent = n
 
 	cli.SetWriteDeadline(time.Now().Add(c.WWait))
 	err = cli.WriteMessage(websocket.CloseMessage, []byte{})
