@@ -208,11 +208,12 @@ func (c *WsClient) StartTest() {
 
 	}()
 
+	c.wg.Wait()
+
 	cli.SetWriteDeadline(time.Now().Add(c.WWait))
 	err = cli.WriteMessage(websocket.CloseMessage, []byte{})
 	if err != nil {
 		c.MessageCloseErr = err
 	}
 
-	c.wg.Wait()
 }
