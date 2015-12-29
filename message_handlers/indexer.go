@@ -1,12 +1,11 @@
 package message_handlers
 
 import (
+	"fmt"
 	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/satori/go.uuid"
 	. "github.com/vivowares/octopus/connections"
 	. "github.com/vivowares/octopus/models"
 )
-
-import "github.com/vivowares/octopus/Godeps/_workspace/src/github.com/kr/pretty"
 
 var SupportedMessageHandlers = map[string]*Middleware{"indexer": Indexer}
 
@@ -29,12 +28,12 @@ var Indexer = NewMiddleware("indexer", func(h MessageHandler) MessageHandler {
 						BodyJson(p).
 						Do()
 					if err != nil {
-						pretty.Println(err)
+						fmt.Println(err)
 					} else {
-						pretty.Println(resp)
+						fmt.Println(resp)
 					}
 				} else {
-					pretty.Println(err)
+					fmt.Println(err)
 				}
 			}
 		}

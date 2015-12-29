@@ -19,8 +19,6 @@ import (
 	"testing"
 )
 
-// import "github.com/kr/pretty"
-
 var ApiServer string
 var ConfigFile string
 

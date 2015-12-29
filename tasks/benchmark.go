@@ -5,7 +5,6 @@ import (
 	"flag"
 	"fmt"
 	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/gorilla/websocket"
-	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/kr/pretty"
 	"math/rand"
 	"net/http"
 	"net/url"
@@ -23,7 +22,8 @@ func main() {
 	nm := flag.Int("m", 50, "number of payload messages to send")
 	rw := flag.Duration("r", 15*time.Second, "wait time for reading messages")
 	ww := flag.Duration("w", 2*time.Second, "wait time for writing messages")
-	itv := flag.Duration("i", 1*time.Second, "wait interval between each sends in client")
+	itv := flag.Int("i", 3, "wait interval between each sends in client, randomized")
+	citv := flag.Int("I", 5, "wait interval between each connection, randomized")
 
 	flag.Parse()
 
@@ -34,6 +34,7 @@ func main() {
 	wg.Add(*n)
 
 	for i := 0; i < *n; i++ {
+		time.Sleep(time.Duration(rand.Intn(*citv)) * time.Second)
 		go func(idx int) {
 			defer wg.Done()
 			c := &WsClient{
@@ -46,6 +47,7 @@ func main() {
 				RWait:       *rw,
 				WWait:       *ww,
 				Itv:         *itv,
+				ch:          make(chan struct{}),
 			}
 
 			clients[idx] = c
@@ -97,7 +99,7 @@ func main() {
 	report["total_ping_sent"] = pingSent
 
 	js, _ := json.MarshalIndent(report, "", "  ")
-	pretty.Println(string(js))
+	fmt.Println(string(js))
 }
 
 type WsClient struct {
@@ -109,7 +111,9 @@ type WsClient struct {
 	NMessage    int
 	RWait       time.Duration
 	WWait       time.Duration
-	Itv         time.Duration
+	Itv         int
+	wg          sync.WaitGroup
+	ch          chan struct{}
 
 	Cli             *websocket.Conn
 	ConnErr         error
@@ -140,56 +144,75 @@ func (c *WsClient) StartTest() {
 		c.Pongs += 1
 		return nil
 	})
+	c.wg.Add(2)
 
-	n := 0
-	m := 0
+	go func() {
+		defer c.wg.Done()
 
-	for n < c.NPing || m < c.NMessage {
-		cli.SetWriteDeadline(time.Now().Add(c.WWait))
-		if n >= c.NPing {
-			err := cli.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("1|%d|temperature=%.2f", rand.Int31(), rand.Float32()*100)))
-			m += 1
-			if err != nil {
-				c.MessageErr += 1
-			}
-		} else if m >= c.NMessage {
-			err := cli.WriteMessage(websocket.PingMessage, []byte{})
-			n += 1
-			if err != nil {
-				c.PingErr += 1
-			} else {
+		for {
+			select {
+			case <-c.ch:
+				return
+			default:
 				cli.SetReadDeadline(time.Now().Add(c.RWait))
 				cli.ReadMessage()
 			}
-		} else {
-			r := rand.Intn(2)
-			if r == 0 {
+		}
+
+	}()
+
+	go func() {
+		defer c.wg.Done()
+
+		n := 0
+		m := 0
+
+		for n < c.NPing || m < c.NMessage {
+			cli.SetWriteDeadline(time.Now().Add(c.WWait))
+			if n >= c.NPing {
 				err := cli.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("1|%d|temperature=%.2f", rand.Int31(), rand.Float32()*100)))
 				m += 1
 				if err != nil {
 					c.MessageErr += 1
 				}
-			} else {
+			} else if m >= c.NMessage {
 				err := cli.WriteMessage(websocket.PingMessage, []byte{})
 				n += 1
 				if err != nil {
 					c.PingErr += 1
+				}
+			} else {
+				r := rand.Intn(2)
+				if r == 0 {
+					err := cli.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("1|%d|temperature=%.2f", rand.Int31(), rand.Float32()*100)))
+					m += 1
+					if err != nil {
+						c.MessageErr += 1
+					}
 				} else {
-					cli.SetReadDeadline(time.Now().Add(c.RWait))
-					cli.ReadMessage()
+					err := cli.WriteMessage(websocket.PingMessage, []byte{})
+					n += 1
+					if err != nil {
+						c.PingErr += 1
+					}
 				}
 			}
+			time.Sleep(time.Duration(c.Itv) * time.Second)
 		}
-		time.Sleep(c.Itv)
-	}
 
-	c.MessageSent = m
-	c.PingSent = n
+		c.MessageSent = m
+		c.PingSent = n
+
+		time.Sleep(3 * time.Second)
+		close(c.ch)
+
+	}()
 
 	cli.SetWriteDeadline(time.Now().Add(c.WWait))
 	err = cli.WriteMessage(websocket.CloseMessage, []byte{})
 	if err != nil {
-		pretty.Println(err.Error())
 		c.MessageCloseErr = err
 	}
+
+	c.wg.Wait()
 }
