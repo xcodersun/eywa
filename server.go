@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/rs/cors"
 	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/zenazn/goji/bind"
 	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/zenazn/goji/graceful"
 	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/zenazn/goji/web"
@@ -96,6 +97,11 @@ func HttpRouter() http.Handler {
 	httpRouter.Use(middleware.Logger)
 	httpRouter.Use(middleware.Recoverer)
 	httpRouter.Use(middleware.AutomaticOptions)
+	c := cors.New(cors.Options{
+		AllowedOrigins: []string{"*"},
+	})
+	httpRouter.Use(c.Handler)
+
 	httpRouter.Get("/heartbeat", handlers.HeartBeatHttp)
 
 	httpRouter.Get("/channels", handlers.ListChannels)
