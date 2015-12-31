@@ -69,19 +69,21 @@ func (q *StatsQuery) QueryES() (interface{}, error) {
 		Aggregation("name", filterAgg).
 		Do()
 
+	res := make(map[string]interface{})
+	for _, tag := range q.Channel.Tags {
+		res[tag] = []interface{}{}
+	}
+
 	if err != nil {
-		return nil, err
+		return res, nil
 	} else {
 		if agg, found := resp.Aggregations.Filter("name"); found {
-			res := make(map[string]interface{})
 			for _, tag := range q.Channel.Tags {
 				tagStats, found := agg.Aggregations.Terms(tag)
 				if found {
-					values := []interface{}{}
 					for _, bucket := range tagStats.Buckets {
-						values = append(values, bucket.Key)
+						res[tag] = append(res[tag].([]interface{}), bucket.Key)
 					}
-					res[tag] = values
 				}
 			}
 			return res, nil
