@@ -99,14 +99,18 @@ var messages = `
 func main() {
 	configFile := flag.String("conf", "", "config file location")
 	flag.Parse()
-	if len(*configFile) > 0 {
-		PanicIfErr(InitializeConfig(*configFile))
-	} else {
-		pwd, err := os.Getwd()
-		PanicIfErr(err)
-		*configFile = path.Join(path.Dir(pwd), "configs", "octopus_development.yml")
-		PanicIfErr(InitializeConfig(*configFile))
+	if len(*configFile) == 0 {
+		defaultConf := "/etc/octopus/octopus.yml"
+		if _, err := os.Stat(defaultConf); os.IsNotExist(err) {
+			pwd, err := os.Getwd()
+			PanicIfErr(err)
+			*configFile = path.Join(path.Dir(pwd), "configs", "octopus_development.yml")
+		} else {
+			*configFile = defaultConf
+		}
 	}
+
+	PanicIfErr(InitializeConfig(*configFile))
 
 	PanicIfErr(InitializeIndexClient())
 
