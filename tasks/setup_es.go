@@ -15,6 +15,7 @@ var messages = `
 {
 	"messages": {
 		"_all": { "enabled": false },
+		"_source": { "enabled": false },
 	  "dynamic_templates": [
 	    {
 	      "string_to_doc_values": {

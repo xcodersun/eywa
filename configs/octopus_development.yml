@@ -21,7 +21,7 @@ indices:
   host: localhost
   port: 9200
   number_of_shards: 8
-  number_of_replicas: 1
+  number_of_replicas: 0
   ttl_enabled: true
   ttl: '336h'
 database:
