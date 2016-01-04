@@ -15,7 +15,7 @@ var SupportedDataTypes = []string{"float", "int", "boolean", "string"}
 
 type Channel struct {
 	Id              int         `sql:"type:integer" json:"-"`
-	Name            string      `sql:"type:varchar(255)" json:"name"`
+	Name            string      `sql:"type:varchar(255);unique_index" json:"name"`
 	Description     string      `sql:"type:text" json:"description"`
 	Tags            StringSlice `sql:"type:text" json:"tags"`
 	Fields          StringMap   `sql:"type:text" json:"fields"`

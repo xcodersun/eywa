@@ -29,6 +29,9 @@ func main() {
 
 	runtime.GOMAXPROCS(runtime.NumCPU())
 
+	//create a channel for testing
+
+	//start clients
 	clients := make([]*WsClient, *n)
 	var wg sync.WaitGroup
 	wg.Add(*n)
@@ -57,6 +60,7 @@ func main() {
 
 	wg.Wait()
 
+	//collecting test results
 	report := make(map[string]interface{})
 	report["total_clients"] = *n
 

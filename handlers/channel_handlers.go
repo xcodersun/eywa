@@ -24,7 +24,7 @@ func CreateChannel(c web.C, w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		Render.JSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
 	} else {
-		w.WriteHeader(http.StatusCreated)
+		Render.JSON(w, http.StatusCreated, NewChannelBrief(ch))
 	}
 }
 

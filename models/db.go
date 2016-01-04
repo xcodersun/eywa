@@ -53,8 +53,12 @@ func (s *StringSlice) Scan(src interface{}) error {
 	}
 
 	asString := string(asBytes)
-	parsed := strings.Split(asString, ",")
-	(*s) = StringSlice(parsed)
+	if len(asString) == 0 {
+		(*s) = StringSlice([]string{})
+	} else {
+		parsed := strings.Split(asString, ",")
+		(*s) = StringSlice(parsed)
+	}
 
 	return nil
 }
