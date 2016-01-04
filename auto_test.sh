@@ -25,6 +25,7 @@ Usage:
   -i integration tests. default: disabled
   -t tests tag. default: none
   -T tests name. default: none
+  -o override the log in each of the test iteration
 EOM
 
 while getopts "h?voifn:s:l:t:T:" opt; do
