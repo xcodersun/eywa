@@ -4,11 +4,15 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"github.com/parnurzeal/gorequest"
+	"github.com/satori/go.uuid"
 	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/gorilla/websocket"
+	. "github.com/vivowares/octopus/utils"
 	"math/rand"
 	"net/http"
 	"net/url"
 	"runtime"
+	"strings"
 	"sync"
 	"time"
 )
@@ -16,8 +20,9 @@ import (
 func main() {
 	s := flag.String("s", "localhost:8081", "the target server host:port")
 	n := flag.Int("n", 1000, "number of concurrent clients")
-	ch := flag.String("ch", "MQ==", "channel id for testing")
+	ch := flag.String("ch", "test", "channel name for testing")
 	tk := flag.String("t", "1234567", "access token used for testing")
+	fs := flag.String("fields", "temperature:float", "fields that are used for bench test. Format: 'field1:type1,field2:type2'")
 	np := flag.Int("p", 100, "number of ping messages to send")
 	nm := flag.Int("m", 50, "number of payload messages to send")
 	rw := flag.Duration("r", 15*time.Second, "wait time for reading messages")
@@ -30,6 +35,30 @@ func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 
 	//create a channel for testing
+	url := fmt.Sprintf("http://%s/channels", *s)
+	fieldDefs := strings.Split(*fs, ",")
+	fields := make(map[string]string)
+	for _, def := range fieldDefs {
+		pair := strings.Split(def, ":")
+		fields[pair[0]] = pair[1]
+	}
+	body := map[string]interface{}{
+		"name":          *ch,
+		"description":   "bench test channel",
+		"fields":        fields,
+		"access_tokens": []string{*tk},
+	}
+	asBytes, err := json.Marshal(body)
+	PanicIfErr(err)
+	req := gorequest.New()
+	_, bodyBytes, errs := req.Post(url).
+		Send(string(asBytes)).EndBytes()
+	if len(errs) > 0 {
+		PanicIfErr(errs[0])
+	}
+	var created map[string]interface{}
+	json.Unmarshal(bodyBytes, &created)
+	chId := created["id"].(string)
 
 	//start clients
 	clients := make([]*WsClient, *n)
@@ -42,7 +71,7 @@ func main() {
 			defer wg.Done()
 			c := &WsClient{
 				Server:      *s,
-				ChannelId:   *ch,
+				ChannelId:   chId,
 				DeviceId:    fmt.Sprintf("device-%d", idx),
 				AccessToken: *tk,
 				NPing:       *np,
@@ -51,6 +80,7 @@ func main() {
 				WWait:       *ww,
 				Itv:         *itv,
 				ch:          make(chan struct{}),
+				fields:      fields,
 			}
 
 			clients[idx] = c
@@ -118,6 +148,7 @@ type WsClient struct {
 	Itv         int
 	wg          sync.WaitGroup
 	ch          chan struct{}
+	fields      map[string]string
 
 	Cli             *websocket.Conn
 	ConnErr         error
@@ -173,8 +204,25 @@ func (c *WsClient) StartTest() {
 
 		for n < c.NPing || m < c.NMessage {
 			cli.SetWriteDeadline(time.Now().Add(c.WWait))
+			msgBody := map[string]interface{}{}
+			for f, t := range c.fields {
+				switch t {
+				case "float":
+					msgBody[f] = rand.Float32()
+				case "int":
+					msgBody[f] = rand.Int31()
+				case "boolean":
+					msgBody[f] = true
+				case "string":
+					msgBody[f] = uuid.NewV1().String()
+				default:
+					msgBody[f] = uuid.NewV1().String()
+				}
+			}
+			asBytes, err := json.Marshal(msgBody)
+			PanicIfErr(err)
 			if n >= c.NPing {
-				err := cli.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("1|%d|temperature=%.2f", rand.Int31(), rand.Float32()*100)))
+				err := cli.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("1|%d|%s", rand.Int31(), string(asBytes))))
 				m += 1
 				if err != nil {
 					c.MessageErr += 1
@@ -188,7 +236,7 @@ func (c *WsClient) StartTest() {
 			} else {
 				r := rand.Intn(2)
 				if r == 0 {
-					err := cli.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("1|%d|temperature=%.2f", rand.Int31(), rand.Float32()*100)))
+					err := cli.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("1|%d|%s", rand.Int31(), string(asBytes))))
 					m += 1
 					if err != nil {
 						c.MessageErr += 1
