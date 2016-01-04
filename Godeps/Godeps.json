@@ -60,6 +60,10 @@
 			"Rev": "281073eb9eb092240d33ef253c404f1cca550309"
 		},
 		{
+			"ImportPath": "github.com/moul/http2curl",
+			"Rev": "1c29be06762e43e04dd954a01c66991104ce4374"
+		},
+		{
 			"ImportPath": "github.com/mozillazg/request",
 			"Comment": "v0.5.0",
 			"Rev": "c7b9b28d405aea75359a0a5dfb89f52a84632f6d"
@@ -68,6 +72,11 @@
 			"ImportPath": "github.com/olivere/elastic/uritemplates",
 			"Comment": "v2.0.23-27-ga8215e0",
 			"Rev": "a8215e0b307af4727033f0cbc52e42600c5baebc"
+		},
+		{
+			"ImportPath": "github.com/parnurzeal/gorequest",
+			"Comment": "v0.2.13-7-g27bfb0d",
+			"Rev": "27bfb0dcbcc020d11b7839af416fb8dafc2ab01c"
 		},
 		{
 			"ImportPath": "github.com/rs/cors",
