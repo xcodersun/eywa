@@ -48,6 +48,16 @@ func (q *StatsQuery) Parse(params map[string]string) error {
 }
 
 func (q *StatsQuery) QueryES() (interface{}, error) {
+	res := make(map[string]interface{})
+	for _, tag := range q.Channel.Tags {
+		res[tag] = []interface{}{}
+	}
+
+	indexName := TimedIndices(q.Channel, q.TimeStart, q.TimeEnd)
+	if len(indexName) == 0 {
+		return res, nil
+	}
+
 	filterAgg := elastic.NewFilterAggregation()
 
 	boolQ := elastic.NewBoolQuery()
@@ -64,15 +74,10 @@ func (q *StatsQuery) QueryES() (interface{}, error) {
 
 	resp, err := IndexClient.Search().
 		SearchType("count").
-		Index(TimedIndices(q.Channel, q.TimeStart, q.TimeEnd)).
+		Index(indexName).
 		Type(IndexType).
 		Aggregation("name", filterAgg).
 		Do()
-
-	res := make(map[string]interface{})
-	for _, tag := range q.Channel.Tags {
-		res[tag] = []interface{}{}
-	}
 
 	if err != nil {
 		return res, nil

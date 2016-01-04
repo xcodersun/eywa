@@ -21,7 +21,7 @@ func QueryValue(c web.C, w http.ResponseWriter, r *http.Request) {
 	} else {
 		value, err := q.QueryES()
 		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
+			Render.Text(w, http.StatusInternalServerError, err.Error())
 		} else {
 			Render.JSON(w, http.StatusOK, value)
 		}
@@ -42,7 +42,7 @@ func QuerySeries(c web.C, w http.ResponseWriter, r *http.Request) {
 	} else {
 		series, err := q.QueryES()
 		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
+			Render.Text(w, http.StatusInternalServerError, err.Error())
 		} else {
 			Render.JSON(w, http.StatusOK, series)
 		}

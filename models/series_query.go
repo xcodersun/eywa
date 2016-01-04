@@ -102,6 +102,12 @@ func (q *SeriesQuery) Parse(params map[string]string) error {
 }
 
 func (q *SeriesQuery) QueryES() (interface{}, error) {
+	series := make([]map[string]interface{}, 0)
+	indexName := TimedIndices(q.Channel, q.TimeStart, q.TimeEnd)
+	if len(indexName) == 0 {
+		return series, nil
+	}
+
 	filterAgg := elastic.NewFilterAggregation()
 
 	boolQ := elastic.NewBoolQuery()
@@ -147,7 +153,7 @@ func (q *SeriesQuery) QueryES() (interface{}, error) {
 
 	resp, err := IndexClient.Search().
 		SearchType("count").
-		Index(TimedIndices(q.Channel, q.TimeStart, q.TimeEnd)).
+		Index(indexName).
 		Type(IndexType).
 		Aggregation("name", filterAgg).
 		Do()
@@ -163,7 +169,6 @@ func (q *SeriesQuery) QueryES() (interface{}, error) {
 		return nil, errors.New("error querying indices")
 	}
 
-	series := make([]map[string]interface{}, 0)
 	for _, bkt := range SeriesResp.Buckets {
 		switch q.SummaryType {
 		case "sum":

@@ -156,9 +156,14 @@ func (q *ValueQuery) QueryES() (interface{}, error) {
 	filterAgg.SubAggregation(ValueAggName, agg)
 
 	if q.SummaryType != "last" {
+		indexName := TimedIndices(q.Channel, q.TimeStart, q.TimeEnd)
+		if len(indexName) == 0 {
+			return nil, nil
+		}
+
 		resp, err := IndexClient.Search().
 			SearchType("count").
-			Index(TimedIndices(q.Channel, q.TimeStart, q.TimeEnd)).
+			Index(indexName).
 			Type(IndexType).
 			Aggregation("name", filterAgg).
 			Do()
