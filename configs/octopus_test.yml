@@ -2,7 +2,7 @@ service:
   host: localhost
   http_port: 9090
   ws_port: 9091
-  pid_file: /var/octopus/octopus_test.pid
+  pid_file: {{ .octopus_home }}/tmp/pids/octopus_test.pid
 connections:
   registry: memory
   nshards: 4
@@ -26,4 +26,4 @@ indices:
   ttl: '336h'
 database:
   db_type: sqlite3
-  db_file: /var/octopus/octopus_test.db
+  db_file: {{ .octopus_home }}/db/octopus_test.db

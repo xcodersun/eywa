@@ -1,21 +1,35 @@
 package configs
 
 import (
+	"bytes"
+	"errors"
 	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/spf13/viper"
-	"path"
+	"os"
+	"text/template"
 	"time"
 )
 
 var Config *Conf
 
 func InitializeConfig(filename string) error {
-	ext := path.Ext(filename)
-	filePath := path.Dir(filename)
-	filename = path.Base(filename[0 : len(filename)-len(ext)])
 
-	viper.SetConfigName(filename)
-	viper.AddConfigPath(filePath)
-	err := viper.ReadInConfig()
+	t, err := template.ParseFiles(filename)
+	if err != nil {
+		return err
+	}
+	buf := bytes.NewBuffer([]byte{})
+	octopus_home := os.Getenv("OCTOPUS_HOME")
+	if len(octopus_home) == 0 {
+		return errors.New("ENV OCTOPUS_HOME is not set")
+	}
+
+	err = t.Execute(buf, map[string]string{"octopus_home": octopus_home})
+	if err != nil {
+		return err
+	}
+
+	viper.SetConfigType("yml")
+	viper.ReadConfig(buf)
 	if err != nil {
 		return err
 	}

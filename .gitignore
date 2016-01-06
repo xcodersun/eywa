@@ -4,3 +4,4 @@ dump.rdb
 *.log
 tests/tests
 *.db
+*.pid
