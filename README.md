@@ -1,519 +1,87 @@
-##Channels API’s
-###*List all defined channels*
-**request**
+### What is Octopus
 
-```
-GET /channels
-```
-**response**
-
-```
-200 OK
-[
-  {
-    "id": "aCe1z-3itbqS0k_t",
-    "name": "yang's channel",
-    "description": "this is yang's first channel."
-  },
-  "..."
-]
-```
-
-As you can see here, the id's that are used there are not numeric id's. In fact we use a decentralized algorithm to generate ID's. The schema is called [FLAKE](http://www.bmc.com/blogs/).
-
-###*Show details of defined channel*
-**request**
-
-```
-GET /channels/aCe1z-3itbqS0k_t
-```
-**response**
-
-```
-200 OK
-{
-  "id": "aCe1z-3itbqS0k_t",
-  "name": "yang's channel",
-  "description": "this is yang's first channel.",
-  "tags": ["ip","device_id","product","brand","part_num"],
-  "fields": {
-    "temp": "float",
-    "count": "int",
-    "status": "string",
-    "on_off": "boolean"
-  },
-  "access_tokens": ["test_token1", "test_token2"]
-}
-```
-Or, if not found
-
-```
-404 Not Found
-```
-
-###*Create a channel*
-**request**
-
-```
-POST /channels
-{
-  "name": "yang's channel",
-  "description": "this is yang's first channel that is .",
-  "tags": ["ip", "device_id", "product", "brand", "part_num"],
-  "fields": {
-    "temp": "float",
-    "count": "int",
-    "status": "string",
-    "on_off": "boolean"
-  },
-  "access_tokens": ["test_token1", "test_token2"]
-}
-```
-
-Some validations need to be done here:
-
-1. Fields such as name and description can't be empty. At least one field needs to be defined.
-
-2. All tags and field names should only contain letters, numbers and underscores.
-
-3. Only four data types are allowed in fields: float, int, string, boolean.
-
-4. Tag names or field names should be unique.
-
-5. At least access token is provided. Device will need to carry this access token in their header when they setup the webocket connection. `Front end should have a javascript that generates a random string to be used a access toekn.`
-
-**response**
-
-on success
-
-```
-200 OK
-```
-on failure
-
-```
-400 Bad Request
-{
-  "errors": {
-    "description": "empty description."
-  }
-}
-```
-
-Response returns detailed error messages on failure.
-
-
-###*Update existing channel*
-**request**
-
-```
-PUT /channels/aCe1z-3itbqS0k_t
-{
-  "name": "yang's channel **updated**",
-  "description": "",
-  "tags": ["ip", "device_id", "product", "brand", "part_num", "**new_tag**"]
-}
-```
-
-Front end should show warning as anyone tries to update the existing channel. Reasons being:
-
-1. Removing a tag will result in that tag will no longer be searchable, although the historical data might still exist. Removing a tag will also result that new data coming in to lose that tag from going onwards.`
-
-2. Removing the fields has the similar issues with tags.
-
-3. Changing the type of the field is not allowed.
-
-So to easier address these issues, what we can do is to allow only following updates:
-
-1. Updating the name or description.
-
-2. Adding new fields or tags.
-
-3. Adding/Removing access tokens. But at least one access token will be needed.
-
-**response**
-
-on success
-
-```
-200 OK
-```
-on failure
-
-```
-400 Bad Request
-{
-  "errors": {
-    "description": "empty description."
-  }
-}
-```
-
-###*Delete an existing channel*
-**request**
-
-```
-DELETE /channels/aCe1z-3itbqS0k_t
-```
-
-`Front end should show warning as the user tries to delete a channel. Deleting a channel means, any device that tries to connect to this server will be rejected.`
-
-**response**
-
-on success
-
-```
-200 OK
-```
-
-on failure
-
-```
-500 Internal Service Error
-{
-  "errors": {
-    "database": "database error"
-  }
-}
-```
+Octopus is essentially a connection manager that keeps track of the connected devices. But more than just connecting devices, it is also capable of controlling them, collecting the metrics sent from them, indexing the data, and providing query interfaces that can be used for data visualizations. Octopus lets the team of embedded system developers to forget about reinventing the backend services and provides a commonly used protocol, websocket, to make real-time control easily achievable.
 
 ***
+### Basic Concepts
 
-##Dashboards API’s
-###*List all defined dashboards*
-**request**
+#### Channel
 
-```
-GET /dashboards
-```
+Channel is a logical group of connections. They should share the same authentication keys, similar data schema,
+and the same handlers of their messages.
 
-**response**
+Here is an example of defining a channel for monitoring hotel room sensors:
 
 ```
-200 OK
-[
-  {
-    "id": "bq1C3ik_etzat-S0",
-    "name": "yang's dashboard",
-    "description": "this is yang's first dashboard."
+{
+  "name": "hotel monitoring",
+  "description": "This is a channel created for monitoring hotel.",
+  "tags": ["building", "floor", "room", "room_type"],
+  "fields": {
+    "brightness": "int",
+    "co2": "float",
+    "cooler": "boolean",
+    "humidity": "int",
+    "noise": "float",
+    "pm2_5": "int",
+    "temperature": "float"
   },
-  "..."
-]
-```
-
-###*Show details of defined dashboard*
-**request**
-
-```
-GET /dashboards/bq1C3ik_etzat-S0
-```
-
-response
-
-```
-200 OK
-{
-  "id": "bq1C3ik_etzat-S0",
-  "name": "yang's dashboard",
-  "description": "this is yang's first dashboard",
-  "definition": "..."
-}
-```
-Or, if not found
-
-```
-404 Not Found
-```
-
-Dashboard definition currently is a big stringified json.
-
-###*Create a dashboard*
-**request**
-
-```
-POST /dashboards
-{
-  "name": "yang's dashboard updated",
-  "description": "this is yang's first dashboard.",
-  "definition": "..."
+  "message_handlers": ["indexer"],
+  "access_tokens": ["abcdefg"]
 }
 ```
 
-Some validations need to be done here:
+A channel typically comes with a name and description. But more importantly, it needs to know what data is expected from the sensors, which sensor is it, how should uploaded data be treated, and also the access_tokens for authenticating the sensor connection.
 
-1. Fields such as name, description and definition can't be empty.
+In this channel definition, **fields** are the expected data their types. **Tags** are more like meta data of the actual field data. It tells which room does this data come from, what kinda of room type it is, etc. This tags are useful when you are interested in seeing data visualizations. They can be used to graph out the correlation between data and room types.
 
-2. Some other checks need to be done on front end to make sense of the dashboards.
+A channel can have multiple **access_tokens&&, and any one can be used at the time setting up connection.
 
-**response**
+Octopus provides middlewares as **message handlers**. So far only the `indexer` is provided. You can leave the message_handler as an empty array, which means, Octopus will solely just be your connection manager and won't try to index your data, and so that the data won't be queryable.
 
-on success
+More message handlers will be supported soon, including **web hooks**, **alerters**, etc. Please check out [road map](https://github.com/vivowares/octopus/wiki/Road-Map) for more details.
 
-```
-201 Created
-```
+#### Dashboard
 
-on failure
-
-```
-400 Bad Request
-{
-  "errors": {
-    "name": "name is empty."
-  }
-}
-```
-
-###*Update an existing dashboard*
-**request**
-
-```
-PUT /dashboards/bq1C3ik_etzat-S0
-{
-  "name": "yang's dashboard updated"
-}
-```
-
-You can update one field, such as name, description, etc. Or
-
-```
-{
-  "definition": "..."
-}
-```
-
-If you want to update the dashboard definition, you need to send along the entire stringified json.
-
-**response**
-
-on success
-
-```
-200 OK
-```
-
-on failure
-
-```
-404 Bad Request
-{
-  "errors": {
-    "name": "name is empty"
-  }
-}
-```
-
-###*Delete an existing dashboard*
-**request**
-
-```
-DELETE /dashboards/bq1C3ik_etzat-S0
-```
-**response**
-
-on success
-
-```
-200 OK
-```
-
-on failure
-
-```
-500 Internal Service Error
-{
-  "errors": {
-    "database": "connection error"
-  }
-}
-```
+A dashboard is a collection of data visualizations. You can create a dashboard and in there define the graphs that you want to see. Octopus provides a easy-to-use interface to make sense of your data. And tutorial of graphing out of them is also available! Check out our [online demo](#) and play with it!
 
 ***
+### Components
 
-## Metrics Query API's
-###*Example Channel Data*
+#### Connection Manager
 
-**Channel: water_level**
+Currently Octopus is a single node connection manager, we've put clustering for scalability into our road map and it will be our milestone for the early 2016. Stay tuned for that!
 
-|time|depth|location|reporter|weather|width|
-|----|-----|--------|--------|-------|-----|
-|2015-12-06T23:13:28.63539517Z   |130 | us    |  kenny   | sunny    | 6   |
-|2015-12-06T23:13:28.63539517Z   |153 | china |  yang    | sunny    | 1   |
-|2015-12-06T23:13:36.45545326Z   |112 | china |  yang    | sunny    | 5   |
-|2015-12-06T23:13:51.054705818Z  |167 | us    |  kenny   | cloudy    | 4   |
-|2015-12-06T23:14:13.526779874Z  |109 | china |  kenny   | cloudy   | 8   |
-|2015-12-06T23:14:38.867923309Z  |143 | us    |  yang    | cloud    | 9   |
-|2015-12-06T23:14:43.356459782Z  |153 | us    |  yang    | sunny    | 10  |
-|2015-12-06T23:14:47.312731741Z  |155 | china |  kenny   | sunny    | 3   |
-|2015-12-06T23:14:50.094782447Z  |135 | us    |  yang    | sunny    | 3   |
-|2015-12-06T23:14:53.467367472Z  |120 | china |  kenny   | cloudy   | 0   |
-|2015-12-06T23:14:56.146985608Z  |null| china |  yang    | sunny    | 5   |
+#### Indexing Engine
 
+Other than the backend services itself, Octopus uses [Elasticsearch](https://www.elastic.co/products/elasticsearch) as indexing engine. We've heard of requests of using other NoSql database such as [influxdb](https://influxdata.com/) or [mongodb](https://www.mongodb.org/). Supporting them will be discussed but Elasticsearch will be more than capable for most of the requirements.
 
-###*Time Range Expression Syntax*
+#### Data Visualization
 
-All timestamps are unix milliseconds from epoch.
+We provide a default front-end application for easily access to the data. It is called [overlook](#), and is a subproject under Octopus. Checkout the [demo site](#) and you will get a sense of it.
 
-An example time range including start and end time would be:
+***
+### Features
 
-```
-time_range=1449436224077:1449436235379
-```
+Here is a complete list of supported features. And more will be supported.
 
-Time range without end time would imply that the current timestamp is the end time.
+- [x] Connection Manager
+- [x] Device Control
+- [x] Basic Authentication
+- [x] SSL protection
+- [x] Data Indexing
+- [x] Data Export
+- [x] Data Retention
+- [x] Data Visualization
+- [x] Query Interface
+- [ ] Clustering
+- [ ] Custom Web hooks
+- [ ] Custom Alerters
 
-```
-time_range=1449436224077:
-```
+Please let us know if you want more features by creating issues. Pull requests are also very much welcome!
 
-All time ranges should contain the start time.
+***
+### Performance
 
-###*Time Interval Expression Syntax*
-
-Time intervals are expressed in the format of `\d+[usmhdw]`.
-
-For example, `1u` means 1 microsecond, `1s` means 1 second, `2m` means 2 minutes, `12h` means 12 hours and `3d` means 3 days, `1w` means 1 week.
-
-###*Tagging/Filtering Expression Syntax*
-
-Supported operations are: `eq`, `ne`, `lt`, `gt`, `le`, `ge`. However, only `eq` and `ne` are supported by tagging expression so far.
-
-Multiple expressions are comma separated.
-
-**tagging expression example**
-
-```
-tags=location:eq:china,reporter:ne:kenny
-```
-**filtering expression example**
-
-```
-filters=width:gt:2,depth:le:130
-```
-
-Logical grouping on these expressions is not currently supported. Comma separated expressions will by default treated as logical `AND`.
-
-###*Supported Summary Type*
-
-avg/mean, min, max, median, sum, count, last, first, top_n, percentile_n
-
-###*Query for Field Value*
-
-This is used to query for a single value matching all the expressions, applied with summary_type.
-
-Since the value is aggregated according to `summary_type`, the returned value won't have a timestamp attached to it.
-
-**request**
-
-```
-GET /channels/<channel_id>/query?field=<field>&tags=<tagging expression>&filters=<filtering expression>&summary_type=<summary_type>&time_range=<time_range expression>
-```
-
-`field` and `summary_type` are required.
-
-`tags`, `filters`, `time_range` are optional.
-
-**example**
-
-```
-GET /channels/1/query?field=depth&tags=reporter:eq:yang&filters=depth:gt:4&summary_type=avg&time_range=1449436224077:
-```
-
-**response**
-
-```
-{ "value" : 12.5 }
-```
-
-For querying gauges, 
-
-```
-GET /channels/1/query?field=depth&tags=reporter:eq:yang&summary_type=last
-```
-**response**
-
-```
-{ "value" : 17.6 }
-```
-
-###*Query for Time Serials*
-
-This is used to query for a serial of timestamped values with applied summaries for each interval.
-
-**request**
-
-```
-GET /channels/<channel_id>/serials?field=<field>&tags=<tagging expression>&filters=<filtering expression>&summary_type=<summary_type>&time_range=<time_range expression>&time_interval=<interval expression>
-```
-
-`field`, `time_range`, `time_interval`, `summary_type` are required.
-
-`tags`, `filters` are optional.
-
-**example**
-
-```
-GET /channels/1/serials?field=depth&tags=reporter:eq:yang&filters=depth:gt:15&summary_type=avg&time_range=1449436224077:1449436235379&time_interval=1s
-```
-
-**response**
-
-```
-[
-  { "timestamp": 1449456213000, "value": null },
-  { "timestamp": 1449456214000, "value": null },
-  { "timestamp": 1449456215000, "value": 112 },
-  { "timestamp": 1449456216000, "value": 109 },
-  { "timestamp": 1449456217000, "value": null },
-  { "timestamp": 1449456218000, "value": null },
-  { "timestamp": 1449456219000, "value": null },
-  { "timestamp": 1449456220000, "value": 155 },
-  { "timestamp": 1449456221000, "value": 120 },
-  { "timestamp": 1449456222000, "value": 173 }
-]        
-```
-
-The timestamp returned in response is always unix milliseconds from epoch.
-
-
-###*Query for Raw Data*
-
-This is usually for testing purposes.
-
-**request**
-
-```
-GET /channels/<channel_id>/raw?fields=<fields>&tags=<tagging expression>&filters=<filtering expression>&time_range=<time_range expression>
-```
-
-`fields` and `time_range` are required.
-
-`tags`, `filters`, `order`, `limit` and `offset` are optional.
-
-`summary_type`, and `time_interval` are omitted.
-
-`fields` can include multiple fields to be returned at a time, use `*` to return all fields.
-
-**example**
-
-```
-GET /channels/1/raw?fields=depth,width&tags=reporter:eq:yang&filters=width:gt:4,width:le:10&time_range=1449436224077:1449436235379&order=desc&limit=3&offset=3
-```
-
-**response**
-
-```
-{
-  "depth": [
-    { "timestamp": 1449456219387, "value": 153 },
-    { "timestamp": 1449456218385, "value": 143 },
-    { "timestamp": 1449456217385, "value": 167 }
-  ],
-  "width": [
-    { "timestamp": 1449456219387, "value": 10 },
-    { "timestamp": 1449456218385, "value": 9 },
-    { "timestamp": 1449456217385, "value": 4 }
-  ]
-}
-```
-
+How reliable is Octopus? Well we did a simple benchmark and the benchmark script is also available in the repo.
+On a very basic setup: 1 CPU + 1GB mem on [Digital Ocean](https://www.digitalocean.com/). A single Octopus node can keep track of more than 15k devices easily. More detail please hit our [blog post](#).
