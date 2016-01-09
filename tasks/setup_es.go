@@ -91,7 +91,11 @@ var messages = `
 	  		"type": "date",
 	  		"format": "epoch_millis",
 	  		"doc_values": true
-	  	}
+			},
+			"_size": {
+				"type": "long",
+				"doc_values": true
+			}
 	  }
 	}
 }
