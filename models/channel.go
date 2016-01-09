@@ -14,7 +14,7 @@ import (
 var SupportedDataTypes = []string{"float", "int", "boolean", "string"}
 
 type Channel struct {
-	Id              int         `sql:"type:integer" json:"-"`
+	Id              int         `sql:"type:integer primary key autoincrement" json:"-"`
 	Name            string      `sql:"type:varchar(255);unique_index" json:"name"`
 	Description     string      `sql:"type:text" json:"description"`
 	Tags            StringSlice `sql:"type:text" json:"tags"`
