@@ -39,6 +39,7 @@ func main() {
 	}
 	PanicIfErr(configs.InitializeConfig(*configFile))
 
+	InitialLoggers()
 	PanicIfErr(models.InitializeDB())
 	PanicIfErr(models.InitializeIndexClient())
 	PanicIfErr(connections.InitializeCM())

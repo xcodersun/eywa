@@ -27,3 +27,14 @@ indices:
 database:
   db_type: sqlite3
   db_file: {{ .octopus_home }}/db/octopus_test.db
+logs:
+  access:
+    filename: {{ .octopus_home }}/logs/test/access.log
+    maxsize: 1024
+    maxage: 7
+    maxbackups: 5
+  connection:
+    filename: {{ .octopus_home }}/logs/test/connection.log
+    maxsize: 1024
+    maxage: 7
+    maxbackups: 5

@@ -157,6 +157,11 @@
 			"Rev": "1796f9b8b7178e3c7587dff118d3bb9d37f9b0b3"
 		},
 		{
+			"ImportPath": "gopkg.in/natefinch/lumberjack.v2",
+			"Comment": "v1.0-18-g600ceb4",
+			"Rev": "600ceb4523e5b7ff745f91083c8a023c2bf73af5"
+		},
+		{
 			"ImportPath": "gopkg.in/olivere/elastic.v3",
 			"Comment": "v3.0.14",
 			"Rev": "33747b6d450839d8186edd535f36ae1c90e75730"
