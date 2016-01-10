@@ -80,19 +80,13 @@ func InitializeConfig(filename string) error {
 		},
 	}
 
-	logConfig := &LogsConf{
-		AccessLog: &LogConf{
-			Filename:   viper.GetString("logs.access.filename"),
-			MaxSize:    viper.GetInt("logs.access.maxsize"),
-			MaxAge:     viper.GetInt("logs.access.maxage"),
-			MaxBackups: viper.GetInt("logs.access.maxbackups"),
-		},
-		ConnectionLog: &LogConf{
-			Filename:   viper.GetString("logs.connection.filename"),
-			MaxSize:    viper.GetInt("logs.connection.maxsize"),
-			MaxAge:     viper.GetInt("logs.connection.maxage"),
-			MaxBackups: viper.GetInt("logs.connection.maxbackups"),
-		},
+	logConfig := &LogConf{
+		Filename:   viper.GetString("logging.filename"),
+		MaxSize:    viper.GetInt("logging.maxsize"),
+		MaxAge:     viper.GetInt("logging.maxage"),
+		MaxBackups: viper.GetInt("logging.maxbackups"),
+		Level:      viper.GetString("logging.level"),
+		BufferSize: viper.GetInt("logging.buffer_size"),
 	}
 
 	Config = &Conf{
@@ -100,7 +94,7 @@ func InitializeConfig(filename string) error {
 		Connections: connConfig,
 		Indices:     indexConfig,
 		Database:    dbConfig,
-		Logs:        logConfig,
+		Logging:     logConfig,
 	}
 
 	return nil
@@ -111,7 +105,7 @@ type Conf struct {
 	Connections *ConnectionConf
 	Indices     *IndexConf
 	Database    *DbConf
-	Logs        *LogsConf
+	Logging     *LogConf
 }
 
 type DbConf struct {
@@ -158,14 +152,11 @@ type ConnectionBufferSizeConf struct {
 	Read  int
 }
 
-type LogsConf struct {
-	AccessLog     *LogConf
-	ConnectionLog *LogConf
-}
-
 type LogConf struct {
 	Filename   string
 	MaxSize    int
 	MaxAge     int
 	MaxBackups int
+	Level      string
+	BufferSize int
 }
