@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/spf13/viper"
 	"os"
+	"path/filepath"
 	"text/template"
 	"time"
 )
@@ -21,6 +22,11 @@ func InitializeConfig(filename string) error {
 	octopus_home := os.Getenv("OCTOPUS_HOME")
 	if len(octopus_home) == 0 {
 		return errors.New("ENV OCTOPUS_HOME is not set")
+	}
+
+	octopus_home, err = filepath.Abs(octopus_home)
+	if err != nil {
+		return err
 	}
 
 	err = t.Execute(buf, map[string]string{"octopus_home": octopus_home})

@@ -9,9 +9,14 @@ integration=0
 testname=""
 tag=""
 override=0
+rebuild=0
 
 OPTIND=1
 
+if [[ "${#OCTOPUS_HOME}" -eq 0 ]]; then
+  echo 'Warn: OCTOPUS_HOME is not set. Using current directory as OCTOPUS_HOME.'
+  export OCTOPUS_HOME=$PWD
+fi
 
 read -r -d '' USAGE << EOM
 Usage:
@@ -26,9 +31,10 @@ Usage:
   -t tests tag. default: none
   -T tests name. default: none
   -o override the log in each of the test iteration
+  -b rebuild binary before running integration tests. default: not rebuild
 EOM
 
-while getopts "h?voifn:s:l:t:T:" opt; do
+while getopts "h?vobifn:s:l:t:T:" opt; do
     case "$opt" in
     h|\?)
         echo "$USAGE"
@@ -53,6 +59,8 @@ while getopts "h?voifn:s:l:t:T:" opt; do
         ;;
     o)  override=1
         ;;
+    b)  rebuild=1
+        ;;
     esac
 done
 
@@ -72,18 +80,30 @@ fi
 
 params="$([[ $verbose != 1 ]] || echo '-v' ) $([[ ${#tag} -gt 0 ]] && echo '-tags' ${tag}) $([[ ${#testname} -gt 0 ]] && echo '--run' ${testname}) ./..."
 
-# echo "go test $params >> $log 2>&1"
-
 echo "Starting Tests..."
 
 serverpid=""
 
 if [[ $integration -eq 1 ]]; then
+  if [[ $rebuild -eq 1 ]]; then
+    echo "Rebuilding octopus binary..."
+    go build -a
+  fi
+
+  echo "Running test setup..."
+  go run "$OCTOPUS_HOME"/tasks/migration.go -conf="$OCTOPUS_HOME/configs/octopus_test.yml" > /dev/null
+  curl -XDELETE 127.0.0.1:9200/channels.* > /dev/null 2>&1
+  curl -XDELETE 127.0.0.1:9200/_template/* > /dev/null 2>&1
+  go run "$OCTOPUS_HOME"/tasks/setup_es.go -conf="$OCTOPUS_HOME/configs/octopus_test.yml" > /dev/null
+
   echo "Starting test server..."
-  cd tasks; go run migration.go -conf=$PWD/../configs/octopus_test.yml; cd ..
-  ./octopus -conf=$PWD/configs/octopus_test.yml &
-  serverpid=$!
-  sleep 3
+  "$OCTOPUS_HOME"/octopus -conf="$OCTOPUS_HOME/configs/octopus_test.yml" &
+  sleep 5
+  serverpid="$(cat "${OCTOPUS_HOME}"/tmp/pids/octopus_test.pid)"
+  if [[ ${#serverpid} -eq 0 ]]; then
+    echo 'Error: test server was not started within 5 seconds'
+    exit 1
+  fi
 fi
 
 fail=1
@@ -115,13 +135,19 @@ if [[ ${#serverpid} -gt 0 ]]; then
 
   kill -INT $serverpid
 
-  ps auxww | grep $serverpid | grep -v grep
+  ps auxww | grep $serverpid | grep -v grep >/dev/null 2>&1
   running=$?
 
+  waitIter=0
   while [[ $running -eq 0 ]]; do
+    if [[ $waitIter -gt 10 ]]; then
+      echo 'Error: server failed to shutdown.'
+      exit 1
+    fi
+
     sleep 1
 
-    ps auxww | grep $serverpid | grep -v grep
+    ps auxww | grep $serverpid | grep -v grep >/dev/null 2>&1
     running=$?
   done
 

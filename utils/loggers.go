@@ -2,6 +2,7 @@ package utils
 
 import (
 	. "github.com/vivowares/octopus/configs"
+	"log"
 	// "gopkg.in/inconshreveable/log15.v2"
 	"github.com/vivowares/octopus/Godeps/_workspace/src/gopkg.in/natefinch/lumberjack.v2"
 )
@@ -23,4 +24,6 @@ func InitialLoggers() {
 		MaxBackups: Config.Logs.ConnectionLog.MaxBackups,
 		MaxAge:     Config.Logs.ConnectionLog.MaxAge,
 	}
+
+	log.SetOutput(AccessLog)
 }
