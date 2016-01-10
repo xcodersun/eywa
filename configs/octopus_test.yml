@@ -27,6 +27,7 @@ indices:
 database:
   db_type: sqlite3
   db_file: {{ .octopus_home }}/db/octopus_test.db
+  logging: false
 logs:
   access:
     filename: {{ .octopus_home }}/logs/test/access.log

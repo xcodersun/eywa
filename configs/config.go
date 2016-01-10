@@ -48,8 +48,9 @@ func InitializeConfig(filename string) error {
 	}
 
 	dbConfig := &DbConf{
-		DbType: viper.GetString("database.db_type"),
-		DbFile: viper.GetString("database.db_file"),
+		DbType:  viper.GetString("database.db_type"),
+		DbFile:  viper.GetString("database.db_file"),
+		Logging: viper.GetBool("database.logging"),
 	}
 
 	indexConfig := &IndexConf{
@@ -114,8 +115,9 @@ type Conf struct {
 }
 
 type DbConf struct {
-	DbType string
-	DbFile string
+	DbType  string
+	DbFile  string
+	Logging bool
 }
 
 type IndexConf struct {

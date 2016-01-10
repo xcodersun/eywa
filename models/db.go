@@ -17,10 +17,7 @@ func InitializeDB() error {
 	if err != nil {
 		return err
 	}
-	err = db.DB().Ping()
-	if err != nil {
-		return err
-	}
+	db.LogMode(Config.Database.Logging)
 	DB = &db
 
 	return nil
