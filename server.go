@@ -125,6 +125,9 @@ func HttpRouter() http.Handler {
 	httpRouter.Get("/connections/_count", handlers.ConnectionCounts)
 	httpRouter.Get("/channels/:id/value", handlers.QueryValue)
 	httpRouter.Get("/channels/:id/series", handlers.QuerySeries)
+
+	httpRouter.Post("/devices/:id/async_send", handlers.AsyncSendToDevice)
+	httpRouter.Post("/devices/:id/sync_send", handlers.SyncSendToDevice)
 	httpRouter.Compile()
 
 	return httpRouter
