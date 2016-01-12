@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/rs/cors"
 	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/zenazn/goji/bind"
 	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/zenazn/goji/graceful"
@@ -10,10 +11,10 @@ import (
 	"github.com/vivowares/octopus/configs"
 	"github.com/vivowares/octopus/connections"
 	"github.com/vivowares/octopus/handlers"
+	"github.com/vivowares/octopus/middlewares"
 	"github.com/vivowares/octopus/models"
 	. "github.com/vivowares/octopus/utils"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"os"
 	"path"
@@ -39,15 +40,14 @@ func main() {
 	}
 	PanicIfErr(configs.InitializeConfig(*configFile))
 
-	InitialLoggers()
+	PanicIfErr(InitialLogger())
 	PanicIfErr(models.InitializeDB())
 	PanicIfErr(models.InitializeIndexClient())
 	PanicIfErr(connections.InitializeCM())
 	handlers.InitWsUpgrader()
 
 	go func() {
-		log.Printf("Octopus started listenning to port %d", configs.Config.Service.HttpPort)
-
+		Logger.Info(fmt.Sprintf("Octopus started listenning to port %d", configs.Config.Service.HttpPort))
 		graceful.Serve(
 			bind.Socket(":"+strconv.Itoa(configs.Config.Service.HttpPort)),
 			HttpRouter(),
@@ -55,7 +55,7 @@ func main() {
 	}()
 
 	go func() {
-		log.Printf("Connection Manager started listenning to port %d", configs.Config.Service.WsPort)
+		Logger.Info(fmt.Sprintf("Connection Manager started listenning to port %d", configs.Config.Service.WsPort))
 		graceful.Serve(
 			bind.Socket(":"+strconv.Itoa(configs.Config.Service.WsPort)),
 			WsRouter(),
@@ -63,17 +63,22 @@ func main() {
 	}()
 
 	graceful.HandleSignals()
-	graceful.PreHook(func() { log.Printf("Octopus received signal, gracefully stopping...") })
+	graceful.PreHook(func() {
+		Logger.Info("Octopus received signal, gracefully stopping...")
+	})
 
 	graceful.PostHook(func() {
 		connections.CM.Close()
-		log.Printf("Waiting for websockets to drain...")
+		Logger.Info("Waiting for websockets to drain...")
 		time.Sleep(3 * time.Second)
-		log.Printf("Connection Manager closed.")
+		Logger.Info("Connection Manager closed.")
 	})
 	graceful.PostHook(func() { models.CloseDB() })
 	graceful.PostHook(func() { models.CloseIndexClient() })
-	graceful.PostHook(func() { log.Printf("Octopus stopped") })
+	graceful.PostHook(func() {
+		Logger.Info("Octopus stopped")
+	})
+	graceful.PostHook(func() { CloseLogger() })
 	graceful.PostHook(func() { removePidFile() })
 
 	createPidFile()
@@ -84,7 +89,7 @@ func main() {
 func WsRouter() http.Handler {
 	wsRouter := web.New()
 	wsRouter.Use(middleware.RequestID)
-	wsRouter.Use(middleware.Logger)
+	wsRouter.Use(middlewares.AccessLogging)
 	wsRouter.Use(middleware.Recoverer)
 	wsRouter.Use(middleware.AutomaticOptions)
 	wsRouter.Get("/heartbeat", handlers.HeartBeatWs)
@@ -98,7 +103,7 @@ func WsRouter() http.Handler {
 func HttpRouter() http.Handler {
 	httpRouter := web.New()
 	httpRouter.Use(middleware.RequestID)
-	httpRouter.Use(middleware.Logger)
+	httpRouter.Use(middlewares.AccessLogging)
 	httpRouter.Use(middleware.Recoverer)
 	httpRouter.Use(middleware.AutomaticOptions)
 	c := cors.New(cors.Options{
