@@ -15,6 +15,10 @@ type SyncLogger struct {
 	closed bool
 }
 
+func (l *SyncLogger) Level() Level {
+	return l.level
+}
+
 func NewSyncLogger(w io.WriteCloser, f Formatter, lvl string) *SyncLogger {
 	return &SyncLogger{
 		wc:    w,

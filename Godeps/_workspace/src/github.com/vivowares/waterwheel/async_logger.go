@@ -18,6 +18,10 @@ type AsyncLogger struct {
 	f     Formatter
 }
 
+func (l *AsyncLogger) Level() Level {
+	return l.level
+}
+
 func NewAsyncLogger(w io.WriteCloser, f Formatter, bufSize int, lvl string) *AsyncLogger {
 	ch := make(chan *Record, bufSize)
 

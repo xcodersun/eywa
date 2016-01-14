@@ -11,6 +11,7 @@ import (
 
 func WsRouter() http.Handler {
 	wsRouter := web.New()
+	wsRouter.Use(middleware.RealIP)
 	wsRouter.Use(middleware.RequestID)
 	wsRouter.Use(middlewares.AccessLogging)
 	wsRouter.Use(middleware.Recoverer)
@@ -25,6 +26,7 @@ func WsRouter() http.Handler {
 
 func HttpRouter() http.Handler {
 	httpRouter := web.New()
+	httpRouter.Use(middleware.RealIP)
 	httpRouter.Use(middleware.RequestID)
 	httpRouter.Use(middlewares.AccessLogging)
 	httpRouter.Use(middleware.Recoverer)

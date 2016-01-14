@@ -33,5 +33,5 @@ logging:
   maxsize: 1024
   maxage: 7
   maxbackups: 5
-  level: info
-  buffer_size: 128
+  level: debug
+  buffer_size: 0

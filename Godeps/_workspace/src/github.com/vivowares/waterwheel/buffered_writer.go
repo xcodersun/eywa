@@ -21,14 +21,13 @@ func NewBufferedWriteCloser(size int, w io.WriteCloser) *BufferedWriteCloser {
 }
 
 func (w *BufferedWriteCloser) Write(p []byte) (int, error) {
-	if w.cur < w.size {
-		w.cur += 1
-		return w.bw.Write(p)
+	n, err := w.bw.Write(p)
+	w.cur += 1
+	if w.cur >= w.size {
+		w.bw.Flush()
+		w.cur = 0
 	}
-
-	w.bw.Flush()
-	w.cur = 1
-	return w.bw.Write(p)
+	return n, err
 }
 
 func (w *BufferedWriteCloser) Close() error {

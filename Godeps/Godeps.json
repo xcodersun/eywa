@@ -131,7 +131,7 @@
 		},
 		{
 			"ImportPath": "github.com/vivowares/waterwheel",
-			"Rev": "d98b4e214036b0346b427d50b056ed94120c5a38"
+			"Rev": "2ec5767fe9fe5c6a2cf7ccd2f409d3a88451438f"
 		},
 		{
 			"ImportPath": "github.com/zenazn/goji/bind",
