@@ -1,4 +1,4 @@
-#### *What is this?*
+#### *What is this?*   ![travis](https://travis-ci.org/vivowares/waterwheel.svg?branch=master "build status")
 
 It's another logging package
 
@@ -12,7 +12,7 @@ The standard `log` package is pretty good on performance, but it doesn't provide
 
 Let's start from the root. Often times, logs are written into a file or a socket, etc. They all require synchronization between different writes. For example, when writing into a file, you need to make sure different goroutines are logging with locks. Failed to do locking will resulting unexpected data. It's usually OK when you only have a few logs per client and you don't have many concurrent clients. But when we started working on [Octopus](https://github.com/vivowares/octopus), we found that we want to support at least tens of thousands(or even close to million in the future release) of long-live connections per node, and each of them can generate tons of logs. When this happens, all the goroutines will be synchronized at the one single point - *Logging*. Not matter how much effort you put on improving other moving parts, logging will always block you if you don't make it asynchronous. That's why we created waterwheel and the only difference is that: Let the logging to have its own goroutine and, others can just fire and forget.
 
-To show the different, at the end of the documentation, we posted some benchmark results compared with standard `log` package.
+To show the difference, at the end of the documentation, we posted some benchmark results compared with standard `log` package.
 
 
 #### *How to use?*
@@ -137,5 +137,7 @@ Example of using:
   BenchmarkSyncLoggerSize10000WithBufferedWriterLargeMessageToFile-8         1000000        2188 ns/op
 ```
 
-**Notice that with Async + Buffered logging, writing to a regular file becomes even faster then standard logging to Discard!**
+##### **Conclusion:**
+
+With `Async + Buffered` logging, writing to a regular file becomes even faster then standard logging to Discard!
 
