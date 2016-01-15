@@ -29,6 +29,7 @@ func HttpRouter() http.Handler {
 	httpRouter.Use(middleware.RealIP)
 	httpRouter.Use(middleware.RequestID)
 	httpRouter.Use(middlewares.AccessLogging)
+	httpRouter.Use(middlewares.Authenticator)
 	httpRouter.Use(middleware.Recoverer)
 	httpRouter.Use(middleware.AutomaticOptions)
 	c := cors.New(cors.Options{
@@ -37,6 +38,8 @@ func HttpRouter() http.Handler {
 	httpRouter.Use(c.Handler)
 
 	httpRouter.Get("/heartbeat", handlers.HeartBeatHttp)
+
+	httpRouter.Get("/login", handlers.Login)
 
 	httpRouter.Get("/channels", handlers.ListChannels)
 	httpRouter.Post("/channels", handlers.CreateChannel)

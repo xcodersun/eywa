@@ -41,6 +41,18 @@ func init() {
 	ApiServer = "http://" + Config.Service.Host + ":" + strconv.Itoa(Config.Service.HttpPort)
 }
 
+func authStr() string {
+	auth, err := NewAuthToken(
+		Config.Security.Dashboard.Username,
+		Config.Security.Dashboard.Password,
+	)
+	PanicIfErr(err)
+
+	str, err := auth.Encrypt()
+	PanicIfErr(err)
+	return str
+}
+
 func ListChannelPath() string {
 	return fmt.Sprintf("%s/%s", ApiServer, "channels")
 }
@@ -55,7 +67,9 @@ func TestApiChannels(t *testing.T) {
 	DB.DropTableIfExists(&Channel{})
 	DB.AutoMigrate(&Channel{})
 
-	frisby.Global.SetHeader("Content-Type", "application/json").SetHeader("Accept", "application/json")
+	frisby.Global.SetHeader("Content-Type", "application/json").
+		SetHeader("Accept", "application/json").
+		SetHeader("AuthToken", authStr())
 
 	Convey("successfully creates/gets/lists/updates channel", t, func() {
 		f := frisby.Create("list channels").Get(ListChannelPath()).Send()

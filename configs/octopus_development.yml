@@ -3,6 +3,14 @@ service:
   http_port: 8080
   ws_port: 8081
   pid_file: {{ .octopus_home }}/tmp/pids/octopus_development.pid
+security:
+  dashboard:
+    username: root
+    password: waterISwide
+    token_expiry: 24h
+    aes:
+      key: abcdefg123456789
+      iv: abcdefg123456789
 connections:
   registry: memory
   nshards: 4
