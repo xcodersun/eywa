@@ -124,18 +124,18 @@ func main() {
 
 	settings := map[string]interface{}{
 		"index.cache.query.enable": true,
-		"number_of_shards":         Config.Indices.NumberOfShards,
-		"number_of_replicas":       Config.Indices.NumberOfReplicas,
+		"number_of_shards":         Config().Indices.NumberOfShards,
+		"number_of_replicas":       Config().Indices.NumberOfReplicas,
 	}
 
 	mappings := map[string]interface{}{}
 	PanicIfErr(json.Unmarshal([]byte(messages), &mappings))
 
-	if Config.Indices.TTLEnabled {
+	if Config().Indices.TTLEnabled {
 		m := mappings["messages"].(map[string]interface{})
 		m["_ttl"] = map[string]interface{}{
 			"enabled": true,
-			"default": fmt.Sprintf("%.0fs", Config.Indices.TTL.Seconds()),
+			"default": fmt.Sprintf("%.0fs", Config().Indices.TTL.Seconds()),
 		}
 	}
 

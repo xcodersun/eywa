@@ -39,6 +39,9 @@ func HttpRouter() http.Handler {
 
 	httpRouter.Get("/heartbeat", handlers.HeartBeatHttp)
 
+	httpRouter.Get("/configs", handlers.GetConfig)
+	httpRouter.Get("/configs/_reload", handlers.ReloadConfig)
+
 	httpRouter.Get("/login", handlers.Login)
 
 	httpRouter.Get("/channels", handlers.ListChannels)

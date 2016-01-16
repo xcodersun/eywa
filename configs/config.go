@@ -6,14 +6,24 @@ import (
 	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/spf13/viper"
 	"os"
 	"path/filepath"
+	"sync/atomic"
 	"text/template"
 	"time"
+	"unsafe"
 )
 
-var Config *Conf
+var cfgPtr unsafe.Pointer
+var filename string
 
-func InitializeConfig(filename string) error {
+func Config() *Conf {
+	return (*Conf)(cfgPtr)
+}
 
+func SetConfig(cfg *Conf) {
+	atomic.StorePointer(&cfgPtr, unsafe.Pointer(cfg))
+}
+
+func Reload() error {
 	t, err := template.ParseFiles(filename)
 	if err != nil {
 		return err
@@ -101,7 +111,7 @@ func InitializeConfig(filename string) error {
 		BufferSize: viper.GetInt("logging.buffer_size"),
 	}
 
-	Config = &Conf{
+	cfg := &Conf{
 		Service:     serviceConfig,
 		Security:    securityConfig,
 		Connections: connConfig,
@@ -110,83 +120,89 @@ func InitializeConfig(filename string) error {
 		Logging:     logConfig,
 	}
 
+	atomic.StorePointer(&cfgPtr, unsafe.Pointer(cfg))
 	return nil
 }
 
+func InitializeConfig(f string) error {
+	filename = f
+	return Reload()
+}
+
 type Conf struct {
-	Service     *ServiceConf
-	Security    *SecurityConf
-	Connections *ConnectionConf
-	Indices     *IndexConf
-	Database    *DbConf
-	Logging     *LogConf
+	Service     *ServiceConf    `json:"service"`
+	Security    *SecurityConf   `json:"security"`
+	Connections *ConnectionConf `json:"connections"`
+	Indices     *IndexConf      `json:"indices"`
+	Database    *DbConf         `json:"database"`
+	Logging     *LogConf        `json:"logging"`
 }
 
 type DbConf struct {
-	DbType  string
-	DbFile  string
-	Logging bool
+	DbType  string `json:"db_type"`
+	DbFile  string `json:"db_file"`
+	Logging bool   `json:"logging"`
 }
 
 type IndexConf struct {
-	Host             string
-	Port             int
-	NumberOfShards   int
-	NumberOfReplicas int
-	TTLEnabled       bool
-	TTL              time.Duration
+	Host             string        `json:"host"`
+	Port             int           `json:"port"`
+	NumberOfShards   int           `json:"number_of_shards"`
+	NumberOfReplicas int           `json:"number_of_replicas"`
+	TTLEnabled       bool          `json:"ttl_enabled"`
+	TTL              time.Duration `json:"ttl"`
 }
 
 type ServiceConf struct {
-	Host     string
-	HttpPort int
-	WsPort   int
-	PidFile  string
+	Host     string `json:"host"`
+	HttpPort int    `json:"http_port"`
+	WsPort   int    `json:"ws_port"`
+	PidFile  string `json:"pid_file"`
 }
 
 type ConnectionConf struct {
-	Registry         string
-	NShards          int
-	InitShardSize    int
-	RequestQueueSize int
-	Expiry           time.Duration
-	Timeouts         *ConnectionTimeoutConf
-	BufferSizes      *ConnectionBufferSizeConf
+	Registry         string                    `json:"registry"`
+	NShards          int                       `json:"nshards"`
+	InitShardSize    int                       `json:"init_shard_size"`
+	RequestQueueSize int                       `json:"request_queue_size"`
+	Expiry           time.Duration             `json:"expiry"`
+	Timeouts         *ConnectionTimeoutConf    `json:"timeouts"`
+	BufferSizes      *ConnectionBufferSizeConf `json:"buffer_sizes"`
 }
 
 type ConnectionTimeoutConf struct {
-	Write    time.Duration
-	Read     time.Duration
-	Request  time.Duration
-	Response time.Duration
+	Write    time.Duration `json:"write"`
+	Read     time.Duration `json:"read"`
+	Request  time.Duration `json:"request"`
+	Response time.Duration `json:"response"`
 }
 
 type ConnectionBufferSizeConf struct {
-	Write int
-	Read  int
+	Write int `json:"write"`
+	Read  int `json:"read"`
 }
 
 type LogConf struct {
-	Filename   string
-	MaxSize    int
-	MaxAge     int
-	MaxBackups int
-	Level      string
-	BufferSize int
+	Filename   string `json:"filename"`
+	MaxSize    int    `json:"maxsize"`
+	MaxAge     int    `json:"maxage"`
+	MaxBackups int    `json:"maxbackups"`
+	Level      string `json:"level"`
+	BufferSize int    `json:"buffer_size"`
 }
 
 type SecurityConf struct {
-	Dashboard *DashboardSecurityConf
+	Dashboard *DashboardSecurityConf `json:"dashboard"`
 }
 
 type DashboardSecurityConf struct {
-	Username    string
-	Password    string
-	TokenExpiry time.Duration
-	AES         *AESConf
+	Username    string        `json:"username"`
+	Password    string        `json:"password"`
+	TokenExpiry time.Duration `json:"token_expiry"`
+	AES         *AESConf      `json:"aes"`
 }
 
 type AESConf struct {
-	KEY string
-	IV  string
+	KEY string `json:"key"`
+	IV  string `json:"iv"`
 }

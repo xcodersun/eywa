@@ -17,8 +17,8 @@ var upgrader *websocket.Upgrader
 
 func InitWsUpgrader() {
 	upgrader = &websocket.Upgrader{
-		ReadBufferSize:  Config.Connections.BufferSizes.Read,
-		WriteBufferSize: Config.Connections.BufferSizes.Write,
+		ReadBufferSize:  Config().Connections.BufferSizes.Read,
+		WriteBufferSize: Config().Connections.BufferSizes.Write,
 	}
 }
 

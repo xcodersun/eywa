@@ -19,7 +19,7 @@ func InitializeCM() error {
 
 func NewConnectionManager() (*ConnectionManager, error) {
 	cm := &ConnectionManager{}
-	switch Config.Connections.Registry {
+	switch Config().Connections.Registry {
 	case "memory":
 		cm.Registry = &InMemoryRegistry{}
 	default:
@@ -29,11 +29,11 @@ func NewConnectionManager() (*ConnectionManager, error) {
 		return nil, err
 	}
 
-	cm.shards = make([]*shard, Config.Connections.NShards)
-	for i := 0; i < Config.Connections.NShards; i++ {
+	cm.shards = make([]*shard, Config().Connections.NShards)
+	for i := 0; i < Config().Connections.NShards; i++ {
 		cm.shards[i] = &shard{
 			cm:    cm,
-			conns: make(map[string]*Connection, Config.Connections.InitShardSize),
+			conns: make(map[string]*Connection, Config().Connections.InitShardSize),
 		}
 	}
 
@@ -73,7 +73,7 @@ func (cm *ConnectionManager) NewConnection(id string, ws wsConn, h MessageHandle
 		h:            h,
 		Metadata:     meta,
 
-		wch: make(chan *MessageReq, Config.Connections.RequestQueueSize),
+		wch: make(chan *MessageReq, Config().Connections.RequestQueueSize),
 		msgChans: &syncRespChanMap{
 			m: make(map[string]chan *MessageResp),
 		},
@@ -87,7 +87,7 @@ func (cm *ConnectionManager) NewConnection(id string, ws wsConn, h MessageHandle
 		return ws.WriteControl(
 			websocket.PongMessage,
 			[]byte(strconv.FormatInt(time.Now().UnixNano()/int64(time.Millisecond), 10)),
-			time.Now().Add(Config.Connections.Timeouts.Write))
+			time.Now().Add(Config().Connections.Timeouts.Write))
 	})
 
 	conn.Start()

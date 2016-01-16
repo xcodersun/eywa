@@ -9,7 +9,7 @@ import (
 )
 
 func TestAuthToken(t *testing.T) {
-	Config = &Conf{
+	SetConfig(&Conf{
 		Security: &SecurityConf{
 			Dashboard: &DashboardSecurityConf{
 				Username:    "test_user",
@@ -21,7 +21,7 @@ func TestAuthToken(t *testing.T) {
 				},
 			},
 		},
-	}
+	})
 
 	Convey("encrypts/decrypts auth token", t, func() {
 		t, e := NewAuthToken("test_user", "test_password")

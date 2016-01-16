@@ -9,7 +9,7 @@ import (
 
 func TestConnectionManager(t *testing.T) {
 
-	Config = &Conf{
+	SetConfig(&Conf{
 		Connections: &ConnectionConf{
 			Registry:         "memory",
 			NShards:          4,
@@ -27,7 +27,7 @@ func TestConnectionManager(t *testing.T) {
 				Read:  1024,
 			},
 		},
-	}
+	})
 
 	h := func(c *Connection, m *Message, e error) {}
 	meta := make(map[string]interface{})

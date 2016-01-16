@@ -12,12 +12,12 @@ func TestDashboard(t *testing.T) {
 	pwd, _ := os.Getwd()
 	dbFile := path.Join(pwd, "octopus_test.db")
 
-	Config = &Conf{
+	SetConfig(&Conf{
 		Database: &DbConf{
 			DbType: "sqlite3",
 			DbFile: dbFile,
 		},
-	}
+	})
 
 	InitializeDB()
 	DB.AutoMigrate(&Dashboard{})

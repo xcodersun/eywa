@@ -13,7 +13,7 @@ func CloseIndexClient() error {
 }
 
 func InitializeIndexClient() error {
-	url := fmt.Sprintf("http://%s:%d", Config.Indices.Host, Config.Indices.Port)
+	url := fmt.Sprintf("http://%s:%d", Config().Indices.Host, Config().Indices.Port)
 	client, err := NewClient(
 		SetURL(url),
 	)

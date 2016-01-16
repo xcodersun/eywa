@@ -32,5 +32,5 @@ func Login(c web.C, w http.ResponseWriter, r *http.Request) {
 }
 
 func validateUserPassword(u, p string) bool {
-	return u == Config.Security.Dashboard.Username && p == Config.Security.Dashboard.Password
+	return u == Config().Security.Dashboard.Username && p == Config().Security.Dashboard.Password
 }

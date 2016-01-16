@@ -13,11 +13,11 @@ import (
 var DB *gorm.DB
 
 func InitializeDB() error {
-	db, err := gorm.Open(Config.Database.DbType, Config.Database.DbFile)
+	db, err := gorm.Open(Config().Database.DbType, Config().Database.DbFile)
 	if err != nil {
 		return err
 	}
-	db.LogMode(Config.Database.Logging)
+	db.LogMode(Config().Database.Logging)
 	DB = &db
 
 	return nil

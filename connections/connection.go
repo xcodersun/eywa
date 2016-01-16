@@ -136,7 +136,7 @@ func (c *Connection) sendMessage(messageType int, payload string) (respMsg strin
 
 	respCh := make(chan *MessageResp, 1)
 
-	timeout := Config.Connections.Timeouts.Request
+	timeout := Config().Connections.Timeouts.Request
 	select {
 	case <-time.After(timeout):
 		err = errors.New(fmt.Sprintf("request timed out for %s", timeout))
@@ -152,7 +152,7 @@ func (c *Connection) sendMessage(messageType int, payload string) (respMsg strin
 			c.msgChans.delete(msgId)
 		}()
 
-		timeout = Config.Connections.Timeouts.Response
+		timeout = Config().Connections.Timeouts.Response
 	}
 
 	select {
@@ -200,7 +200,7 @@ func (c *Connection) wListen() {
 }
 
 func (c *Connection) sendWsMessage(message *Message) error {
-	err := c.ws.SetWriteDeadline(time.Now().Add(Config.Connections.Timeouts.Write))
+	err := c.ws.SetWriteDeadline(time.Now().Add(Config().Connections.Timeouts.Write))
 	if err != nil {
 		return &WebsocketError{message: "error setting write deadline, " + err.Error()}
 	}
@@ -220,7 +220,7 @@ func (c *Connection) sendWsMessage(message *Message) error {
 }
 
 func (c *Connection) readWsMessage() (*Message, error) {
-	if err := c.ws.SetReadDeadline(time.Now().Add(Config.Connections.Timeouts.Read)); err != nil {
+	if err := c.ws.SetReadDeadline(time.Now().Add(Config().Connections.Timeouts.Read)); err != nil {
 		return nil, &WebsocketError{
 			message: fmt.Sprintf("error setting read deadline, %s", err.Error()),
 		}

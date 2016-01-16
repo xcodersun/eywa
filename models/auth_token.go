@@ -38,7 +38,7 @@ func NewAuthToken(u, p string) (*AuthToken, error) {
 		Username:    u,
 		TokenString: base64.URLEncoding.EncodeToString(asBytes),
 		CreatedAt:   time.Now(),
-		ExpiresAt:   time.Now().Add(Config.Security.Dashboard.TokenExpiry),
+		ExpiresAt:   time.Now().Add(Config().Security.Dashboard.TokenExpiry),
 	}, nil
 }
 
@@ -109,11 +109,11 @@ func DecryptAuthToken(str string) (*AuthToken, error) {
 }
 
 func aesEncrypt(b []byte) ([]byte, error) {
-	block, err := aes.NewCipher([]byte(Config.Security.Dashboard.AES.KEY))
+	block, err := aes.NewCipher([]byte(Config().Security.Dashboard.AES.KEY))
 	if err != nil {
 		return nil, err
 	}
-	iv := []byte(Config.Security.Dashboard.AES.IV)[:aes.BlockSize]
+	iv := []byte(Config().Security.Dashboard.AES.IV)[:aes.BlockSize]
 
 	encrypter := cipher.NewCFBEncrypter(block, iv)
 	encrypted := make([]byte, len(b))
@@ -123,11 +123,11 @@ func aesEncrypt(b []byte) ([]byte, error) {
 }
 
 func aesDecrypt(b []byte) ([]byte, error) {
-	block, err := aes.NewCipher([]byte(Config.Security.Dashboard.AES.KEY))
+	block, err := aes.NewCipher([]byte(Config().Security.Dashboard.AES.KEY))
 	if err != nil {
 		return nil, err
 	}
-	iv := []byte(Config.Security.Dashboard.AES.IV)[:aes.BlockSize]
+	iv := []byte(Config().Security.Dashboard.AES.IV)[:aes.BlockSize]
 
 	decrypter := cipher.NewCFBDecrypter(block, iv)
 	decrypted := make([]byte, len(b))

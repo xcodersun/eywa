@@ -38,13 +38,13 @@ func init() {
 	ConfigFile = path.Join(path.Dir(pwd), "configs", "octopus_test.yml")
 	PanicIfErr(InitializeConfig(ConfigFile))
 
-	ApiServer = "http://" + Config.Service.Host + ":" + strconv.Itoa(Config.Service.HttpPort)
+	ApiServer = "http://" + Config().Service.Host + ":" + strconv.Itoa(Config().Service.HttpPort)
 }
 
 func authStr() string {
 	auth, err := NewAuthToken(
-		Config.Security.Dashboard.Username,
-		Config.Security.Dashboard.Password,
+		Config().Security.Dashboard.Username,
+		Config().Security.Dashboard.Password,
 	)
 	PanicIfErr(err)
 

@@ -24,17 +24,17 @@ func main() {
 	Initialize()
 
 	go func() {
-		Logger.Info(fmt.Sprintf("Octopus started listenning to port %d", configs.Config.Service.HttpPort))
+		Logger.Info(fmt.Sprintf("Octopus started listenning to port %d", configs.Config().Service.HttpPort))
 		graceful.Serve(
-			bind.Socket(":"+strconv.Itoa(configs.Config.Service.HttpPort)),
+			bind.Socket(":"+strconv.Itoa(configs.Config().Service.HttpPort)),
 			HttpRouter(),
 		)
 	}()
 
 	go func() {
-		Logger.Info(fmt.Sprintf("Connection Manager started listenning to port %d", configs.Config.Service.WsPort))
+		Logger.Info(fmt.Sprintf("Connection Manager started listenning to port %d", configs.Config().Service.WsPort))
 		graceful.Serve(
-			bind.Socket(":"+strconv.Itoa(configs.Config.Service.WsPort)),
+			bind.Socket(":"+strconv.Itoa(configs.Config().Service.WsPort)),
 			WsRouter(),
 		)
 	}()
@@ -79,7 +79,7 @@ func Initialize() {
 	PanicIfErr(configs.InitializeConfig(*configFile))
 
 	InitialLogger()
-	p, _ := json.Marshal(configs.Config)
+	p, _ := json.Marshal(configs.Config())
 	Logger.Debug(string(p))
 	PanicIfErr(models.InitializeDB())
 	PanicIfErr(models.InitializeIndexClient())
@@ -89,9 +89,9 @@ func Initialize() {
 
 func createPidFile() error {
 	pid := os.Getpid()
-	return ioutil.WriteFile(configs.Config.Service.PidFile, []byte(strconv.Itoa(pid)), 0644)
+	return ioutil.WriteFile(configs.Config().Service.PidFile, []byte(strconv.Itoa(pid)), 0644)
 }
 
 func removePidFile() error {
-	return os.Remove(configs.Config.Service.PidFile)
+	return os.Remove(configs.Config().Service.PidFile)
 }

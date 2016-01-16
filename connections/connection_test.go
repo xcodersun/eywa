@@ -96,7 +96,7 @@ func (f *fakeWsConn) UnderlyingConn() net.Conn {
 
 func TestConnections(t *testing.T) {
 
-	Config = &Conf{
+	SetConfig(&Conf{
 		Connections: &ConnectionConf{
 			Registry:         "memory",
 			NShards:          2,
@@ -114,7 +114,7 @@ func TestConnections(t *testing.T) {
 				Read:  1024,
 			},
 		},
-	}
+	})
 
 	h := func(c *Connection, m *Message, e error) {}
 	meta := make(map[string]interface{})
