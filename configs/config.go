@@ -47,6 +47,18 @@ func InitializeConfig(filename string) error {
 		PidFile:  viper.GetString("service.pid_file"),
 	}
 
+	securityConfig := &SecurityConf{
+		Dashboard: &DashboardSecurityConf{
+			Username:    viper.GetString("security.dashboard.username"),
+			Password:    viper.GetString("security.dashboard.password"),
+			TokenExpiry: viper.GetDuration("security.dashboard.token_expiry"),
+			AES: &AESConf{
+				KEY: viper.GetString("security.dashboard.aes.key"),
+				IV:  viper.GetString("security.dashboard.aes.iv"),
+			},
+		},
+	}
+
 	dbConfig := &DbConf{
 		DbType:  viper.GetString("database.db_type"),
 		DbFile:  viper.GetString("database.db_file"),
@@ -91,6 +103,7 @@ func InitializeConfig(filename string) error {
 
 	Config = &Conf{
 		Service:     serviceConfig,
+		Security:    securityConfig,
 		Connections: connConfig,
 		Indices:     indexConfig,
 		Database:    dbConfig,
@@ -102,6 +115,7 @@ func InitializeConfig(filename string) error {
 
 type Conf struct {
 	Service     *ServiceConf
+	Security    *SecurityConf
 	Connections *ConnectionConf
 	Indices     *IndexConf
 	Database    *DbConf
@@ -159,4 +173,20 @@ type LogConf struct {
 	MaxBackups int
 	Level      string
 	BufferSize int
+}
+
+type SecurityConf struct {
+	Dashboard *DashboardSecurityConf
+}
+
+type DashboardSecurityConf struct {
+	Username    string
+	Password    string
+	TokenExpiry time.Duration
+	AES         *AESConf
+}
+
+type AESConf struct {
+	KEY string
+	IV  string
 }

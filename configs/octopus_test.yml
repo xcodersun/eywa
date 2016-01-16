@@ -3,6 +3,14 @@ service:
   http_port: 9090
   ws_port: 9091
   pid_file: {{ .octopus_home }}/tmp/pids/octopus_test.pid
+security:
+  dashboard:
+    username: root
+    password: waterISwide
+    token_expiry: 24h
+    aes:
+      key: abcdefg123456789
+      iv: abcdefg123456789
 connections:
   registry: memory
   nshards: 4

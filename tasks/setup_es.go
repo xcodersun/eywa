@@ -107,9 +107,12 @@ func main() {
 	if len(*configFile) == 0 {
 		defaultConf := "/etc/octopus/octopus.yml"
 		if _, err := os.Stat(defaultConf); os.IsNotExist(err) {
-			pwd, err := os.Getwd()
-			PanicIfErr(err)
-			*configFile = path.Join(path.Dir(pwd), "configs", "octopus_development.yml")
+			home := os.Getenv("OCTOPUS_HOME")
+			if len(home) == 0 {
+				panic("ENV OCTOPUS_HOME is not set")
+			}
+
+			*configFile = path.Join(home, "configs", "octopus_development.yml")
 		} else {
 			*configFile = defaultConf
 		}

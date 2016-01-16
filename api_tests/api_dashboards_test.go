@@ -35,7 +35,9 @@ func TestApiDashboards(t *testing.T) {
 	DB.DropTableIfExists(&Dashboard{})
 	DB.AutoMigrate(&Dashboard{})
 
-	frisby.Global.SetHeader("Content-Type", "application/json").SetHeader("Accept", "application/json")
+	frisby.Global.SetHeader("Content-Type", "application/json").
+		SetHeader("Accept", "application/json").
+		SetHeader("AuthToken", authStr())
 
 	Convey("successfully creates/gets/lists/updates dashboard", t, func() {
 		f := frisby.Create("list dashboards").Get(ListDashboardPath()).Send()

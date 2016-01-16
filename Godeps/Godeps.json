@@ -51,14 +51,6 @@
 			"Rev": "6ac0b95f449268951dd5c100682ea687a9866ea1"
 		},
 		{
-			"ImportPath": "github.com/mattn/go-colorable",
-			"Rev": "40e4aedc8fabf8c23e040057540867186712faa5"
-		},
-		{
-			"ImportPath": "github.com/mattn/go-isatty",
-			"Rev": "56b76bdf51f7708750eac80fa38b952bb9f32639"
-		},
-		{
 			"ImportPath": "github.com/mattn/go-sqlite3",
 			"Comment": "v1.1.0-27-g5651a9d",
 			"Rev": "5651a9d9d49ec25811d08220ee972080378d52ea"
@@ -138,6 +130,10 @@
 			"Rev": "709764c9382cd689fa2ad9e32c0c6d831f9914a5"
 		},
 		{
+			"ImportPath": "github.com/vivowares/waterwheel",
+			"Rev": "2ec5767fe9fe5c6a2cf7ccd2f409d3a88451438f"
+		},
+		{
 			"ImportPath": "github.com/zenazn/goji/bind",
 			"Comment": "v0.9.0-34-gbf843a1",
 			"Rev": "bf843a174a08e846246b8945f8a9a853d84a256a"
@@ -163,15 +159,6 @@
 		{
 			"ImportPath": "golang.org/x/net/publicsuffix",
 			"Rev": "1796f9b8b7178e3c7587dff118d3bb9d37f9b0b3"
-		},
-		{
-			"ImportPath": "golang.org/x/sys/unix",
-			"Rev": "833a04a10549a95dc34458c195cbad61bbb6cb4d"
-		},
-		{
-			"ImportPath": "gopkg.in/inconshreveable/log15.v2",
-			"Comment": "v2.11",
-			"Rev": "b105bd37f74e5d9dc7b6ad7806715c7a2b83fd3f"
 		},
 		{
 			"ImportPath": "gopkg.in/natefinch/lumberjack.v2",
