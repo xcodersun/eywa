@@ -11,6 +11,9 @@ security:
     aes:
       key: abcdefg123456789
       iv: abcdefg123456789
+  ssl:
+    certfile:
+    keyfile:
 connections:
   registry: memory
   nshards: 4

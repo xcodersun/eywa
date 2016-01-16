@@ -1,8 +1,8 @@
 service:
   host: localhost
-  http_port: 9090
-  ws_port: 9091
-  pid_file: {{ .octopus_home }}/tmp/pids/octopus_test.pid
+  http_port: 80
+  ws_port: 8081
+  pid_file: /var/octopus/octopus.pid
 security:
   dashboard:
     username: root
@@ -12,8 +12,8 @@ security:
       key: abcdefg123456789
       iv: abcdefg123456789
   ssl:
-    certfile:
-    keyfile:
+    certfile: /etc/octopus/server.crt
+    keyfile: /etc/octopus/server.key
 connections:
   registry: memory
   nshards: 4
@@ -37,12 +37,12 @@ indices:
   ttl: '336h'
 database:
   db_type: sqlite3
-  db_file: {{ .octopus_home }}/db/octopus_test.db
+  db_file: /var/octopus/octopus.db
   logging: false
 logging:
-  filename: {{ .octopus_home }}/logs/test/octopus.log
+  filename: /var/octopus/octopus.log
   maxsize: 1024
   maxage: 7
   maxbackups: 5
-  level: debug
-  buffer_size: 0
+  level: warn
+  buffer_size: 512

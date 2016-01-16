@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/zenazn/goji/bind"
 	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/zenazn/goji/graceful"
 	"github.com/vivowares/octopus/configs"
 	"github.com/vivowares/octopus/connections"
@@ -23,20 +22,54 @@ func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 	Initialize()
 
+	cert := configs.Config().Security.SSL.CertFile
+	key := configs.Config().Security.SSL.KeyFile
+	if len(cert) > 0 {
+		if _, err := os.Stat(cert); os.IsNotExist(err) {
+			panic(fmt.Sprintf("cert file doesn't exist at: %s\n", cert))
+		}
+	}
+	if len(key) > 0 {
+		if _, err := os.Stat(key); os.IsNotExist(err) {
+			panic(fmt.Sprintf("key file doesn't exist at: %s\n", key))
+		}
+	}
+
 	go func() {
-		Logger.Info(fmt.Sprintf("Octopus started listenning to port %d", configs.Config().Service.HttpPort))
-		graceful.Serve(
-			bind.Socket(":"+strconv.Itoa(configs.Config().Service.HttpPort)),
-			HttpRouter(),
-		)
+		if len(cert) > 0 && len(key) > 0 {
+			Logger.Info(fmt.Sprintf("Octopus started listening to port %d with SSL", configs.Config().Service.HttpPort))
+			graceful.ListenAndServeTLS(
+				":"+strconv.Itoa(configs.Config().Service.HttpPort),
+				cert,
+				key,
+				HttpRouter(),
+			)
+		} else {
+			Logger.Info(fmt.Sprintf("Octopus started listening to port %d", configs.Config().Service.HttpPort))
+			graceful.ListenAndServe(
+				":"+strconv.Itoa(configs.Config().Service.HttpPort),
+				HttpRouter(),
+			)
+		}
 	}()
 
 	go func() {
-		Logger.Info(fmt.Sprintf("Connection Manager started listenning to port %d", configs.Config().Service.WsPort))
-		graceful.Serve(
-			bind.Socket(":"+strconv.Itoa(configs.Config().Service.WsPort)),
-			WsRouter(),
-		)
+		if len(cert) > 0 && len(key) > 0 {
+			Logger.Info(fmt.Sprintf("Connection Manager started listening to port %d with SSL", configs.Config().Service.WsPort))
+			graceful.ListenAndServeTLS(
+				":"+strconv.Itoa(configs.Config().Service.WsPort),
+				cert,
+				key,
+				WsRouter(),
+			)
+		} else {
+			Logger.Info(fmt.Sprintf("Connection Manager started listening to port %d", configs.Config().Service.WsPort))
+			graceful.ListenAndServe(
+				":"+strconv.Itoa(configs.Config().Service.WsPort),
+				WsRouter(),
+			)
+		}
+
 	}()
 
 	graceful.HandleSignals()

@@ -67,6 +67,10 @@ func Reload() error {
 				IV:  viper.GetString("security.dashboard.aes.iv"),
 			},
 		},
+		SSL: &SSLConf{
+			CertFile: viper.GetString("security.ssl.certfile"),
+			KeyFile:  viper.GetString("security.ssl.keyfile"),
+		},
 	}
 
 	dbConfig := &DbConf{
@@ -193,6 +197,7 @@ type LogConf struct {
 
 type SecurityConf struct {
 	Dashboard *DashboardSecurityConf `json:"dashboard"`
+	SSL       *SSLConf
 }
 
 type DashboardSecurityConf struct {
@@ -205,4 +210,9 @@ type DashboardSecurityConf struct {
 type AESConf struct {
 	KEY string `json:"key"`
 	IV  string `json:"iv"`
+}
+
+type SSLConf struct {
+	CertFile string
+	KeyFile  string
 }
