@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"fmt"
 	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/zenazn/goji/web"
 	. "github.com/vivowares/octopus/connections"
 	. "github.com/vivowares/octopus/utils"
