@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/zenazn/goji/web"
 	. "github.com/vivowares/octopus/connections"
 	. "github.com/vivowares/octopus/utils"
@@ -37,9 +38,7 @@ func SyncSendToDevice(c web.C, w http.ResponseWriter, r *http.Request) {
 
 func PreProcessRequest(c web.C, w http.ResponseWriter, r *http.Request) (*Connection, string) {
 	device_id := c.URLParams["id"]
-	cm, _ := NewConnectionManager()
-	defer cm.Close()
-	conn, found := cm.FindConnection(device_id)
+	conn, found := CM.FindConnection(device_id)
 	if !found {
 		w.WriteHeader(http.StatusNotFound)
 		return conn, ""
