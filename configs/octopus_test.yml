@@ -1,3 +1,4 @@
+auto_reload: 10m
 service:
   host: localhost
   http_port: 9090

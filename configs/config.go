@@ -116,6 +116,7 @@ func Reload() error {
 	}
 
 	cfg := &Conf{
+		AutoReload:  viper.GetDuration("auto_reload"),
 		Service:     serviceConfig,
 		Security:    securityConfig,
 		Connections: connConfig,
@@ -130,10 +131,20 @@ func Reload() error {
 
 func InitializeConfig(f string) error {
 	filename = f
-	return Reload()
+	err := Reload()
+	if err == nil && Config().AutoReload.Nanoseconds() > 0 {
+		go func() {
+			for {
+				time.Sleep(Config().AutoReload)
+				Reload()
+			}
+		}()
+	}
+	return err
 }
 
 type Conf struct {
+	AutoReload  time.Duration   `json:"auto_reload"`
 	Service     *ServiceConf    `json:"service"`
 	Security    *SecurityConf   `json:"security"`
 	Connections *ConnectionConf `json:"connections"`
