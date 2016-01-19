@@ -61,6 +61,7 @@ func HttpRouter() http.Handler {
 	httpRouter.Get("/connections/_count", handlers.ConnectionCounts)
 	httpRouter.Get("/channels/:id/value", handlers.QueryValue)
 	httpRouter.Get("/channels/:id/series", handlers.QuerySeries)
+	httpRouter.Get("/channels/:id/raw", handlers.QueryRaw)
 	httpRouter.Compile()
 
 	return httpRouter

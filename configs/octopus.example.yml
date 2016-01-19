@@ -41,9 +41,24 @@ database:
   db_file: /var/octopus/octopus.db
   logging: false
 logging:
-  filename: /var/octopus/octopus.log
-  maxsize: 1024
-  maxage: 7
-  maxbackups: 5
-  level: warn
-  buffer_size: 512
+  octopus:
+    filename: /var/octopus/octopus.log
+    maxsize: 1024
+    maxage: 7
+    maxbackups: 5
+    level: warn
+    buffer_size: 512
+  indices:
+    filename: /var/octopus/indices.log
+    maxsize: 1024
+    maxage: 7
+    maxbackups: 5
+    level: warn
+    buffer_size: 512
+  database:
+    filename: /var/octopus/db.log
+    maxsize: 1024
+    maxage: 7
+    maxbackups: 5
+    level: warn
+    buffer_size: 512

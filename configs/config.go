@@ -106,13 +106,31 @@ func Reload() error {
 		},
 	}
 
-	logConfig := &LogConf{
-		Filename:   viper.GetString("logging.filename"),
-		MaxSize:    viper.GetInt("logging.maxsize"),
-		MaxAge:     viper.GetInt("logging.maxage"),
-		MaxBackups: viper.GetInt("logging.maxbackups"),
-		Level:      viper.GetString("logging.level"),
-		BufferSize: viper.GetInt("logging.buffer_size"),
+	logOctopus := &LogConf{
+		Filename:   viper.GetString("logging.octopus.filename"),
+		MaxSize:    viper.GetInt("logging.octopus.maxsize"),
+		MaxAge:     viper.GetInt("logging.octopus.maxage"),
+		MaxBackups: viper.GetInt("logging.octopus.maxbackups"),
+		Level:      viper.GetString("logging.octopus.level"),
+		BufferSize: viper.GetInt("logging.octopus.buffer_size"),
+	}
+
+	logIndices := &LogConf{
+		Filename:   viper.GetString("logging.indices.filename"),
+		MaxSize:    viper.GetInt("logging.indices.maxsize"),
+		MaxAge:     viper.GetInt("logging.indices.maxage"),
+		MaxBackups: viper.GetInt("logging.indices.maxbackups"),
+		Level:      viper.GetString("logging.indices.level"),
+		BufferSize: viper.GetInt("logging.indices.buffer_size"),
+	}
+
+	logDatabase := &LogConf{
+		Filename:   viper.GetString("logging.database.filename"),
+		MaxSize:    viper.GetInt("logging.database.maxsize"),
+		MaxAge:     viper.GetInt("logging.database.maxage"),
+		MaxBackups: viper.GetInt("logging.database.maxbackups"),
+		Level:      viper.GetString("logging.database.level"),
+		BufferSize: viper.GetInt("logging.database.buffer_size"),
 	}
 
 	cfg := &Conf{
@@ -122,7 +140,11 @@ func Reload() error {
 		Connections: connConfig,
 		Indices:     indexConfig,
 		Database:    dbConfig,
-		Logging:     logConfig,
+		Logging: &LogsConf{
+			Octopus:  logOctopus,
+			Indices:  logIndices,
+			Database: logDatabase,
+		},
 	}
 
 	atomic.StorePointer(&cfgPtr, unsafe.Pointer(cfg))
@@ -150,7 +172,7 @@ type Conf struct {
 	Connections *ConnectionConf `json:"connections"`
 	Indices     *IndexConf      `json:"indices"`
 	Database    *DbConf         `json:"database"`
-	Logging     *LogConf        `json:"logging"`
+	Logging     *LogsConf       `json:"logging"`
 }
 
 type DbConf struct {
@@ -197,6 +219,12 @@ type ConnectionBufferSizeConf struct {
 	Read  int `json:"read"`
 }
 
+type LogsConf struct {
+	Octopus  *LogConf `json:"octopus"`
+	Indices  *LogConf `json:"indices"`
+	Database *LogConf `json:"database"`
+}
+
 type LogConf struct {
 	Filename   string `json:"filename"`
 	MaxSize    int    `json:"maxsize"`
@@ -208,7 +236,7 @@ type LogConf struct {
 
 type SecurityConf struct {
 	Dashboard *DashboardSecurityConf `json:"dashboard"`
-	SSL       *SSLConf
+	SSL       *SSLConf               `json:"ssl"`
 }
 
 type DashboardSecurityConf struct {
@@ -224,6 +252,6 @@ type AESConf struct {
 }
 
 type SSLConf struct {
-	CertFile string
-	KeyFile  string
+	CertFile string `json:"cert_file"`
+	KeyFile  string `json:"cert_key"`
 }

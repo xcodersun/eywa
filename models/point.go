@@ -29,20 +29,13 @@ type Point struct {
 // extra information about a point is mixed in here
 func (p *Point) MarshalJSON() ([]byte, error) {
 	j := make(map[string]interface{})
-	size := 0
 	j["id"] = p.Id
 	j["device_id"] = p.conn.Identifier()
-	size += len(p.conn.Identifier())
 	j["channel_name"] = p.ch.Name
-	size += len(p.ch.Name)
 	j["channel_id"] = p.ch.Id
 	j["channel_based64_id"] = p.ch.Base64Id()
-	size += len(p.ch.Base64Id())
-	t := p.Timestamp.UTC().UnixNano() / int64(time.Millisecond)
-	j["timestamp"] = t
-	size += len(strconv.FormatInt(t, 10))
+	j["timestamp"] = p.Timestamp.UTC().UnixNano() / int64(time.Millisecond)
 	j["message_id"] = p.msg.MessageId
-	size += len(p.msg.MessageId)
 	switch p.msg.MessageType {
 	case ResponseMessage:
 		j["message_type"] = "response"
@@ -53,7 +46,6 @@ func (p *Point) MarshalJSON() ([]byte, error) {
 	case CloseMessage:
 		j["message_type"] = "close"
 	}
-	size += len(j["message_type"].(string))
 
 	for k, v := range p.Tags {
 		j[k] = v
@@ -62,10 +54,6 @@ func (p *Point) MarshalJSON() ([]byte, error) {
 	for k, v := range p.Fields {
 		j[k] = v
 	}
-
-	size += len(p.msg.Payload)
-
-	j["_size"] = size
 
 	return json.Marshal(j)
 }

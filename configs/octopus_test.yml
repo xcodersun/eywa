@@ -1,4 +1,4 @@
-auto_reload: 10m
+auto_reload: 0m
 service:
   host: localhost
   http_port: 9090
@@ -41,9 +41,24 @@ database:
   db_file: {{ .octopus_home }}/db/octopus_test.db
   logging: false
 logging:
-  filename: {{ .octopus_home }}/logs/test/octopus.log
-  maxsize: 1024
-  maxage: 7
-  maxbackups: 5
-  level: debug
-  buffer_size: 0
+  octopus:
+    filename: {{ .octopus_home }}/logs/test/octopus.log
+    maxsize: 1024
+    maxage: 7
+    maxbackups: 5
+    level: debug
+    buffer_size: 0
+  indices:
+    filename: {{ .octopus_home }}/logs/test/indices.log
+    maxsize: 1024
+    maxage: 7
+    maxbackups: 5
+    level: debug
+    buffer_size: 0
+  database:
+    filename: {{ .octopus_home }}/logs/test/db.log
+    maxsize: 1024
+    maxage: 7
+    maxbackups: 5
+    level: debug
+    buffer_size: 0

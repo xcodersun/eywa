@@ -7,7 +7,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
-	"github.com/elithrar/simple-scrypt"
+	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/elithrar/simple-scrypt"
 	. "github.com/vivowares/octopus/configs"
 	"io"
 	"time"

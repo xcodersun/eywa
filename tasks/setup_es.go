@@ -16,6 +16,7 @@ var messages = `
 	"messages": {
 		"_all": { "enabled": false },
 		"_source": { "enabled": false },
+		"_size" : {"enabled" : true},
 	  "dynamic_templates": [
 	    {
 	      "string_to_doc_values": {
@@ -91,10 +92,6 @@ var messages = `
 	  		"type": "date",
 	  		"format": "epoch_millis",
 	  		"doc_values": true
-			},
-			"_size": {
-				"type": "long",
-				"doc_values": true
 			}
 	  }
 	}
