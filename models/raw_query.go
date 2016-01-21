@@ -2,12 +2,19 @@ package models
 
 import (
 	"errors"
+	"fmt"
 	"github.com/vivowares/octopus/Godeps/_workspace/src/gopkg.in/olivere/elastic.v3"
+	. "github.com/vivowares/octopus/configs"
 	. "github.com/vivowares/octopus/utils"
+	"io/ioutil"
+	"os"
 	"strconv"
 	"strings"
 	"time"
 )
+
+var ScrollSize = 2000
+var KeepAlive = "5m"
 
 type RawQuery struct {
 	Channel   *Channel
@@ -78,10 +85,13 @@ func (q *RawQuery) Parse(params map[string]string) error {
 	return nil
 }
 
-func (q *RawQuery) QueryESNop() (int64, error) {
+func (q *RawQuery) QueryES() (interface{}, error) {
+	res := map[string]interface{}{}
+
 	indexName := TimedIndices(q.Channel, q.TimeStart, q.TimeEnd)
 	if len(indexName) == 0 {
-		return 0, nil
+		res["size"] = "0b"
+		return res, nil
 	}
 
 	boolQ := elastic.NewBoolQuery()
@@ -97,26 +107,65 @@ func (q *RawQuery) QueryESNop() (int64, error) {
 		To(NanoToMilli(q.TimeEnd.UnixNano()))
 	boolQ.Must(rangeQ)
 
-	filterAgg := elastic.NewFilterAggregation()
-	filterAgg.Filter(boolQ).SubAggregation("bytes", elastic.NewSumAggregation().Field("_size"))
-	resp, err := IndexClient.Search().
-		SearchType("count").
-		Index(indexName).
-		Type(IndexType).
-		Aggregation("name", filterAgg).
-		Do()
+	if q.Nop {
+		filterAgg := elastic.NewFilterAggregation()
+		filterAgg.Filter(boolQ).SubAggregation("bytes", elastic.NewSumAggregation().Field("_size"))
+		resp, err := IndexClient.Search().
+			SearchType("count").
+			Index(indexName).
+			Type(IndexType).
+			Aggregation("name", filterAgg).
+			Do()
 
-	if err != nil {
-		return 0, err
-	}
+		if err != nil {
+			return res, err
+		}
 
-	aggs, success := resp.Aggregations.Filter("name")
-	if !success {
-		return 0, errors.New("error query raw data")
+		aggs, success := resp.Aggregations.Filter("name")
+		if !success {
+			return res, errors.New("error query raw data")
+		}
+		sum, success := aggs.Sum("bytes")
+		if !success {
+			return res, errors.New("error query raw data")
+		}
+
+		bytes := int64(*sum.Value)
+		if bytes < 1024 {
+			res["size"] = fmt.Sprintf("%db", bytes)
+		} else if bytes < 1024*1024 {
+			res["size"] = fmt.Sprintf("%dkb", bytes/1024)
+		} else if bytes < 1024*1024*1024 {
+			res["size"] = fmt.Sprintf("%dmb", bytes/1024/1024)
+		} else {
+			res["size"] = fmt.Sprintf("%dgb", bytes/1024/1024/1024)
+		}
+
+		return res, nil
+
+	} else {
+		tmpFile, err := ioutil.TempFile(os.TempDir(), fmt.Sprintf("%s.raw", q.Channel.Name))
+		if err != nil {
+			return res, err
+		}
+
+		size := ScrollSize / Config().Indices.NumberOfShards
+		resp, err := IndexClient.Scroll().KeepAlive(KeepAlive).Index(indexName).Type(IndexType).Query(boolQ).Size(size).Do()
+		for err == nil {
+			resp, err = IndexClient.Scroll().KeepAlive(KeepAlive).ScrollId(resp.ScrollId).GetNextPage()
+			if err == nil {
+				for _, hit := range resp.Hits.Hits {
+					tmpFile.Write([]byte(*hit.Source))
+					tmpFile.WriteString("\n")
+				}
+			}
+		}
+
+		if err != nil && err != elastic.EOS {
+			return res, err
+		}
+
+		res["file"] = tmpFile.Name()
+		return res, nil
 	}
-	sum, success := aggs.Sum("bytes")
-	if !success {
-		return 0, errors.New("error query raw data")
-	}
-	return int64(*sum.Value), nil
 }

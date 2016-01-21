@@ -15,7 +15,6 @@ var messages = `
 {
 	"messages": {
 		"_all": { "enabled": false },
-		"_source": { "enabled": false },
 		"_size" : {"enabled" : true},
 	  "dynamic_templates": [
 	    {

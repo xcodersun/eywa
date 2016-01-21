@@ -1,11 +1,11 @@
 package handlers
 
 import (
-	"fmt"
 	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/zenazn/goji/web"
 	. "github.com/vivowares/octopus/models"
 	. "github.com/vivowares/octopus/utils"
 	"net/http"
+	"os"
 )
 
 func QueryValue(c web.C, w http.ResponseWriter, r *http.Request) {
@@ -62,21 +62,16 @@ func QueryRaw(c web.C, w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		Render.JSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
 	} else {
-		bytes, err := q.QueryESNop()
+		res, err := q.QueryES()
 		if err != nil {
 			Render.Text(w, http.StatusInternalServerError, err.Error())
 		} else {
-			var mega string
-			if bytes < 1024 {
-				mega = fmt.Sprintf("%db", bytes)
-			} else if bytes < 1024*1024 {
-				mega = fmt.Sprintf("%dkb", bytes/1024)
-			} else if bytes < 1024*1024*1024 {
-				mega = fmt.Sprintf("%dmb", bytes/1024/1024)
+			if f, ok := res.(map[string]interface{})["file"]; ok {
+				http.ServeFile(w, r, f.(string))
+				os.Remove(f.(string))
 			} else {
-				mega = fmt.Sprintf("%dgb", bytes/1024/1024/1024)
+				Render.JSON(w, http.StatusOK, res)
 			}
-			Render.JSON(w, http.StatusOK, map[string]string{"size": mega})
 		}
 	}
 }
