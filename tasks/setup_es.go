@@ -116,7 +116,7 @@ func main() {
 	}
 
 	PanicIfErr(InitializeConfig(*configFile))
-
+	InitialLogger()
 	PanicIfErr(InitializeIndexClient())
 
 	settings := map[string]interface{}{

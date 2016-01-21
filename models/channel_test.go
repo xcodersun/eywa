@@ -3,6 +3,7 @@ package models
 import (
 	. "github.com/vivowares/octopus/Godeps/_workspace/src/github.com/smartystreets/goconvey/convey"
 	. "github.com/vivowares/octopus/configs"
+	"log"
 	"os"
 	"path"
 	"reflect"
@@ -22,8 +23,9 @@ func TestChannel(t *testing.T) {
 	})
 
 	InitializeDB()
-	DB.AutoMigrate(&Channel{})
 	DB.LogMode(true)
+	DB.SetLogger(log.New(os.Stdout, "", log.LstdFlags))
+	DB.AutoMigrate(&Channel{})
 
 	Convey("creates/updates/deletes channel", t, func() {
 		c := &Channel{

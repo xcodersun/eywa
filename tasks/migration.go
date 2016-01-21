@@ -26,7 +26,7 @@ func main() {
 		}
 	}
 	PanicIfErr(configs.InitializeConfig(*configFile))
-
+	InitialLogger()
 	PanicIfErr(InitializeDB())
 
 	DB.AutoMigrate(

@@ -3,6 +3,7 @@ package models
 import (
 	. "github.com/vivowares/octopus/Godeps/_workspace/src/github.com/smartystreets/goconvey/convey"
 	. "github.com/vivowares/octopus/configs"
+	"log"
 	"os"
 	"path"
 	"testing"
@@ -20,8 +21,9 @@ func TestDashboard(t *testing.T) {
 	})
 
 	InitializeDB()
-	DB.AutoMigrate(&Dashboard{})
 	DB.LogMode(true)
+	DB.SetLogger(log.New(os.Stdout, "", log.LstdFlags))
+	DB.AutoMigrate(&Dashboard{})
 
 	Convey("creates/updates/deletes dashboard", t, func() {
 		d := &Dashboard{

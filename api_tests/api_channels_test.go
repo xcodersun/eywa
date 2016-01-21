@@ -11,6 +11,7 @@ import (
 	. "github.com/vivowares/octopus/configs"
 	. "github.com/vivowares/octopus/models"
 	. "github.com/vivowares/octopus/utils"
+	"log"
 	"net/http"
 	"os"
 	"path"
@@ -64,6 +65,8 @@ func GetChannelPath(base64Id string) string {
 func TestApiChannels(t *testing.T) {
 
 	InitializeDB()
+	DB.LogMode(true)
+	DB.SetLogger(log.New(os.Stdout, "", log.LstdFlags))
 	DB.DropTableIfExists(&Channel{})
 	DB.AutoMigrate(&Channel{})
 

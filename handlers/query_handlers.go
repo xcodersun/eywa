@@ -66,8 +66,17 @@ func QueryRaw(c web.C, w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			Render.Text(w, http.StatusInternalServerError, err.Error())
 		} else {
-			mega := bytes / 1024 / 1024
-			Render.JSON(w, http.StatusOK, map[string]string{"size": fmt.Sprintf("%dmb", mega)})
+			var mega string
+			if bytes < 1024 {
+				mega = fmt.Sprintf("%db", bytes)
+			} else if bytes < 1024*1024 {
+				mega = fmt.Sprintf("%dkb", bytes/1024)
+			} else if bytes < 1024*1024*1024 {
+				mega = fmt.Sprintf("%dmb", bytes/1024/1024)
+			} else {
+				mega = fmt.Sprintf("%dgb", bytes/1024/1024/1024)
+			}
+			Render.JSON(w, http.StatusOK, map[string]string{"size": mega})
 		}
 	}
 }
