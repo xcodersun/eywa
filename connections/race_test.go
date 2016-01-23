@@ -48,17 +48,17 @@ func TestRaceConditions(t *testing.T) {
 		errs := make([]error, concurrency)
 		for i := 0; i < concurrency; i++ {
 			go func(index int) {
-				var msg string
+				var msg []byte
 				var err error
 				switch rand.Intn(3) {
 				case 0:
-					msg = "async" + strconv.Itoa(index)
+					msg = []byte("async" + strconv.Itoa(index))
 					err = conn.SendAsyncRequest(msg)
 				case 1:
-					msg = "resp" + strconv.Itoa(index)
+					msg = []byte("resp" + strconv.Itoa(index))
 					err = conn.SendResponse(msg)
 				case 2:
-					msg = "sync" + strconv.Itoa(index)
+					msg = []byte("sync" + strconv.Itoa(index))
 					_, err = conn.SendSyncRequest(msg)
 				}
 				errs[index] = err
@@ -91,17 +91,17 @@ func TestRaceConditions(t *testing.T) {
 		errs := make([]error, concurrency)
 		for i := 0; i < concurrency; i++ {
 			go func(index int) {
-				var msg string
+				var msg []byte
 				var err error
 				switch rand.Intn(3) {
 				case 0:
-					msg = "async" + strconv.Itoa(index)
+					msg = []byte("async" + strconv.Itoa(index))
 					err = conn.SendAsyncRequest(msg)
 				case 1:
-					msg = "resp" + strconv.Itoa(index)
+					msg = []byte("resp" + strconv.Itoa(index))
 					err = conn.SendResponse(msg)
 				case 2:
-					msg = "sync" + strconv.Itoa(index)
+					msg = []byte("sync" + strconv.Itoa(index))
 					_, err = conn.SendSyncRequest(msg)
 				}
 				errs[index] = err
@@ -160,11 +160,11 @@ func TestRaceConditions(t *testing.T) {
 				errs[iter] = err
 				switch rand.Intn(3) {
 				case 0:
-					conn.SendAsyncRequest("async" + strconv.Itoa(iter))
+					conn.SendAsyncRequest([]byte("async" + strconv.Itoa(iter)))
 				case 1:
-					conn.SendResponse("resp" + strconv.Itoa(iter))
+					conn.SendResponse([]byte("resp" + strconv.Itoa(iter)))
 				case 2:
-					conn.SendSyncRequest("sync" + strconv.Itoa(iter))
+					conn.SendSyncRequest([]byte("sync" + strconv.Itoa(iter)))
 				}
 			}(i)
 		}

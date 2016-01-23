@@ -104,22 +104,22 @@ func (c *Connection) LastPingedAt() time.Time { return c.lastPingedAt }
 
 func (c *Connection) Closed() bool { return c.closed }
 
-func (c *Connection) SendAsyncRequest(msg string) error {
+func (c *Connection) SendAsyncRequest(msg []byte) error {
 	_, err := c.sendMessage(AsyncRequestMessage, msg)
 	return err
 }
 
-func (c *Connection) SendResponse(msg string) error {
+func (c *Connection) SendResponse(msg []byte) error {
 	_, err := c.sendMessage(ResponseMessage, msg)
 	return err
 }
 
-func (c *Connection) SendSyncRequest(msg string) (string, error) {
+func (c *Connection) SendSyncRequest(msg []byte) ([]byte, error) {
 	return c.sendMessage(SyncRequestMessage, msg)
 }
 
-func (c *Connection) sendMessage(messageType int, payload string) (respMsg string, err error) {
-	respMsg = ""
+func (c *Connection) sendMessage(messageType int, payload []byte) (respMsg []byte, err error) {
+	respMsg = []byte{}
 
 	defer func() {
 		if r := recover(); r != nil {
@@ -206,16 +206,18 @@ func (c *Connection) sendWsMessage(message *Message) error {
 	}
 
 	if message.MessageType == CloseMessage {
-		err = c.ws.WriteMessage(websocket.CloseMessage, []byte(message.Payload))
+		err = c.ws.WriteMessage(websocket.CloseMessage, message.Payload)
 		err = c.ws.Close()
 	} else {
-		err = c.ws.WriteMessage(websocket.TextMessage, []byte(message.Marshal()))
+		var p []byte
+		p, err = message.Marshal()
+		if err == nil {
+			err = c.ws.WriteMessage(websocket.BinaryMessage, p)
+			if err != nil {
+				err = &WebsocketError{message: err.Error()}
+			}
+		}
 	}
-
-	if err != nil {
-		err = &WebsocketError{message: err.Error()}
-	}
-
 	return err
 }
 
@@ -242,7 +244,7 @@ func (c *Connection) readWsMessage() (*Message, error) {
 		}, nil
 	}
 
-	return Unmarshal(string(messageBody))
+	return Unmarshal(messageBody)
 }
 
 func (c *Connection) rListen() {

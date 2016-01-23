@@ -12,26 +12,29 @@ func TestMessageSerializations(t *testing.T) {
 		m := &Message{
 			MessageType: SyncRequestMessage,
 			MessageId:   "1",
-			Payload:     "test",
+			Payload:     []byte("\u2318|\u2317"),
 		}
 
-		raw := Marshal(m)
+		raw, _ := Marshal(m)
 		n, _ := Unmarshal(raw)
 		So(reflect.DeepEqual(m, n), ShouldBeTrue)
 	})
 
 	Convey("message unmarshalling returns proper errors", t, func() {
-		raw := "1|test"
+		raw := []byte("1|test")
 		_, err := Unmarshal(raw)
+		So(err.Error(), ShouldContainSubstring, "pips")
 
-		So(err.Error(), ShouldContainSubstring, "fields")
-
-		raw = "2||"
+		raw = []byte("2||")
 		_, err = Unmarshal(raw)
 		So(err.Error(), ShouldContainSubstring, "empty MessageId")
 
-		raw = "0|test|this is a test message"
+		raw = []byte("98|test|this is a test message")
 		_, err = Unmarshal(raw)
 		So(err.Error(), ShouldContainSubstring, "invalid MessageType")
+
+		raw = []byte("-|test|this is a test message")
+		_, err = Unmarshal(raw)
+		So(err.Error(), ShouldContainSubstring, "strconv.ParseIn")
 	})
 }

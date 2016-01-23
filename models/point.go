@@ -60,7 +60,7 @@ func (p *Point) MarshalJSON() ([]byte, error) {
 
 func (p *Point) parseJson() error {
 	jsonValues := make(map[string]json.RawMessage)
-	err := json.Unmarshal([]byte(p.msg.Payload), &jsonValues)
+	err := json.Unmarshal(p.msg.Payload, &jsonValues)
 	if err != nil {
 		return jsonParsingErr
 	}
@@ -130,7 +130,7 @@ func (p *Point) parseJson() error {
 }
 
 func (p *Point) parseUrl() error {
-	urlValues, err := url.ParseQuery(p.msg.Payload)
+	urlValues, err := url.ParseQuery(string(p.msg.Payload))
 	if err != nil {
 		return urlParsingErr
 	}

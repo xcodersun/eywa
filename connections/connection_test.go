@@ -38,7 +38,7 @@ type fakeWsConn struct {
 	readMessageBuf   []byte
 	readMessageErr   error
 	randomErr        bool
-	message          string
+	message          []byte
 	sync.Mutex
 }
 
@@ -53,7 +53,7 @@ func (f *fakeWsConn) WriteControl(i int, b []byte, t time.Time) error { return n
 func (f *fakeWsConn) NextWriter(i int) (io.WriteCloser, error)        { return nil, nil }
 func (f *fakeWsConn) WriteMessage(msgType int, msg []byte) error {
 	f.Lock()
-	f.message = string(msg)
+	f.message = msg
 	f.Unlock()
 	time.Sleep(time.Duration(rand.Intn(200)) * time.Millisecond)
 	if f.randomErr && rand.Intn(3) == 0 {
@@ -70,11 +70,11 @@ func (f *fakeWsConn) NextReader() (int, io.Reader, error) {
 func (f *fakeWsConn) ReadMessage() (int, []byte, error) {
 	time.Sleep(time.Duration(rand.Intn(200)) * time.Millisecond)
 	f.Lock()
-	m := f.message
+	m := string(f.message)
 	f.Unlock()
 	if strings.HasSuffix(m, "sync") {
-		msg, _ := Unmarshal(m)
-		return websocket.TextMessage, []byte(fmt.Sprintf("%d|%s|sync response", ResponseMessage, msg.MessageId)), nil
+		msg, _ := Unmarshal(f.message)
+		return websocket.BinaryMessage, []byte(fmt.Sprintf("%d|%s|sync response", ResponseMessage, msg.MessageId)), nil
 	}
 
 	if f.randomErr && rand.Intn(3) == 0 {
@@ -127,11 +127,11 @@ func TestConnections(t *testing.T) {
 			wch:        make(chan *MessageReq, 1),
 		}
 
-		err := conn.SendResponse("resp")
+		err := conn.SendResponse([]byte("resp"))
 		So(err, ShouldNotBeNil)
 		So(err.Error(), ShouldContainSubstring, "response timed out")
 
-		err = conn.SendAsyncRequest("async")
+		err = conn.SendAsyncRequest([]byte("async"))
 		So(err, ShouldNotBeNil)
 		So(err.Error(), ShouldContainSubstring, "request timed out")
 	})
@@ -145,7 +145,7 @@ func TestConnections(t *testing.T) {
 		conn.Close()
 		conn.Wait()
 		So(cm.Count(), ShouldEqual, 0)
-		err := conn.SendAsyncRequest("async")
+		err := conn.SendAsyncRequest([]byte("async"))
 		So(err, ShouldNotBeNil)
 		So(err.Error(), ShouldContainSubstring, "connection is closed")
 	})
@@ -157,7 +157,7 @@ func TestConnections(t *testing.T) {
 		conn, _ := cm.NewConnection("test write err", ws, h, meta)
 		So(cm.Count(), ShouldEqual, 1)
 
-		err := conn.SendAsyncRequest("async")
+		err := conn.SendAsyncRequest([]byte("async"))
 		So(err, ShouldNotBeNil)
 		So(err.Error(), ShouldContainSubstring, "WebsocketError")
 		conn.Wait()
@@ -178,7 +178,7 @@ func TestConnections(t *testing.T) {
 		conn, _ := cm.NewConnection("test", &fakeWsConn{}, h, meta)
 		So(cm.Count(), ShouldEqual, 1)
 
-		err := conn.SendAsyncRequest("async")
+		err := conn.SendAsyncRequest([]byte("async"))
 		So(err, ShouldBeNil)
 	})
 
@@ -188,9 +188,9 @@ func TestConnections(t *testing.T) {
 		conn, _ := cm.NewConnection("test", &fakeWsConn{}, h, meta)
 		So(cm.Count(), ShouldEqual, 1)
 
-		msg, err := conn.SendSyncRequest("sync")
+		msg, err := conn.SendSyncRequest([]byte("sync"))
 		So(err, ShouldBeNil)
-		So(msg, ShouldContainSubstring, "sync response")
+		So(string(msg), ShouldContainSubstring, "sync response")
 		So(conn.msgChans.len(), ShouldEqual, 0)
 	})
 

@@ -1,10 +1,10 @@
 package connections
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"strconv"
-	"strings"
 )
 
 const (
@@ -17,7 +17,7 @@ const (
 type Message struct {
 	MessageType int
 	MessageId   string
-	Payload     string
+	Payload     []byte
 }
 
 type MessageResp struct {
@@ -30,38 +30,61 @@ type MessageReq struct {
 	respCh chan *MessageResp
 }
 
-func (m *Message) String() string {
-	return fmt.Sprintf("%d|%s|%s", m.MessageType, m.MessageId, m.Payload)
+func (m *Message) Marshal() ([]byte, error) {
+	p := bytes.Buffer{}
+
+	_, err := p.WriteString(fmt.Sprintf("%d|%s|", m.MessageType, m.MessageId))
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = p.Write(m.Payload)
+	if err != nil {
+		return nil, err
+	}
+
+	return p.Bytes(), nil
 }
 
-func (m *Message) Marshal() string {
-	return m.String()
-}
-
-func Marshal(m *Message) string {
+func Marshal(m *Message) ([]byte, error) {
 	return m.Marshal()
 }
 
-func Unmarshal(raw string) (*Message, error) {
-	fields := strings.SplitN(raw, "|", 3)
-	if len(fields) != 3 {
-		return nil, errors.New(fmt.Sprintf("expected 3 fields instead of %d, raw: %s in message", len(fields), raw))
+func Unmarshal(raw []byte) (*Message, error) {
+	msg := &Message{}
+	pips := 0
+	var pip1, pip2 int
+	for idx, b := range raw {
+		if b == '|' {
+			pips += 1
+			if pips == 1 {
+				pip1 = idx
+				msgType, err := strconv.Atoi(string(raw[0:idx]))
+				if err != nil {
+					return nil, err
+				} else if msgType != AsyncRequestMessage &&
+					msgType != SyncRequestMessage && msgType != ResponseMessage && msgType != CloseMessage {
+					return nil, errors.New(fmt.Sprintf("invalid MessageType %d, raw: %s", msgType, raw))
+				} else {
+					msg.MessageType = msgType
+				}
+			} else if pips == 2 {
+				pip2 = idx
+				msg.MessageId = string(raw[pip1+1 : pip2])
+				break
+			} else {
+				break
+			}
+		}
+	}
+	if pips != 2 {
+		return nil, errors.New(fmt.Sprintf("expected 2 pips instead of %d, raw: %s", pips, raw))
 	}
 
-	msgType, err := strconv.Atoi(fields[0])
-	if err != nil || (msgType != AsyncRequestMessage &&
-		msgType != SyncRequestMessage && msgType != ResponseMessage && msgType != CloseMessage) {
-		return nil, errors.New(fmt.Sprintf("invalid MessageType, raw: %s", raw))
-	}
-
-	m := &Message{
-		MessageType: msgType,
-		MessageId:   fields[1],
-		Payload:     fields[2],
-	}
-	if len(m.MessageId) == 0 && msgType != CloseMessage {
+	if len(msg.MessageId) == 0 && msg.MessageType != CloseMessage {
 		return nil, errors.New("empty MessageId")
 	}
 
-	return m, nil
+	msg.Payload = raw[pip2+1:]
+	return msg, nil
 }
