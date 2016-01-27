@@ -18,6 +18,11 @@ func TestDashboard(t *testing.T) {
 			DbType: "sqlite3",
 			DbFile: dbFile,
 		},
+		Logging: &LogsConf{
+			Database: &LogConf{
+				Level: "debug",
+			},
+		},
 	})
 
 	InitializeDB()

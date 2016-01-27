@@ -6,6 +6,7 @@ import (
 	"errors"
 	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/jinzhu/gorm"
 	_ "github.com/vivowares/octopus/Godeps/_workspace/src/github.com/mattn/go-sqlite3"
+	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/vivowares/waterwheel"
 	. "github.com/vivowares/octopus/configs"
 	. "github.com/vivowares/octopus/utils"
 	"strings"
@@ -18,7 +19,7 @@ func InitializeDB() error {
 	if err != nil {
 		return err
 	}
-	db.LogMode(Config().Database.Logging)
+	db.LogMode(waterwheel.MapLevel(Config().Logging.Database.Level) == waterwheel.Debug)
 	db.SetLogger(DBLogger)
 	DB = &db
 

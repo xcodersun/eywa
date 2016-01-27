@@ -74,9 +74,8 @@ func Reload() error {
 	}
 
 	dbConfig := &DbConf{
-		DbType:  viper.GetString("database.db_type"),
-		DbFile:  viper.GetString("database.db_file"),
-		Logging: viper.GetBool("database.logging"),
+		DbType: viper.GetString("database.db_type"),
+		DbFile: viper.GetString("database.db_file"),
 	}
 
 	indexConfig := &IndexConf{
@@ -176,9 +175,8 @@ type Conf struct {
 }
 
 type DbConf struct {
-	DbType  string `json:"db_type"`
-	DbFile  string `json:"db_file"`
-	Logging bool   `json:"logging"`
+	DbType string `json:"db_type"`
+	DbFile string `json:"db_file"`
 }
 
 type IndexConf struct {

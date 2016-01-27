@@ -39,14 +39,13 @@ indices:
 database:
   db_type: sqlite3
   db_file: /var/octopus/octopus.db
-  logging: false
 logging:
   octopus:
     filename: /var/octopus/octopus.log
     maxsize: 1024
     maxage: 7
     maxbackups: 5
-    level: warn
+    level: info
     buffer_size: 512
   indices:
     filename: /var/octopus/indices.log

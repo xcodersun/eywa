@@ -35,12 +35,22 @@ func InitializeIndexClient() error {
 func setLogger(logger *log.Logger) func(*Client) error {
 	switch strings.ToUpper(Config().Logging.Indices.Level) {
 	case "INFO":
-		return SetInfoLog(logger)
-	case "WARN", "ERROR", "CRITICAL":
-		return SetErrorLog(logger)
+		return func(c *Client) error {
+			SetInfoLog(logger)
+			SetErrorLog(logger)
+			return nil
+		}
 	case "DEBUG":
-		return SetTraceLog(logger)
+		return func(c *Client) error {
+			SetInfoLog(logger)
+			SetErrorLog(logger)
+			SetTraceLog(logger)
+			return nil
+		}
 	default:
-		return SetErrorLog(logger)
+		return func(c *Client) error {
+			SetErrorLog(logger)
+			return nil
+		}
 	}
 }
