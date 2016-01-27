@@ -17,25 +17,30 @@ import (
 	"time"
 )
 
+//go run tasks/benchmark.go  -h=107.170.239.173 -p=8080 -w=8081 -n=1 -ch=bench_test -tk=1234567 -fs=temperature:float -np=1 -nm=1 -auth=M_MPDzpPSUuYt_CLdeeMKRBYRpVc-IhTUNXxvKqSi5Xa8zRNyz6_rEaQKWnlk-vDQePYSVcOQiaA6dw283C1yHdJ71NzEAePND3OkA-3p8FcMwSKF8UUmY_y3gLO_dJPvznWlL0LI70EA4lh8xtyKjTMhK1qF96YYRJCG_Q7BLi9r3kJRbN0Hb4OBBy-gVyNrGAKkjphMOBpfpKXkMgZkU6L41rGodZfNwX6lt1AKO0ZWiGPKuujLdQIuPlFR3axyWHDIUF6k56pKy-NFUMoQ6Kxwj1hunMEi68YpkVTxCDqHYZ7xkrq-IBKsbrgEX0Nv9VvSkVDMOIREOCDkoKSkPOBsEDTUe1OdL-lUYDtegVgN3jDW1Qmvjts8LzvuLprmpuIToxeBHbH9KZebxGD2dcyG9hN9sWVszv0JdPCaZiGRQjGZk4Adwbi2tqNx06jHNIOokM7Mbbyk0L_LTC9O8YdzqoLnLnp-MuWOeKVTuyZB3LyoA_Vpxv--y88jWw7ySEQihVyoTb9F9zyAlBa-OTxcTjSzU0C0fvsUeM2Z525re0q9Ek6MswNKjSiow==
+
 func main() {
-	s := flag.String("s", "localhost:8081", "the target server host:port")
+	h := flag.String("h", "localhost", "the target server host")
+	p := flag.String("p", "8080", "the http port")
+	w := flag.String("w", "8081", "the ws port")
 	n := flag.Int("n", 1000, "number of concurrent clients")
 	ch := flag.String("ch", "test", "channel name for testing")
-	tk := flag.String("t", "1234567", "access token used for testing")
-	fs := flag.String("fields", "temperature:float", "fields that are used for bench test. Format: 'field1:type1,field2:type2'")
-	np := flag.Int("p", 100, "number of ping messages to send")
-	nm := flag.Int("m", 50, "number of payload messages to send")
-	rw := flag.Duration("r", 15*time.Second, "wait time for reading messages")
-	ww := flag.Duration("w", 2*time.Second, "wait time for writing messages")
+	tk := flag.String("tk", "1234567", "access token used for testing")
+	fs := flag.String("fs", "temperature:float", "fields that are used for bench test. Format: 'field1:type1,field2:type2'")
+	np := flag.Int("np", 100, "number of ping messages to send")
+	nm := flag.Int("nm", 50, "number of payload messages to send")
+	rw := flag.Duration("rw", 15*time.Second, "wait time for reading messages")
+	ww := flag.Duration("ww", 2*time.Second, "wait time for writing messages")
 	itv := flag.Int("i", 5000, "wait milliseconds interval between each sends in client, randomized")
 	citv := flag.Int("I", 1000, "wait milliseconds interval between each connection, randomized")
+	auth := flag.String("auth", "", "auth_token for creating channel")
 
 	flag.Parse()
 
 	runtime.GOMAXPROCS(runtime.NumCPU())
 
 	//create a channel for testing
-	url := fmt.Sprintf("http://%s/channels", *s)
+	url := fmt.Sprintf("http://%s:%s/channels", *h, *p)
 	fieldDefs := strings.Split(*fs, ",")
 	fields := make(map[string]string)
 	for _, def := range fieldDefs {
@@ -51,11 +56,13 @@ func main() {
 	asBytes, err := json.Marshal(body)
 	PanicIfErr(err)
 	req := gorequest.New()
-	_, bodyBytes, errs := req.Post(url).
+
+	_, bodyBytes, errs := req.Post(url).Set("AuthToken", *auth).
 		Send(string(asBytes)).EndBytes()
 	if len(errs) > 0 {
 		PanicIfErr(errs[0])
 	}
+
 	var created map[string]interface{}
 	json.Unmarshal(bodyBytes, &created)
 	chId := created["id"].(string)
@@ -70,7 +77,7 @@ func main() {
 		go func(idx int) {
 			defer wg.Done()
 			c := &WsClient{
-				Server:      *s,
+				Server:      fmt.Sprintf("%s:%s", *h, *w),
 				ChannelId:   chId,
 				DeviceId:    fmt.Sprintf("device-%d", idx),
 				AccessToken: *tk,
