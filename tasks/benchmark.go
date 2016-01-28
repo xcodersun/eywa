@@ -8,6 +8,7 @@ import (
 	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/parnurzeal/gorequest"
 	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/satori/go.uuid"
 	. "github.com/vivowares/octopus/utils"
+	"log"
 	"math/rand"
 	"net/http"
 	"net/url"
@@ -17,89 +18,133 @@ import (
 	"time"
 )
 
-//go run tasks/benchmark.go  -h=107.170.239.173 -p=8080 -w=8081 -n=1 -ch=bench_test -tk=1234567 -fs=temperature:float -np=1 -nm=1 -auth=M_MPDzpPSUuYt_CLdeeMKRBYRpVc-IhTUNXxvKqSi5Xa8zRNyz6_rEaQKWnlk-vDQePYSVcOQiaA6dw283C1yHdJ71NzEAePND3OkA-3p8FcMwSKF8UUmY_y3gLO_dJPvznWlL0LI70EA4lh8xtyKjTMhK1qF96YYRJCG_Q7BLi9r3kJRbN0Hb4OBBy-gVyNrGAKkjphMOBpfpKXkMgZkU6L41rGodZfNwX6lt1AKO0ZWiGPKuujLdQIuPlFR3axyWHDIUF6k56pKy-NFUMoQ6Kxwj1hunMEi68YpkVTxCDqHYZ7xkrq-IBKsbrgEX0Nv9VvSkVDMOIREOCDkoKSkPOBsEDTUe1OdL-lUYDtegVgN3jDW1Qmvjts8LzvuLprmpuIToxeBHbH9KZebxGD2dcyG9hN9sWVszv0JdPCaZiGRQjGZk4Adwbi2tqNx06jHNIOokM7Mbbyk0L_LTC9O8YdzqoLnLnp-MuWOeKVTuyZB3LyoA_Vpxv--y88jWw7ySEQihVyoTb9F9zyAlBa-OTxcTjSzU0C0fvsUeM2Z525re0q9Ek6MswNKjSiow==
+// go run tasks/benchmark.go  -host=198.199.117.56 -ports=8080:8081 -user=root -passwd=waterISwide -fields=temperature:float -c=1 -p=1 -m=1
 
 func main() {
-	h := flag.String("h", "localhost", "the target server host")
-	p := flag.String("p", "8080", "the http port")
-	w := flag.String("w", "8081", "the ws port")
-	n := flag.Int("n", 1000, "number of concurrent clients")
-	ch := flag.String("ch", "test", "channel name for testing")
-	tk := flag.String("tk", "1234567", "access token used for testing")
-	fs := flag.String("fs", "temperature:float", "fields that are used for bench test. Format: 'field1:type1,field2:type2'")
-	np := flag.Int("np", 100, "number of ping messages to send")
-	nm := flag.Int("nm", 50, "number of payload messages to send")
-	rw := flag.Duration("rw", 15*time.Second, "wait time for reading messages")
-	ww := flag.Duration("ww", 2*time.Second, "wait time for writing messages")
-	itv := flag.Int("i", 5000, "wait milliseconds interval between each sends in client, randomized")
-	citv := flag.Int("I", 1000, "wait milliseconds interval between each connection, randomized")
-	auth := flag.String("auth", "", "auth_token for creating channel")
+	host := flag.String("host", "localhost", "the target server host")
+	ports := flag.String("ports", "8080:8081", "the http port and device port")
+	fields := flag.String("fields", "temperature:float", "fields that are used for bench test. Format: 'field1:type1,field2:type2'")
+	user := flag.String("user", "root", "username for authenticating octopus")
+	passwd := flag.String("passwd", "waterISwide", "passwd for authenticating octopus")
+
+	c := flag.Int("c", 1000, "number of concurrent clients")
+	p := flag.Int("p", 100, "number of ping messages to send")
+	m := flag.Int("m", 50, "number of payload messages to send")
+	r := flag.Duration("r", 15*time.Second, "wait time for reading messages")
+	w := flag.Duration("w", 2*time.Second, "wait time for writing messages")
+	i := flag.Int("i", 5000, "wait milliseconds interval between each sends in client, randomized")
+	I := flag.Int("I", 1000, "wait milliseconds interval between each connection, randomized")
 
 	flag.Parse()
 
 	runtime.GOMAXPROCS(runtime.NumCPU())
 
-	//create a channel for testing
-	url := fmt.Sprintf("http://%s:%s/channels", *h, *p)
-	fieldDefs := strings.Split(*fs, ",")
-	fields := make(map[string]string)
+	_ports := strings.Split(*ports, ":")
+	if len(_ports) != 2 {
+		log.Fatalln("Invalid ports format, expecting <http port>:<device port>.")
+	}
+	httpPort := _ports[0]
+	devicePort := _ports[1]
+
+	log.Println("Login the octopus and get the auth token...")
+	url := fmt.Sprintf("http://%s:%s/login", *host, httpPort)
+	req := gorequest.New()
+	response, bodyBytes, errs := req.Get(url).SetBasicAuth(*user, *passwd).EndBytes()
+	if len(errs) > 0 {
+		log.Fatalln(errs[0].Error())
+	}
+	if response.StatusCode != 200 {
+		log.Fatalln("Unable to authenticate to Octopus. Please check the user/passwd pair.")
+	}
+	var loggedIn map[string]string
+	err := json.Unmarshal(bodyBytes, &loggedIn)
+	if err != nil {
+		log.Fatalln("Unable to get auth response")
+	}
+	auth := loggedIn["auth_token"]
+	if len(auth) > 0 {
+		log.Println("Successfully logged in.")
+	} else {
+		log.Fatalln("Unable to get auth token, please check the server log.")
+	}
+
+	log.Println("Creating a channel for testing...")
+	chanName := fmt.Sprintf("bench_channel_%d", time.Now().Unix())
+	token := "123456789"
+	url = fmt.Sprintf("http://%s:%s/channels", *host, httpPort)
+	fieldDefs := strings.Split(*fields, ",")
+	fieldMap := make(map[string]string)
 	for _, def := range fieldDefs {
 		pair := strings.Split(def, ":")
-		fields[pair[0]] = pair[1]
+		fieldMap[pair[0]] = pair[1]
 	}
-	body := map[string]interface{}{
-		"name":          *ch,
+	reqbody := map[string]interface{}{
+		"name":          chanName,
 		"description":   "bench test channel",
-		"fields":        fields,
-		"access_tokens": []string{*tk},
+		"fields":        fieldMap,
+		"access_tokens": []string{token},
 	}
-	asBytes, err := json.Marshal(body)
-	PanicIfErr(err)
-	req := gorequest.New()
+	asBytes, err := json.Marshal(reqbody)
+	if err != nil {
+		log.Fatalln(err.Error())
+	}
 
-	_, bodyBytes, errs := req.Post(url).Set("AuthToken", *auth).
+	req = gorequest.New()
+	response, bodyBytes, errs = req.Post(url).Set("AuthToken", auth).
 		Send(string(asBytes)).EndBytes()
 	if len(errs) > 0 {
-		PanicIfErr(errs[0])
+		log.Fatalln(errs[0].Error())
+	}
+	if response.StatusCode != 201 {
+		log.Fatalln("Unable to create test channel. Please check server log.")
 	}
 
-	var created map[string]interface{}
-	json.Unmarshal(bodyBytes, &created)
-	chId := created["id"].(string)
+	var created map[string]string
+	err = json.Unmarshal(bodyBytes, &created)
+	if err != nil {
+		log.Fatalln("Unable to get channel creation response")
+	}
+	chId := created["id"]
+	if len(chId) > 0 {
+		log.Println("Successfully created channel.")
+	} else {
+		log.Fatalln("Unable to get created channel Id. Please check server log.")
+	}
 
-	//start clients
-	clients := make([]*WsClient, *n)
+	log.Println("Starting clients...")
+	clients := make([]*WsClient, *c)
 	var wg sync.WaitGroup
-	wg.Add(*n)
+	wg.Add(*c)
 
-	for i := 0; i < *n; i++ {
-		time.Sleep(time.Duration(rand.Intn(*citv)) * time.Millisecond)
+	for _i := 0; _i < *c; _i++ {
+		time.Sleep(time.Duration(rand.Intn(*I)) * time.Millisecond)
 		go func(idx int) {
 			defer wg.Done()
 			c := &WsClient{
-				Server:      fmt.Sprintf("%s:%s", *h, *w),
+				Server:      fmt.Sprintf("%s:%s", *host, devicePort),
 				ChannelId:   chId,
 				DeviceId:    fmt.Sprintf("device-%d", idx),
-				AccessToken: *tk,
-				NPing:       *np,
-				NMessage:    *nm,
-				RWait:       *rw,
-				WWait:       *ww,
-				Itv:         *itv,
+				AccessToken: token,
+				NPing:       *p,
+				NMessage:    *m,
+				RWait:       *r,
+				WWait:       *w,
+				Itv:         *i,
 				ch:          make(chan struct{}),
-				fields:      fields,
+				fields:      fieldMap,
 			}
 
 			clients[idx] = c
 			c.StartTest()
-		}(i)
+		}(_i)
 	}
 
+	log.Println("Waiting for clients to complete...")
 	wg.Wait()
 
-	//collecting test results
+	log.Println("collecting test results...")
 	report := make(map[string]interface{})
-	report["total_clients"] = *n
+	report["total_clients"] = *c
 
 	var connErrs int
 	var pingErrs int
@@ -111,20 +156,20 @@ func main() {
 	var msgSent int
 	var pingSent int
 
-	for _, c := range clients {
-		pings += c.NPing
-		msgs += c.NMessage
-		pongs += c.Pongs
-		msgErrs += c.MessageErr
-		pingErrs += c.PingErr
-		msgSent += c.MessageSent
-		pingSent += c.PingSent
+	for _, cli := range clients {
+		pings += cli.NPing
+		msgs += cli.NMessage
+		pongs += cli.Pongs
+		msgErrs += cli.MessageErr
+		pingErrs += cli.PingErr
+		msgSent += cli.MessageSent
+		pingSent += cli.PingSent
 
-		if c.ConnErr != nil {
+		if cli.ConnErr != nil {
 			connErrs += 1
 		}
 
-		if c.MessageCloseErr != nil {
+		if cli.MessageCloseErr != nil {
 			closeErrs += 1
 		}
 	}
@@ -139,8 +184,19 @@ func main() {
 	report["total_msg_sent"] = msgSent
 	report["total_ping_sent"] = pingSent
 
+	log.Println("Deleting test channel...")
+	req = gorequest.New()
+	url = fmt.Sprintf("http://%s:%s/channels/%s", *host, httpPort, chId)
+	_, _, errs = req.Delete(url).Set("AuthToken", auth).End()
+	if len(errs) > 0 {
+		log.Fatalln(errs[0].Error())
+	}
+	log.Println("Successfully deleted test channel.")
+
+	fmt.Println("******************************************************************")
 	js, _ := json.MarshalIndent(report, "", "  ")
 	fmt.Println(string(js))
+	fmt.Println("******************************************************************")
 }
 
 type WsClient struct {
