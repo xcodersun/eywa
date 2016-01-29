@@ -6,7 +6,7 @@ import (
 )
 
 type shard struct {
-	cm     *ConnectionManager
+	wscm     *WebSocketConnectionManager
 	conns  map[string]*Connection
 	closed bool
 	sync.Mutex
@@ -47,7 +47,7 @@ func (sh *shard) register(c *Connection) error {
 		return errors.New("shard is closed")
 	}
 
-	if err := sh.cm.Registry.Register(c); err != nil {
+	if err := sh.wscm.Registry.Register(c); err != nil {
 		return err
 	}
 
@@ -56,7 +56,7 @@ func (sh *shard) register(c *Connection) error {
 }
 
 func (sh *shard) updateRegistry(c *Connection) error {
-	return sh.cm.Registry.UpdateRegistry(c)
+	return sh.wscm.Registry.UpdateRegistry(c)
 }
 
 func (sh *shard) unregister(c *Connection) error {
@@ -64,7 +64,7 @@ func (sh *shard) unregister(c *Connection) error {
 	defer sh.Unlock()
 
 	delete(sh.conns, c.identifier)
-	return sh.cm.Registry.Unregister(c)
+	return sh.wscm.Registry.Unregister(c)
 }
 
 func (sh *shard) findConnection(id string) (*Connection, bool) {

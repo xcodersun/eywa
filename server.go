@@ -78,7 +78,7 @@ func main() {
 	})
 
 	graceful.PostHook(func() {
-		connections.CM.Close()
+		connections.WSCM.Close()
 		Logger.Info("Waiting for websockets to drain...")
 		time.Sleep(3 * time.Second)
 		Logger.Info("Connection Manager closed.")

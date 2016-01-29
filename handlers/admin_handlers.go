@@ -12,7 +12,7 @@ import (
 )
 
 func ConnectionCounts(c web.C, w http.ResponseWriter, r *http.Request) {
-	fmt.Fprint(w, strconv.Itoa(CM.Count()))
+	fmt.Fprint(w, strconv.Itoa(WSCM.Count()))
 }
 
 func GetConfig(c web.C, w http.ResponseWriter, r *http.Request) {
