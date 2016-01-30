@@ -55,7 +55,7 @@ func WsHandler(c web.C, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = connections.WSCM.NewWebSocketConnection(deviceId, ws, h, map[string]interface{}{
+	_, err = connections.WSCM.NewConnection(deviceId, ws, h, map[string]interface{}{
 		"channel":  ch,
 		"metadata": QueryToMap(r.URL.Query()),
 	})

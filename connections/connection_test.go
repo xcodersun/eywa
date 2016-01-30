@@ -139,7 +139,7 @@ func TestConnections(t *testing.T) {
 	Convey("errors out closed connection", t, func() {
 		wscm, _ := NewWebSocketConnectionManager()
 		defer wscm.Close()
-		conn, _ := wscm.NewWebSocketConnection("test", &fakeWsConn{}, h, meta)
+		conn, _ := wscm.NewConnection("test", &fakeWsConn{}, h, meta)
 		So(wscm.Count(), ShouldEqual, 1)
 
 		conn.Close()
@@ -154,7 +154,7 @@ func TestConnections(t *testing.T) {
 		wscm, _ := NewWebSocketConnectionManager()
 		defer wscm.Close()
 		ws := &fakeWsConn{writeErr: errors.New("write err")}
-		conn, _ := wscm.NewWebSocketConnection("test write err", ws, h, meta)
+		conn, _ := wscm.NewConnection("test write err", ws, h, meta)
 		So(wscm.Count(), ShouldEqual, 1)
 
 		err := conn.SendAsyncRequest([]byte("async"))
@@ -165,7 +165,7 @@ func TestConnections(t *testing.T) {
 		So(wscm.Count(), ShouldEqual, 0)
 
 		ws = &fakeWsConn{readMessageErr: errors.New("read err")}
-		conn, _ = wscm.NewWebSocketConnection("test read err", ws, h, meta)
+		conn, _ = wscm.NewConnection("test read err", ws, h, meta)
 
 		conn.Wait()
 		So(ws.closed, ShouldBeTrue)
@@ -175,7 +175,7 @@ func TestConnections(t *testing.T) {
 	Convey("successfully sends async messages", t, func() {
 		wscm, _ := NewWebSocketConnectionManager()
 		defer wscm.Close()
-		conn, _ := wscm.NewWebSocketConnection("test", &fakeWsConn{}, h, meta)
+		conn, _ := wscm.NewConnection("test", &fakeWsConn{}, h, meta)
 		So(wscm.Count(), ShouldEqual, 1)
 
 		err := conn.SendAsyncRequest([]byte("async"))
@@ -185,7 +185,7 @@ func TestConnections(t *testing.T) {
 	Convey("successfully sends sync messages", t, func() {
 		wscm, _ := NewWebSocketConnectionManager()
 		defer wscm.Close()
-		conn, _ := wscm.NewWebSocketConnection("test", &fakeWsConn{}, h, meta)
+		conn, _ := wscm.NewConnection("test", &fakeWsConn{}, h, meta)
 		So(wscm.Count(), ShouldEqual, 1)
 
 		msg, err := conn.SendSyncRequest([]byte("sync"))

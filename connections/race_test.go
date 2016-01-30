@@ -40,7 +40,7 @@ func TestRaceConditions(t *testing.T) {
 		wscm, _ := NewWebSocketConnectionManager()
 		defer wscm.Close()
 		ws := &fakeWsConn{randomErr: false}
-		conn, _ := wscm.NewWebSocketConnection("test", ws, h, meta)
+		conn, _ := wscm.NewConnection("test", ws, h, meta)
 
 		concurrency := 1000
 		var wg sync.WaitGroup
@@ -85,7 +85,7 @@ func TestRaceConditions(t *testing.T) {
 	Convey("burst various sends for race condition test, without wg", t, func() {
 		wscm, _ := NewWebSocketConnectionManager()
 		ws := &fakeWsConn{randomErr: false}
-		conn, _ := wscm.NewWebSocketConnection("test", ws, h, meta)
+		conn, _ := wscm.NewConnection("test", ws, h, meta)
 
 		concurrency := 1000
 		errs := make([]error, concurrency)
@@ -125,7 +125,7 @@ func TestRaceConditions(t *testing.T) {
 		wg.Add(concurrency)
 		for i := 0; i < concurrency; i++ {
 			go func(iter int) {
-				wscm.NewWebSocketConnection("test"+strconv.Itoa(iter), wss[iter], h, meta)
+				wscm.NewConnection("test"+strconv.Itoa(iter), wss[iter], h, meta)
 				wg.Done()
 			}(i)
 		}
@@ -155,7 +155,7 @@ func TestRaceConditions(t *testing.T) {
 		for i := 0; i < concurrency; i++ {
 			go func(iter int) {
 				time.Sleep(time.Duration(rand.Intn(500)) * time.Millisecond)
-				conn, err := wscm.NewWebSocketConnection("test"+strconv.Itoa(iter), wss[iter], h, meta)
+				conn, err := wscm.NewConnection("test"+strconv.Itoa(iter), wss[iter], h, meta)
 				conns[iter] = conn
 				errs[iter] = err
 				switch rand.Intn(3) {

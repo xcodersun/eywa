@@ -35,7 +35,7 @@ func TestConnectionManager(t *testing.T) {
 	Convey("creates/registers/finds new connections.", t, func() {
 		wscm, _ := NewWebSocketConnectionManager()
 		defer wscm.Close()
-		conn, _ := wscm.NewWebSocketConnection("test", &fakeWsConn{}, h, meta) // this connection should be started and registered
+		conn, _ := wscm.NewConnection("test", &fakeWsConn{}, h, meta) // this connection should be started and registered
 		So(wscm.Count(), ShouldEqual, 1)
 
 		// the fake ReadMessage() always return empty string, which will still keep updating the
@@ -45,7 +45,7 @@ func TestConnectionManager(t *testing.T) {
 		t2 := conn.LastPingedAt()
 		So(t1.Equal(t2), ShouldBeFalse)
 
-		_, found := wscm.FindWebSocketConnection("test")
+		_, found := wscm.FindConnection("test")
 		So(found, ShouldBeTrue)
 	})
 
@@ -54,7 +54,7 @@ func TestConnectionManager(t *testing.T) {
 		wscm.Close()
 
 		ws := &fakeWsConn{}
-		_, err := wscm.NewWebSocketConnection("test", ws, h, meta)
+		_, err := wscm.NewConnection("test", ws, h, meta)
 		So(ws.closed, ShouldBeTrue)
 		So(err, ShouldNotBeNil)
 		So(wscm.Count(), ShouldEqual, 0)

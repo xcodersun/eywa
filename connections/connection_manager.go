@@ -11,7 +11,7 @@ import (
 
 var WSCM *WebSocketConnectionManager
 
-func InitializeCM() error {
+func InitializeWSCM() error {
 	wscm, err := NewWebSocketConnectionManager()
 	WSCM = wscm
 	return err
@@ -58,7 +58,7 @@ func (wscm *WebSocketConnectionManager) Close() error {
 	return wscm.Registry.Close()
 }
 
-func (wscm *WebSocketConnectionManager) NewWebSocketConnection(id string, ws wsConn, h MessageHandler, meta map[string]interface{}) (*Connection, error) {
+func (wscm *WebSocketConnectionManager) NewConnection(id string, ws wsConn, h MessageHandler, meta map[string]interface{}) (*Connection, error) {
 	hasher := murmur3.New32()
 	hasher.Write([]byte(id))
 	shard := wscm.shards[hasher.Sum32()%uint32(len(wscm.shards))]
@@ -100,7 +100,7 @@ func (wscm *WebSocketConnectionManager) NewWebSocketConnection(id string, ws wsC
 	return conn, nil
 }
 
-func (wscm *WebSocketConnectionManager) FindWebSocketConnection(id string) (*Connection, bool) {
+func (wscm *WebSocketConnectionManager) FindConnection(id string) (*Connection, bool) {
 	hasher := murmur3.New32()
 	hasher.Write([]byte(id))
 	shard := wscm.shards[hasher.Sum32()%uint32(len(wscm.shards))]

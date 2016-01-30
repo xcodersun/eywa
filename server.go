@@ -116,7 +116,7 @@ func Initialize() {
 	Logger.Debug(string(p))
 	PanicIfErr(models.InitializeDB())
 	PanicIfErr(models.InitializeIndexClient())
-	PanicIfErr(connections.InitializeCM())
+	PanicIfErr(connections.InitializeWSCM())
 	handlers.InitWsUpgrader()
 }
 
