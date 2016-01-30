@@ -18,7 +18,7 @@ import (
 	"time"
 )
 
-// go run tasks/benchmark.go  -host=198.199.117.56 -ports=8080:8081 -user=root -passwd=waterISwide -fields=temperature:float -c=1 -p=1 -m=1
+// ulimit -n 1048576; go run tasks/benchmark.go  -host=<host> -ports=8080:8081 -user=root -passwd=waterISwide -fields=temperature:float -c=20000 -p=5 -m=5 -r=300s -w=10s -i=20000 -I=3 > bench.log 2>&1 &
 
 func main() {
 	host := flag.String("host", "localhost", "the target server host")
@@ -69,7 +69,7 @@ func main() {
 	}
 
 	log.Println("Creating a channel for testing...")
-	chanName := fmt.Sprintf("bench_channel_%d", time.Now().Unix())
+	chanName := fmt.Sprintf("bench_channel_%d", time.Now().UnixNano())
 	token := "123456789"
 	url = fmt.Sprintf("http://%s:%s/channels", *host, httpPort)
 	fieldDefs := strings.Split(*fields, ",")
@@ -123,7 +123,7 @@ func main() {
 			c := &WsClient{
 				Server:      fmt.Sprintf("%s:%s", *host, devicePort),
 				ChannelId:   chId,
-				DeviceId:    fmt.Sprintf("device-%d", idx),
+				DeviceId:    fmt.Sprintf("device-%d-%d", idx, time.Now().UnixNano()),
 				AccessToken: token,
 				NPing:       *p,
 				NMessage:    *m,
