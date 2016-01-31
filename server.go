@@ -78,7 +78,7 @@ func main() {
 	})
 
 	graceful.PostHook(func() {
-		connections.CM.Close()
+		connections.WSCM.Close()
 		Logger.Info("Waiting for websockets to drain...")
 		time.Sleep(3 * time.Second)
 		Logger.Info("Connection Manager closed.")
@@ -116,7 +116,7 @@ func Initialize() {
 	Logger.Debug(string(p))
 	PanicIfErr(models.InitializeDB())
 	PanicIfErr(models.InitializeIndexClient())
-	PanicIfErr(connections.InitializeCM())
+	PanicIfErr(connections.InitializeWSCM())
 	handlers.InitWsUpgrader()
 }
 

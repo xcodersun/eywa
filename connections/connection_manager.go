@@ -9,59 +9,59 @@ import (
 	"time"
 )
 
-var CM *ConnectionManager
+var WSCM *WebSocketConnectionManager
 
-func InitializeCM() error {
-	cm, err := NewConnectionManager()
-	CM = cm
+func InitializeWSCM() error {
+	wscm, err := NewWebSocketConnectionManager()
+	WSCM = wscm
 	return err
 }
 
-func NewConnectionManager() (*ConnectionManager, error) {
-	cm := &ConnectionManager{}
+func NewWebSocketConnectionManager() (*WebSocketConnectionManager, error) {
+	wscm := &WebSocketConnectionManager{}
 	switch Config().Connections.Registry {
 	case "memory":
-		cm.Registry = &InMemoryRegistry{}
+		wscm.Registry = &InMemoryRegistry{}
 	default:
-		cm.Registry = &InMemoryRegistry{}
+		wscm.Registry = &InMemoryRegistry{}
 	}
-	if err := cm.Registry.Ping(); err != nil {
+	if err := wscm.Registry.Ping(); err != nil {
 		return nil, err
 	}
 
-	cm.shards = make([]*shard, Config().Connections.NShards)
+	wscm.shards = make([]*shard, Config().Connections.NShards)
 	for i := 0; i < Config().Connections.NShards; i++ {
-		cm.shards[i] = &shard{
-			cm:    cm,
+		wscm.shards[i] = &shard{
+			wscm:    wscm,
 			conns: make(map[string]*Connection, Config().Connections.InitShardSize),
 		}
 	}
 
-	return cm, nil
+	return wscm, nil
 }
 
-type ConnectionManager struct {
+type WebSocketConnectionManager struct {
 	shards   []*shard
 	Registry Registry
 }
 
-func (cm *ConnectionManager) Close() error {
+func (wscm *WebSocketConnectionManager) Close() error {
 	var wg sync.WaitGroup
-	wg.Add(len(cm.shards))
-	for _, sh := range cm.shards {
+	wg.Add(len(wscm.shards))
+	for _, sh := range wscm.shards {
 		go func(s *shard) {
 			s.Close()
 			wg.Done()
 		}(sh)
 	}
 	wg.Wait()
-	return cm.Registry.Close()
+	return wscm.Registry.Close()
 }
 
-func (cm *ConnectionManager) NewConnection(id string, ws wsConn, h MessageHandler, meta map[string]interface{}) (*Connection, error) {
+func (wscm *WebSocketConnectionManager) NewConnection(id string, ws wsConn, h MessageHandler, meta map[string]interface{}) (*Connection, error) {
 	hasher := murmur3.New32()
 	hasher.Write([]byte(id))
-	shard := cm.shards[hasher.Sum32()%uint32(len(cm.shards))]
+	shard := wscm.shards[hasher.Sum32()%uint32(len(wscm.shards))]
 
 	t := time.Now()
 	conn := &Connection{
@@ -100,16 +100,16 @@ func (cm *ConnectionManager) NewConnection(id string, ws wsConn, h MessageHandle
 	return conn, nil
 }
 
-func (cm *ConnectionManager) FindConnection(id string) (*Connection, bool) {
+func (wscm *WebSocketConnectionManager) FindConnection(id string) (*Connection, bool) {
 	hasher := murmur3.New32()
 	hasher.Write([]byte(id))
-	shard := cm.shards[hasher.Sum32()%uint32(len(cm.shards))]
+	shard := wscm.shards[hasher.Sum32()%uint32(len(wscm.shards))]
 	return shard.findConnection(id)
 }
 
-func (cm *ConnectionManager) Count() int {
+func (wscm *WebSocketConnectionManager) Count() int {
 	sum := 0
-	for _, sh := range cm.shards {
+	for _, sh := range wscm.shards {
 		sum += sh.Count()
 	}
 	return sum

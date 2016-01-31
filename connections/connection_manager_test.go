@@ -33,10 +33,10 @@ func TestConnectionManager(t *testing.T) {
 	meta := make(map[string]interface{})
 
 	Convey("creates/registers/finds new connections.", t, func() {
-		cm, _ := NewConnectionManager()
-		defer cm.Close()
-		conn, _ := cm.NewConnection("test", &fakeWsConn{}, h, meta) // this connection should be started and registered
-		So(cm.Count(), ShouldEqual, 1)
+		wscm, _ := NewWebSocketConnectionManager()
+		defer wscm.Close()
+		conn, _ := wscm.NewConnection("test", &fakeWsConn{}, h, meta) // this connection should be started and registered
+		So(wscm.Count(), ShouldEqual, 1)
 
 		// the fake ReadMessage() always return empty string, which will still keep updating the
 		// pingedAt timestamp
@@ -45,18 +45,18 @@ func TestConnectionManager(t *testing.T) {
 		t2 := conn.LastPingedAt()
 		So(t1.Equal(t2), ShouldBeFalse)
 
-		_, found := cm.FindConnection("test")
+		_, found := wscm.FindConnection("test")
 		So(found, ShouldBeTrue)
 	})
 
 	Convey("disallows creating/registering new connections on closed CM.", t, func() {
-		cm, _ := NewConnectionManager()
-		cm.Close()
+		wscm, _ := NewWebSocketConnectionManager()
+		wscm.Close()
 
 		ws := &fakeWsConn{}
-		_, err := cm.NewConnection("test", ws, h, meta)
+		_, err := wscm.NewConnection("test", ws, h, meta)
 		So(ws.closed, ShouldBeTrue)
 		So(err, ShouldNotBeNil)
-		So(cm.Count(), ShouldEqual, 0)
+		So(wscm.Count(), ShouldEqual, 0)
 	})
 }
