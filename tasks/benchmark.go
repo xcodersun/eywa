@@ -10,15 +10,27 @@ import (
 	. "github.com/vivowares/octopus/utils"
 	"log"
 	"math/rand"
+	"net"
 	"net/http"
 	"net/url"
 	"runtime"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
 // ulimit -n 1048576; go run tasks/benchmark.go  -host=<host> -ports=8080:8081 -user=root -passwd=waterISwide -fields=temperature:float -c=20000 -p=5 -m=5 -r=300s -w=10s -i=20000 -I=3 > bench.log 2>&1 &
+
+type Dialer struct {
+	counter uint64
+	dialers []*websocket.Dialer
+}
+
+func (d *Dialer) Dial(urlStr string, requestHeader http.Header) (*websocket.Conn, *http.Response, error) {
+	c := atomic.AddUint64(&d.counter, 1)
+	return d.dialers[c%uint64(len(d.dialers))].Dial(urlStr, requestHeader)
+}
 
 func main() {
 	host := flag.String("host", "localhost", "the target server host")
@@ -34,10 +46,41 @@ func main() {
 	w := flag.Duration("w", 2*time.Second, "wait time for writing messages")
 	i := flag.Int("i", 5000, "wait milliseconds interval between each sends in client, randomized")
 	I := flag.Int("I", 1000, "wait milliseconds interval between each connection, randomized")
+	b := flag.String("b", "", "ip addresses used to bind clients, defaults to localhost")
 
 	flag.Parse()
 
 	runtime.GOMAXPROCS(runtime.NumCPU())
+
+	dialers := make([]*websocket.Dialer, 0)
+	if len(*b) == 0 {
+		dialers = append(dialers, websocket.DefaultDialer)
+	} else {
+		_ips := strings.Split(*b, ",")
+		for _, _ip := range _ips {
+			ip, err := net.ResolveIPAddr("ip4", strings.Trim(_ip, " "))
+			if err != nil {
+				log.Fatalf("%s is not a valid IPv4 address.\n", _ip)
+			}
+
+			localTCPAddr := &net.TCPAddr{
+				IP: ip.IP,
+			}
+
+			dialers = append(dialers, &websocket.Dialer{
+				Proxy: http.ProxyFromEnvironment,
+				NetDial: (&net.Dialer{
+					LocalAddr: localTCPAddr,
+				}).Dial,
+			})
+		}
+	}
+
+	if len(dialers) == 0 {
+		log.Fatalln("none of the localAddr's are valid")
+	}
+
+	dialer := &Dialer{dialers: dialers}
 
 	_ports := strings.Split(*ports, ":")
 	if len(_ports) != 2 {
@@ -121,6 +164,7 @@ func main() {
 		go func(idx int) {
 			defer wg.Done()
 			c := &WsClient{
+				Dialer:      dialer,
 				Server:      fmt.Sprintf("%s:%s", *host, devicePort),
 				ChannelId:   chId,
 				DeviceId:    fmt.Sprintf("device-%d-%d", idx, time.Now().UnixNano()),
@@ -200,6 +244,7 @@ func main() {
 }
 
 type WsClient struct {
+	Dialer      *Dialer
 	Server      string
 	ChannelId   string
 	DeviceId    string
@@ -229,7 +274,7 @@ func (c *WsClient) StartTest() {
 	u := url.URL{Scheme: "ws", Host: c.Server, Path: p}
 	h := map[string][]string{"AccessToken": []string{c.AccessToken}}
 
-	cli, resp, err := websocket.DefaultDialer.Dial(u.String(), h)
+	cli, resp, err := c.Dialer.Dial(u.String(), h)
 	c.ConnErr = err
 	c.ConnResp = resp
 	c.Cli = cli
