@@ -47,6 +47,7 @@ func main() {
 	i := flag.Int("i", 5000, "wait milliseconds interval between each sends in client, randomized")
 	I := flag.Int("I", 1000, "wait milliseconds interval between each connection, randomized")
 	b := flag.String("b", "", "ip addresses used to bind clients, defaults to localhost")
+	s := flag.Duration("s", 10*time.Second, "the sleep time after messages are all set for each client")
 
 	flag.Parse()
 
@@ -150,6 +151,18 @@ func main() {
 	chId := created["id"]
 	if len(chId) > 0 {
 		log.Println("Successfully created channel.")
+
+		defer func() {
+			log.Println("Deleting test channel...")
+			req = gorequest.New()
+			url = fmt.Sprintf("http://%s:%s/channels/%s", *host, httpPort, chId)
+			_, _, errs = req.Delete(url).Set("AuthToken", auth).End()
+			if len(errs) > 0 {
+				log.Fatalln(errs[0].Error())
+			}
+			log.Println("Successfully deleted test channel.")
+		}()
+
 	} else {
 		log.Fatalln("Unable to get created channel Id. Please check server log.")
 	}
@@ -176,6 +189,7 @@ func main() {
 				Itv:         *i,
 				ch:          make(chan struct{}),
 				fields:      fieldMap,
+				Sleep:       *s,
 			}
 
 			clients[idx] = c
@@ -228,15 +242,6 @@ func main() {
 	report["total_msg_sent"] = msgSent
 	report["total_ping_sent"] = pingSent
 
-	log.Println("Deleting test channel...")
-	req = gorequest.New()
-	url = fmt.Sprintf("http://%s:%s/channels/%s", *host, httpPort, chId)
-	_, _, errs = req.Delete(url).Set("AuthToken", auth).End()
-	if len(errs) > 0 {
-		log.Fatalln(errs[0].Error())
-	}
-	log.Println("Successfully deleted test channel.")
-
 	fmt.Println("******************************************************************")
 	js, _ := json.MarshalIndent(report, "", "  ")
 	fmt.Println(string(js))
@@ -267,9 +272,14 @@ type WsClient struct {
 	MessageCloseErr error
 	MessageSent     int
 	PingSent        int
+	Sleep           time.Duration
 }
 
 func (c *WsClient) StartTest() {
+	defer func() {
+		log.Printf("devices %s completed.\n", c.DeviceId)
+	}()
+
 	p := fmt.Sprintf("/ws/channels/%s/devices/%s", c.ChannelId, c.DeviceId)
 	u := url.URL{Scheme: "ws", Host: c.Server, Path: p}
 	h := map[string][]string{"AccessToken": []string{c.AccessToken}}
@@ -280,6 +290,7 @@ func (c *WsClient) StartTest() {
 	c.Cli = cli
 
 	if err != nil {
+		log.Println(err.Error())
 		return
 	}
 
@@ -369,6 +380,8 @@ func (c *WsClient) StartTest() {
 	}()
 
 	c.wg.Wait()
+
+	time.Sleep(c.Sleep)
 
 	cli.SetWriteDeadline(time.Now().Add(c.WWait))
 	err = cli.WriteMessage(websocket.CloseMessage, []byte{})
