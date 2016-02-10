@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/gorilla/websocket"
 	. "github.com/vivowares/octopus/configs"
+	. "github.com/vivowares/octopus/utils"
 	"io"
 	"net"
 	"strconv"
@@ -289,6 +290,7 @@ func (c *Connection) Close() {
 		close(c.rch)
 		c.closewch <- true
 		c.shard.unregister(c)
+		Logger.Debug(fmt.Sprintf("connection: %s closed", c.Identifier()))
 	})
 }
 
@@ -300,4 +302,5 @@ func (c *Connection) Start() {
 	c.wg.Add(2)
 	go c.rListen()
 	go c.wListen()
+	Logger.Debug(fmt.Sprintf("connection: %s started", c.Identifier()))
 }

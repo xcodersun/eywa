@@ -1,9 +1,11 @@
 package connections
 
 import (
+	"fmt"
 	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/gorilla/websocket"
 	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/spaolacci/murmur3"
 	. "github.com/vivowares/octopus/configs"
+	. "github.com/vivowares/octopus/utils"
 	"strconv"
 	"sync"
 	"time"
@@ -32,7 +34,7 @@ func NewWebSocketConnectionManager() (*WebSocketConnectionManager, error) {
 	wscm.shards = make([]*shard, Config().Connections.NShards)
 	for i := 0; i < Config().Connections.NShards; i++ {
 		wscm.shards[i] = &shard{
-			wscm:    wscm,
+			wscm:  wscm,
 			conns: make(map[string]*Connection, Config().Connections.InitShardSize),
 		}
 	}
@@ -84,6 +86,7 @@ func (wscm *WebSocketConnectionManager) NewConnection(id string, ws wsConn, h Me
 	ws.SetPingHandler(func(payload string) error {
 		conn.lastPingedAt = time.Now()
 		conn.shard.updateRegistry(conn)
+		Logger.Debug(fmt.Sprintf("connection: %s pinged", id))
 		return ws.WriteControl(
 			websocket.PongMessage,
 			[]byte(strconv.FormatInt(time.Now().UnixNano()/int64(time.Millisecond), 10)),
