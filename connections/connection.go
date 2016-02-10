@@ -291,6 +291,7 @@ func (c *Connection) Close() {
 		c.closewch <- true
 		c.shard.unregister(c)
 		Logger.Debug(fmt.Sprintf("connection: %s closed", c.Identifier()))
+		c.h(c, &Message{MessageType: CloseMessage}, nil)
 	})
 }
 
@@ -303,4 +304,5 @@ func (c *Connection) Start() {
 	go c.rListen()
 	go c.wListen()
 	Logger.Debug(fmt.Sprintf("connection: %s started", c.Identifier()))
+	c.h(c, &Message{MessageType: StartMessage}, nil)
 }

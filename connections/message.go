@@ -11,7 +11,10 @@ const (
 	AsyncRequestMessage = 1
 	SyncRequestMessage  = 2
 	ResponseMessage     = 4
-	CloseMessage        = 8
+
+	// these two messages are only used for connection states internally
+	StartMessage = 0
+	CloseMessage = 8
 )
 
 type Message struct {
