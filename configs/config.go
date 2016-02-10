@@ -79,6 +79,7 @@ func Reload() error {
 	}
 
 	indexConfig := &IndexConf{
+		Disable:          viper.GetBool("indices.disable"),
 		Host:             viper.GetString("indices.host"),
 		Port:             viper.GetInt("indices.port"),
 		NumberOfShards:   viper.GetInt("indices.number_of_shards"),
@@ -180,6 +181,7 @@ type DbConf struct {
 }
 
 type IndexConf struct {
+	Disable          bool          `json:"disable"`
 	Host             string        `json:"host"`
 	Port             int           `json:"port"`
 	NumberOfShards   int           `json:"number_of_shards"`

@@ -77,6 +77,7 @@ type Connection struct {
 	ws           wsConn
 	createdAt    time.Time
 	lastPingedAt time.Time
+	closedAt     time.Time
 	identifier   string
 	h            MessageHandler
 	Metadata     map[string]interface{}
@@ -262,7 +263,6 @@ func (c *Connection) rListen() {
 					return
 				}
 			} else if message.MessageType == CloseMessage {
-				c.h(c, message, nil)
 				c.Close()
 				return
 			} else if message.MessageType == ResponseMessage {
@@ -284,6 +284,7 @@ func (c *Connection) rListen() {
 func (c *Connection) Close() {
 	c.closeOnce.Do(func() {
 		c.closed = true
+		c.closedAt = time.Now()
 		close(c.wch)
 		close(c.rch)
 		c.closewch <- true

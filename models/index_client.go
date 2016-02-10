@@ -16,6 +16,10 @@ func CloseIndexClient() error {
 }
 
 func InitializeIndexClient() error {
+	if Config().Indices.Disable {
+		return nil
+	}
+
 	url := fmt.Sprintf("http://%s:%d", Config().Indices.Host, Config().Indices.Port)
 	client, err := NewClient(
 		SetURL(url),
