@@ -17,7 +17,7 @@ var IndexType = "messages"
 
 type Point struct {
 	ch   *Channel
-	conn *Connection
+	conn Connection
 	msg  *Message
 
 	Id        string
@@ -197,7 +197,7 @@ func (p *Point) Metadata(meta map[string]string) {
 	}
 }
 
-func NewPoint(id string, ch *Channel, conn *Connection, m *Message) (*Point, error) {
+func NewPoint(id string, ch *Channel, conn Connection, m *Message) (*Point, error) {
 	p := &Point{
 		ch:   ch,
 		conn: conn,

@@ -87,21 +87,21 @@ func Reload() error {
 		TTL:              viper.GetDuration("indices.ttl"),
 	}
 
-	connConfig := &ConnectionConf{
-		Registry:         viper.GetString("connections.registry"),
-		NShards:          viper.GetInt("connections.nshards"),
-		InitShardSize:    viper.GetInt("connections.init_shard_size"),
-		RequestQueueSize: viper.GetInt("connections.request_queue_size"),
-		Expiry:           viper.GetDuration("connections.expiry"),
-		Timeouts: &ConnectionTimeoutConf{
-			Write:    viper.GetDuration("connections.timeouts.write"),
-			Read:     viper.GetDuration("connections.timeouts.read"),
-			Request:  viper.GetDuration("connections.timeouts.request"),
-			Response: viper.GetDuration("connections.timeouts.response"),
+	wsConnConfig := &WsConnectionConf{
+		Registry:         viper.GetString("ws_connections.registry"),
+		NShards:          viper.GetInt("ws_connections.nshards"),
+		InitShardSize:    viper.GetInt("ws_connections.init_shard_size"),
+		RequestQueueSize: viper.GetInt("ws_connections.request_queue_size"),
+		Expiry:           viper.GetDuration("ws_connections.expiry"),
+		Timeouts: &WsConnectionTimeoutConf{
+			Write:    viper.GetDuration("ws_connections.timeouts.write"),
+			Read:     viper.GetDuration("ws_connections.timeouts.read"),
+			Request:  viper.GetDuration("ws_connections.timeouts.request"),
+			Response: viper.GetDuration("ws_connections.timeouts.response"),
 		},
-		BufferSizes: &ConnectionBufferSizeConf{
-			Write: viper.GetInt("connections.buffer_sizes.write"),
-			Read:  viper.GetInt("connections.buffer_sizes.read"),
+		BufferSizes: &WsConnectionBufferSizeConf{
+			Write: viper.GetInt("ws_connections.buffer_sizes.write"),
+			Read:  viper.GetInt("ws_connections.buffer_sizes.read"),
 		},
 	}
 
@@ -133,12 +133,12 @@ func Reload() error {
 	}
 
 	cfg := &Conf{
-		AutoReload:  viper.GetDuration("auto_reload"),
-		Service:     serviceConfig,
-		Security:    securityConfig,
-		Connections: connConfig,
-		Indices:     indexConfig,
-		Database:    dbConfig,
+		AutoReload:           viper.GetDuration("auto_reload"),
+		Service:              serviceConfig,
+		Security:             securityConfig,
+		WebSocketConnections: wsConnConfig,
+		Indices:              indexConfig,
+		Database:             dbConfig,
 		Logging: &LogsConf{
 			Octopus:  logOctopus,
 			Indices:  logIndices,
@@ -165,13 +165,13 @@ func InitializeConfig(f string) error {
 }
 
 type Conf struct {
-	AutoReload  time.Duration   `json:"auto_reload"`
-	Service     *ServiceConf    `json:"service"`
-	Security    *SecurityConf   `json:"security"`
-	Connections *ConnectionConf `json:"connections"`
-	Indices     *IndexConf      `json:"indices"`
-	Database    *DbConf         `json:"database"`
-	Logging     *LogsConf       `json:"logging"`
+	AutoReload           time.Duration     `json:"auto_reload"`
+	Service              *ServiceConf      `json:"service"`
+	Security             *SecurityConf     `json:"security"`
+	WebSocketConnections *WsConnectionConf `json:"ws_connections"`
+	Indices              *IndexConf        `json:"indices"`
+	Database             *DbConf           `json:"database"`
+	Logging              *LogsConf         `json:"logging"`
 }
 
 type DbConf struct {
@@ -195,24 +195,24 @@ type ServiceConf struct {
 	PidFile  string `json:"pid_file"`
 }
 
-type ConnectionConf struct {
-	Registry         string                    `json:"registry"`
-	NShards          int                       `json:"nshards"`
-	InitShardSize    int                       `json:"init_shard_size"`
-	RequestQueueSize int                       `json:"request_queue_size"`
-	Expiry           time.Duration             `json:"expiry"`
-	Timeouts         *ConnectionTimeoutConf    `json:"timeouts"`
-	BufferSizes      *ConnectionBufferSizeConf `json:"buffer_sizes"`
+type WsConnectionConf struct {
+	Registry         string                      `json:"registry"`
+	NShards          int                         `json:"nshards"`
+	InitShardSize    int                         `json:"init_shard_size"`
+	RequestQueueSize int                         `json:"request_queue_size"`
+	Expiry           time.Duration               `json:"expiry"`
+	Timeouts         *WsConnectionTimeoutConf    `json:"timeouts"`
+	BufferSizes      *WsConnectionBufferSizeConf `json:"buffer_sizes"`
 }
 
-type ConnectionTimeoutConf struct {
+type WsConnectionTimeoutConf struct {
 	Write    time.Duration `json:"write"`
 	Read     time.Duration `json:"read"`
 	Request  time.Duration `json:"request"`
 	Response time.Duration `json:"response"`
 }
 
-type ConnectionBufferSizeConf struct {
+type WsConnectionBufferSizeConf struct {
 	Write int `json:"write"`
 	Read  int `json:"read"`
 }

@@ -10,14 +10,14 @@ import (
 var SupportedMessageHandlers = map[string]*Middleware{"indexer": Indexer}
 
 var Indexer = NewMiddleware("indexer", func(h MessageHandler) MessageHandler {
-	fn := func(c *Connection, m *Message, e error) {
+	fn := func(c Connection, m *Message, e error) {
 		if e == nil {
-			if chItr, found := c.Metadata["channel"]; found {
+			if chItr, found := c.Metadata()["channel"]; found {
 				ch := chItr.(*Channel)
 				id := uuid.NewV1().String()
 				p, err := NewPoint(id, ch, c, m)
 				if err == nil {
-					if meta, found := c.Metadata["metadata"]; found && meta != nil {
+					if meta, found := c.Metadata()["metadata"]; found && meta != nil {
 						p.Metadata(meta.(map[string]string))
 					}
 

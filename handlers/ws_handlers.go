@@ -17,8 +17,8 @@ var upgrader *websocket.Upgrader
 
 func InitWsUpgrader() {
 	upgrader = &websocket.Upgrader{
-		ReadBufferSize:  Config().Connections.BufferSizes.Read,
-		WriteBufferSize: Config().Connections.BufferSizes.Write,
+		ReadBufferSize:  Config().WebSocketConnections.BufferSizes.Read,
+		WriteBufferSize: Config().WebSocketConnections.BufferSizes.Write,
 	}
 }
 
@@ -55,10 +55,11 @@ func WsHandler(c web.C, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = connections.WSCM.NewConnection(deviceId, ws, h, map[string]interface{}{
+	_, err = connections.NewWebSocketConnection(deviceId, ws, h, map[string]interface{}{
 		"channel":  ch,
 		"metadata": QueryToMap(r.URL.Query()),
 	})
+
 	if err != nil {
 		Render.JSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
 	}

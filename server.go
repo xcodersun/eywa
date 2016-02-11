@@ -60,13 +60,13 @@ func main() {
 				":"+strconv.Itoa(configs.Config().Service.WsPort),
 				cert,
 				key,
-				WsRouter(),
+				DeviceRouter(),
 			)
 		} else {
 			Logger.Info(fmt.Sprintf("Connection Manager started listening to port %d", configs.Config().Service.WsPort))
 			graceful.ListenAndServe(
 				":"+strconv.Itoa(configs.Config().Service.WsPort),
-				WsRouter(),
+				DeviceRouter(),
 			)
 		}
 
@@ -78,7 +78,7 @@ func main() {
 	})
 
 	graceful.PostHook(func() {
-		connections.WSCM.Close()
+		connections.CloseWSCM()
 		Logger.Info("Waiting for websockets to drain...")
 		time.Sleep(3 * time.Second)
 		Logger.Info("Connection Manager closed.")

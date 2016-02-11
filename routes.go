@@ -9,19 +9,19 @@ import (
 	"net/http"
 )
 
-func WsRouter() http.Handler {
-	wsRouter := web.New()
-	wsRouter.Use(middleware.RealIP)
-	wsRouter.Use(middleware.RequestID)
-	wsRouter.Use(middlewares.AccessLogging)
-	wsRouter.Use(middleware.Recoverer)
-	wsRouter.Use(middleware.AutomaticOptions)
-	wsRouter.Get("/heartbeat", handlers.HeartBeatWs)
-	wsRouter.Get("/ws/channels/:channel_id/devices/:device_id", handlers.WsHandler)
+func DeviceRouter() http.Handler {
+	DeviceRouter := web.New()
+	DeviceRouter.Use(middleware.RealIP)
+	DeviceRouter.Use(middleware.RequestID)
+	DeviceRouter.Use(middlewares.AccessLogging)
+	DeviceRouter.Use(middleware.Recoverer)
+	DeviceRouter.Use(middleware.AutomaticOptions)
+	DeviceRouter.Get("/heartbeat", handlers.HeartBeatWs)
+	DeviceRouter.Get("/ws/channels/:channel_id/devices/:device_id", handlers.WsHandler)
 
-	wsRouter.Compile()
+	DeviceRouter.Compile()
 
-	return wsRouter
+	return DeviceRouter
 }
 
 func HttpRouter() http.Handler {

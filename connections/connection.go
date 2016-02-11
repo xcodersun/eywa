@@ -72,14 +72,26 @@ type wsConn interface {
 	UnderlyingConn() net.Conn
 }
 
-type Connection struct {
+type Connection interface {
+	Identifier() string
+	Metadata() map[string]interface{}
+	MessageHandler() MessageHandler
+}
+
+type HttpConnection struct {
+	identifier string
+	h          MessageHandler
+	metadata   map[string]interface{}
+}
+
+type WebSocketConnection struct {
 	shard        *shard
 	ws           wsConn
 	createdAt    time.Time
 	lastPingedAt time.Time
 	identifier   string
 	h            MessageHandler
-	Metadata     map[string]interface{}
+	metadata     map[string]interface{}
 
 	wg        sync.WaitGroup
 	closeOnce sync.Once
@@ -96,29 +108,33 @@ type Connection struct {
 	rch      chan struct{}    // size=0
 }
 
-func (c *Connection) Identifier() string { return c.identifier }
+func (c *WebSocketConnection) Identifier() string { return c.identifier }
 
-func (c *Connection) CreatedAt() time.Time { return c.createdAt }
+func (c *WebSocketConnection) CreatedAt() time.Time { return c.createdAt }
 
-func (c *Connection) LastPingedAt() time.Time { return c.lastPingedAt }
+func (c *WebSocketConnection) LastPingedAt() time.Time { return c.lastPingedAt }
 
-func (c *Connection) Closed() bool { return c.closed }
+func (c *WebSocketConnection) Closed() bool { return c.closed }
 
-func (c *Connection) SendAsyncRequest(msg []byte) error {
+func (c *WebSocketConnection) MessageHandler() MessageHandler { return c.h}
+
+func (c *WebSocketConnection) Metadata() map[string]interface{} {return c.metadata}
+
+func (c *WebSocketConnection) SendAsyncRequest(msg []byte) error {
 	_, err := c.sendMessage(AsyncRequestMessage, msg)
 	return err
 }
 
-func (c *Connection) SendResponse(msg []byte) error {
+func (c *WebSocketConnection) SendResponse(msg []byte) error {
 	_, err := c.sendMessage(ResponseMessage, msg)
 	return err
 }
 
-func (c *Connection) SendSyncRequest(msg []byte) ([]byte, error) {
+func (c *WebSocketConnection) SendSyncRequest(msg []byte) ([]byte, error) {
 	return c.sendMessage(SyncRequestMessage, msg)
 }
 
-func (c *Connection) sendMessage(messageType int, payload []byte) (respMsg []byte, err error) {
+func (c *WebSocketConnection) sendMessage(messageType int, payload []byte) (respMsg []byte, err error) {
 	respMsg = []byte{}
 
 	defer func() {
@@ -136,7 +152,7 @@ func (c *Connection) sendMessage(messageType int, payload []byte) (respMsg []byt
 
 	respCh := make(chan *MessageResp, 1)
 
-	timeout := Config().Connections.Timeouts.Request
+	timeout := Config().WebSocketConnections.Timeouts.Request
 	select {
 	case <-time.After(timeout):
 		err = errors.New(fmt.Sprintf("request timed out for %s", timeout))
@@ -152,7 +168,7 @@ func (c *Connection) sendMessage(messageType int, payload []byte) (respMsg []byt
 			c.msgChans.delete(msgId)
 		}()
 
-		timeout = Config().Connections.Timeouts.Response
+		timeout = Config().WebSocketConnections.Timeouts.Response
 	}
 
 	select {
@@ -169,7 +185,7 @@ func (c *Connection) sendMessage(messageType int, payload []byte) (respMsg []byt
 
 }
 
-func (c *Connection) wListen() {
+func (c *WebSocketConnection) wListen() {
 	defer c.wg.Done()
 	for {
 		req, more := <-c.wch
@@ -199,8 +215,8 @@ func (c *Connection) wListen() {
 	}
 }
 
-func (c *Connection) sendWsMessage(message *Message) error {
-	err := c.ws.SetWriteDeadline(time.Now().Add(Config().Connections.Timeouts.Write))
+func (c *WebSocketConnection) sendWsMessage(message *Message) error {
+	err := c.ws.SetWriteDeadline(time.Now().Add(Config().WebSocketConnections.Timeouts.Write))
 	if err != nil {
 		return &WebsocketError{message: "error setting write deadline, " + err.Error()}
 	}
@@ -221,8 +237,8 @@ func (c *Connection) sendWsMessage(message *Message) error {
 	return err
 }
 
-func (c *Connection) readWsMessage() (*Message, error) {
-	if err := c.ws.SetReadDeadline(time.Now().Add(Config().Connections.Timeouts.Read)); err != nil {
+func (c *WebSocketConnection) readWsMessage() (*Message, error) {
+	if err := c.ws.SetReadDeadline(time.Now().Add(Config().WebSocketConnections.Timeouts.Read)); err != nil {
 		return nil, &WebsocketError{
 			message: fmt.Sprintf("error setting read deadline, %s", err.Error()),
 		}
@@ -247,7 +263,7 @@ func (c *Connection) readWsMessage() (*Message, error) {
 	return Unmarshal(messageBody)
 }
 
-func (c *Connection) rListen() {
+func (c *WebSocketConnection) rListen() {
 	defer c.wg.Done()
 	for {
 		select {
@@ -281,7 +297,7 @@ func (c *Connection) rListen() {
 	}
 }
 
-func (c *Connection) Close() {
+func (c *WebSocketConnection) Close() {
 	c.closeOnce.Do(func() {
 		c.closed = true
 		close(c.wch)
@@ -291,12 +307,32 @@ func (c *Connection) Close() {
 	})
 }
 
-func (c *Connection) Wait() {
+func (c *WebSocketConnection) Wait() {
 	c.wg.Wait()
 }
 
-func (c *Connection) Start() {
+func (c *WebSocketConnection) Start() {
 	c.wg.Add(2)
 	go c.rListen()
 	go c.wListen()
+}
+
+func NewWebSocketConnection(id string, ws wsConn, h MessageHandler, meta map[string]interface{}) (*WebSocketConnection, error) {
+	if (defaultWSCM != nil) {
+		return defaultWSCM.newConnection(id, ws, h, meta);
+	}
+	
+	err := errors.New("Connection Manager is not initialized");
+
+	return nil, err
+}
+
+func WebSocketCount() int {
+	count := 0;
+
+	if (defaultWSCM != nil) {
+		count = defaultWSCM.count();
+	}
+
+	return count;
 }

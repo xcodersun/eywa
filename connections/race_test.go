@@ -14,33 +14,33 @@ import (
 func TestRaceConditions(t *testing.T) {
 
 	SetConfig(&Conf{
-		Connections: &ConnectionConf{
+		WebSocketConnections: &WsConnectionConf{
 			Registry:         "memory",
 			NShards:          4,
 			InitShardSize:    8,
 			RequestQueueSize: 8,
 			Expiry:           300 * time.Second,
-			Timeouts: &ConnectionTimeoutConf{
+			Timeouts: &WsConnectionTimeoutConf{
 				Write:    2 * time.Second,
 				Read:     300 * time.Second,
 				Request:  1 * time.Second,
 				Response: 2 * time.Second,
 			},
-			BufferSizes: &ConnectionBufferSizeConf{
+			BufferSizes: &WsConnectionBufferSizeConf{
 				Write: 1024,
 				Read:  1024,
 			},
 		},
 	})
 
-	h := func(c *Connection, m *Message, e error) {}
+	h := func(c Connection, m *Message, e error) {}
 	meta := make(map[string]interface{})
 
 	Convey("burst various sends for race condition test, with wg", t, func() {
-		wscm, _ := NewWebSocketConnectionManager()
-		defer wscm.Close()
+		InitializeWSCM()
+		defer CloseWSCM()
 		ws := &fakeWsConn{randomErr: false}
-		conn, _ := wscm.NewConnection("test", ws, h, meta)
+		conn, _ := NewWebSocketConnection("test", ws, h, meta)
 
 		concurrency := 1000
 		var wg sync.WaitGroup
@@ -69,7 +69,7 @@ func TestRaceConditions(t *testing.T) {
 		wg.Wait()
 		conn.Close()
 		conn.Wait()
-		So(wscm.Count(), ShouldEqual, 0)
+		So(WebSocketCount(), ShouldEqual, 0)
 
 		So(ws.closed, ShouldBeTrue)
 		So(conn.msgChans.len(), ShouldEqual, 0) //?
@@ -83,9 +83,9 @@ func TestRaceConditions(t *testing.T) {
 	})
 
 	Convey("burst various sends for race condition test, without wg", t, func() {
-		wscm, _ := NewWebSocketConnectionManager()
+		InitializeWSCM()
 		ws := &fakeWsConn{randomErr: false}
-		conn, _ := wscm.NewConnection("test", ws, h, meta)
+		conn, _ := NewWebSocketConnection("test", ws, h, meta)
 
 		concurrency := 1000
 		errs := make([]error, concurrency)
@@ -108,13 +108,13 @@ func TestRaceConditions(t *testing.T) {
 			}(i)
 		}
 
-		wscm.Close()
-		So(wscm.Count(), ShouldEqual, 0)
+		CloseWSCM()
+		So(WebSocketCount(), ShouldEqual, 0)
 		So(ws.closed, ShouldBeTrue)
 	})
 
 	Convey("successfully closes all created connections.", t, func() {
-		wscm, _ := NewWebSocketConnectionManager()
+		InitializeWSCM()
 
 		concurrency := 100
 		wss := make([]*fakeWsConn, concurrency)
@@ -125,14 +125,14 @@ func TestRaceConditions(t *testing.T) {
 		wg.Add(concurrency)
 		for i := 0; i < concurrency; i++ {
 			go func(iter int) {
-				wscm.NewConnection("test"+strconv.Itoa(iter), wss[iter], h, meta)
+				NewWebSocketConnection("test"+strconv.Itoa(iter), wss[iter], h, meta)
 				wg.Done()
 			}(i)
 		}
-		wscm.Close()
+		CloseWSCM()
 		wg.Wait()
 
-		So(wscm.Count(), ShouldEqual, 0)
+		So(WebSocketCount(), ShouldEqual, 0)
 
 		allClosed := true
 		for _, ws := range wss {
@@ -145,17 +145,17 @@ func TestRaceConditions(t *testing.T) {
 
 	Convey("real life race conditions, close all underlying ws conn.", t, func() {
 		concurrency := 1000
-		wscm, _ := NewWebSocketConnectionManager()
+		InitializeWSCM()
 		wss := make([]*fakeWsConn, concurrency)
 		for i := 0; i < concurrency; i++ {
 			wss[i] = &fakeWsConn{randomErr: rand.Intn(4) == 0}
 		}
-		conns := make([]*Connection, concurrency)
+		conns := make([]*WebSocketConnection, concurrency)
 		errs := make([]error, concurrency)
 		for i := 0; i < concurrency; i++ {
 			go func(iter int) {
 				time.Sleep(time.Duration(rand.Intn(500)) * time.Millisecond)
-				conn, err := wscm.NewConnection("test"+strconv.Itoa(iter), wss[iter], h, meta)
+				conn, err := NewWebSocketConnection("test"+strconv.Itoa(iter), wss[iter], h, meta)
 				conns[iter] = conn
 				errs[iter] = err
 				switch rand.Intn(3) {
@@ -170,8 +170,8 @@ func TestRaceConditions(t *testing.T) {
 		}
 
 		time.Sleep(time.Duration(200+rand.Intn(500)) * time.Millisecond)
-		wscm.Close()
-		So(wscm.Count(), ShouldEqual, 0)
+		CloseWSCM()
+		So(WebSocketCount(), ShouldEqual, 0)
 
 		time.Sleep(time.Duration(1+rand.Intn(3)) * time.Second)
 		allClosed := true

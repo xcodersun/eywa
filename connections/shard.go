@@ -7,7 +7,7 @@ import (
 
 type shard struct {
 	wscm     *WebSocketConnectionManager
-	conns  map[string]*Connection
+	wsconns  map[string]*WebSocketConnection
 	closed bool
 	sync.Mutex
 }
@@ -18,18 +18,18 @@ func (sh *shard) Close() {
 	sh.closed = true
 
 	var wg sync.WaitGroup
-	conns := make([]*Connection, len(sh.conns))
+	wsconns := make([]*WebSocketConnection, len(sh.wsconns))
 	i := 0
-	for _, conn := range sh.conns {
-		conns[i] = conn
+	for _, conn := range sh.wsconns {
+		wsconns[i] = conn
 		i += 1
 	}
-	wg.Add(len(conns))
+	wg.Add(len(wsconns))
 
 	sh.Unlock()
 
-	for _, conn := range conns {
-		go func(c *Connection) {
+	for _, conn := range wsconns {
+		go func(c *WebSocketConnection) {
 			c.Close()
 			c.Wait()
 			wg.Done()
@@ -39,7 +39,7 @@ func (sh *shard) Close() {
 	wg.Wait()
 }
 
-func (sh *shard) register(c *Connection) error {
+func (sh *shard) register(c *WebSocketConnection) error {
 	sh.Lock()
 	defer sh.Unlock()
 
@@ -51,27 +51,27 @@ func (sh *shard) register(c *Connection) error {
 		return err
 	}
 
-	sh.conns[c.identifier] = c
+	sh.wsconns[c.identifier] = c
 	return nil
 }
 
-func (sh *shard) updateRegistry(c *Connection) error {
+func (sh *shard) updateRegistry(c *WebSocketConnection) error {
 	return sh.wscm.Registry.UpdateRegistry(c)
 }
 
-func (sh *shard) unregister(c *Connection) error {
+func (sh *shard) unregister(c *WebSocketConnection) error {
 	sh.Lock()
 	defer sh.Unlock()
 
-	delete(sh.conns, c.identifier)
+	delete(sh.wsconns, c.identifier)
 	return sh.wscm.Registry.Unregister(c)
 }
 
-func (sh *shard) findConnection(id string) (*Connection, bool) {
+func (sh *shard) findConnection(id string) (*WebSocketConnection, bool) {
 	sh.Lock()
 	defer sh.Unlock()
 
-	conn, found := sh.conns[id]
+	conn, found := sh.wsconns[id]
 	return conn, found
 }
 
@@ -79,5 +79,5 @@ func (sh *shard) Count() int {
 	sh.Lock()
 	defer sh.Unlock()
 
-	return len(sh.conns)
+	return len(sh.wsconns)
 }

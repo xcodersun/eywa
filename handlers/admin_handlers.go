@@ -5,14 +5,14 @@ import (
 	"fmt"
 	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/zenazn/goji/web"
 	"github.com/vivowares/octopus/configs"
-	. "github.com/vivowares/octopus/connections"
+	"github.com/vivowares/octopus/connections"
 	. "github.com/vivowares/octopus/utils"
 	"net/http"
 	"strconv"
 )
 
 func ConnectionCounts(c web.C, w http.ResponseWriter, r *http.Request) {
-	fmt.Fprint(w, strconv.Itoa(WSCM.Count()))
+	fmt.Fprint(w, strconv.Itoa(connections.WebSocketCount()))
 }
 
 func GetConfig(c web.C, w http.ResponseWriter, r *http.Request) {

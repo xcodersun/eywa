@@ -10,33 +10,33 @@ import (
 func TestConnectionManager(t *testing.T) {
 
 	SetConfig(&Conf{
-		Connections: &ConnectionConf{
+		WebSocketConnections: &WsConnectionConf{
 			Registry:         "memory",
 			NShards:          4,
 			InitShardSize:    8,
 			RequestQueueSize: 8,
 			Expiry:           300 * time.Second,
-			Timeouts: &ConnectionTimeoutConf{
+			Timeouts: &WsConnectionTimeoutConf{
 				Write:    2 * time.Second,
 				Read:     300 * time.Second,
 				Request:  1 * time.Second,
 				Response: 2 * time.Second,
 			},
-			BufferSizes: &ConnectionBufferSizeConf{
+			BufferSizes: &WsConnectionBufferSizeConf{
 				Write: 1024,
 				Read:  1024,
 			},
 		},
 	})
 
-	h := func(c *Connection, m *Message, e error) {}
+	h := func(c Connection, m *Message, e error) {}
 	meta := make(map[string]interface{})
 
 	Convey("creates/registers/finds new connections.", t, func() {
-		wscm, _ := NewWebSocketConnectionManager()
-		defer wscm.Close()
-		conn, _ := wscm.NewConnection("test", &fakeWsConn{}, h, meta) // this connection should be started and registered
-		So(wscm.Count(), ShouldEqual, 1)
+		wscm, _ := newWebSocketConnectionManager()
+		defer wscm.close()
+		conn, _ := wscm.newConnection("test", &fakeWsConn{}, h, meta) // this connection should be started and registered
+		So(wscm.count(), ShouldEqual, 1)
 
 		// the fake ReadMessage() always return empty string, which will still keep updating the
 		// pingedAt timestamp
@@ -45,18 +45,18 @@ func TestConnectionManager(t *testing.T) {
 		t2 := conn.LastPingedAt()
 		So(t1.Equal(t2), ShouldBeFalse)
 
-		_, found := wscm.FindConnection("test")
+		_, found := wscm.findConnection("test")
 		So(found, ShouldBeTrue)
 	})
 
 	Convey("disallows creating/registering new connections on closed CM.", t, func() {
-		wscm, _ := NewWebSocketConnectionManager()
-		wscm.Close()
+		wscm, _ := newWebSocketConnectionManager()
+		wscm.close()
 
 		ws := &fakeWsConn{}
-		_, err := wscm.NewConnection("test", ws, h, meta)
+		_, err := wscm.newConnection("test", ws, h, meta)
 		So(ws.closed, ShouldBeTrue)
 		So(err, ShouldNotBeNil)
-		So(wscm.Count(), ShouldEqual, 0)
+		So(wscm.count(), ShouldEqual, 0)
 	})
 }
