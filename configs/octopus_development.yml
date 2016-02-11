@@ -30,6 +30,7 @@ websocket_connections:
     read: 1024
     write: 1024
 indices:
+  disable: false
   host: localhost
   port: 9200
   number_of_shards: 8

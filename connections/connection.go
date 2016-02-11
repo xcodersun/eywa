@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/gorilla/websocket"
 	. "github.com/vivowares/octopus/configs"
+	. "github.com/vivowares/octopus/utils"
 	"io"
 	"net"
 	"strconv"
@@ -89,6 +90,7 @@ type WebSocketConnection struct {
 	ws           wsConn
 	createdAt    time.Time
 	lastPingedAt time.Time
+	closedAt     time.Time
 	identifier   string
 	h            MessageHandler
 	metadata     map[string]interface{}
@@ -278,7 +280,6 @@ func (c *WebSocketConnection) rListen() {
 					return
 				}
 			} else if message.MessageType == CloseMessage {
-				c.h(c, message, nil)
 				c.Close()
 				return
 			} else if message.MessageType == ResponseMessage {
@@ -300,10 +301,13 @@ func (c *WebSocketConnection) rListen() {
 func (c *WebSocketConnection) Close() {
 	c.closeOnce.Do(func() {
 		c.closed = true
+		c.closedAt = time.Now()
 		close(c.wch)
 		close(c.rch)
 		c.closewch <- true
 		c.shard.unregister(c)
+		Logger.Debug(fmt.Sprintf("connection: %s closed", c.Identifier()))
+		c.h(c, &Message{MessageType: CloseMessage}, nil)
 	})
 }
 
@@ -315,4 +319,6 @@ func (c *WebSocketConnection) Start() {
 	c.wg.Add(2)
 	go c.rListen()
 	go c.wListen()
+	Logger.Debug(fmt.Sprintf("connection: %s started", c.Identifier()))
+	c.h(c, &Message{MessageType: StartMessage}, nil)
 }

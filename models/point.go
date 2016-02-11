@@ -45,6 +45,8 @@ func (p *Point) MarshalJSON() ([]byte, error) {
 		j["message_type"] = "sync_request"
 	case CloseMessage:
 		j["message_type"] = "close"
+	case StartMessage:
+		j["message_type"] = "start"
 	}
 
 	for k, v := range p.Tags {

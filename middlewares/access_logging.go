@@ -21,10 +21,6 @@ func AccessLogging(c *web.C, h http.Handler) http.Handler {
 
 		t1 := time.Now()
 		h.ServeHTTP(lw, r)
-
-		if lw.Status() == 0 {
-			lw.WriteHeader(http.StatusOK)
-		}
 		t2 := time.Now()
 
 		logEnd(reqID, lw, t2.Sub(t1))
