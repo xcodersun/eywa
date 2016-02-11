@@ -15,7 +15,7 @@ security:
   ssl:
     certfile:
     keyfile:
-ws_connections:
+websocket_connections:
   registry: memory
   nshards: 4
   init_shard_size: 128

@@ -88,20 +88,20 @@ func Reload() error {
 	}
 
 	wsConnConfig := &WsConnectionConf{
-		Registry:         viper.GetString("ws_connections.registry"),
-		NShards:          viper.GetInt("ws_connections.nshards"),
-		InitShardSize:    viper.GetInt("ws_connections.init_shard_size"),
-		RequestQueueSize: viper.GetInt("ws_connections.request_queue_size"),
-		Expiry:           viper.GetDuration("ws_connections.expiry"),
+		Registry:         viper.GetString("websocket_connections.registry"),
+		NShards:          viper.GetInt("websocket_connections.nshards"),
+		InitShardSize:    viper.GetInt("websocket_connections.init_shard_size"),
+		RequestQueueSize: viper.GetInt("websocket_connections.request_queue_size"),
+		Expiry:           viper.GetDuration("websocket_connections.expiry"),
 		Timeouts: &WsConnectionTimeoutConf{
-			Write:    viper.GetDuration("ws_connections.timeouts.write"),
-			Read:     viper.GetDuration("ws_connections.timeouts.read"),
-			Request:  viper.GetDuration("ws_connections.timeouts.request"),
-			Response: viper.GetDuration("ws_connections.timeouts.response"),
+			Write:    viper.GetDuration("websocket_connections.timeouts.write"),
+			Read:     viper.GetDuration("websocket_connections.timeouts.read"),
+			Request:  viper.GetDuration("websocket_connections.timeouts.request"),
+			Response: viper.GetDuration("websocket_connections.timeouts.response"),
 		},
 		BufferSizes: &WsConnectionBufferSizeConf{
-			Write: viper.GetInt("ws_connections.buffer_sizes.write"),
-			Read:  viper.GetInt("ws_connections.buffer_sizes.read"),
+			Write: viper.GetInt("websocket_connections.buffer_sizes.write"),
+			Read:  viper.GetInt("websocket_connections.buffer_sizes.read"),
 		},
 	}
 
@@ -168,7 +168,7 @@ type Conf struct {
 	AutoReload           time.Duration     `json:"auto_reload"`
 	Service              *ServiceConf      `json:"service"`
 	Security             *SecurityConf     `json:"security"`
-	WebSocketConnections *WsConnectionConf `json:"ws_connections"`
+	WebSocketConnections *WsConnectionConf `json:"websocket_connections"`
 	Indices              *IndexConf        `json:"indices"`
 	Database             *DbConf           `json:"database"`
 	Logging              *LogsConf         `json:"logging"`

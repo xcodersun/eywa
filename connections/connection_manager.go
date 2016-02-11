@@ -7,7 +7,6 @@ import (
 	"strconv"
 	"sync"
 	"time"
-	"errors"
 )
 
 var defaultWSCM *WebSocketConnectionManager
@@ -19,13 +18,11 @@ func InitializeWSCM() error {
 }
 
 func CloseWSCM() error {
-	if (defaultWSCM != nil) {
+	if defaultWSCM != nil {
 		return defaultWSCM.close()
 	}
-	
-	err := errors.New("Connection Manager is not initialized")
 
-	return err
+	return NoWscmErr
 }
 
 func newWebSocketConnectionManager() (*WebSocketConnectionManager, error) {
