@@ -1,6 +1,7 @@
 package connections
 
 import (
+	"errors"
 	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/gorilla/websocket"
 	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/spaolacci/murmur3"
 	. "github.com/vivowares/octopus/configs"
@@ -10,6 +11,34 @@ import (
 )
 
 var defaultWSCM *WebSocketConnectionManager
+
+var noWscmErr = errors.New("Connection Manager is not initialized")
+
+func NewWebSocketConnection(id string, ws wsConn, h MessageHandler, meta map[string]interface{}) (*WebSocketConnection, error) {
+	if defaultWSCM != nil {
+		return defaultWSCM.newConnection(id, ws, h, meta)
+	}
+
+	return nil, noWscmErr
+}
+
+func WebSocketCount() int {
+	count := 0
+
+	if defaultWSCM != nil {
+		count = defaultWSCM.count()
+	}
+
+	return count
+}
+
+func FindWeSocketConnection(id string) (*WebSocketConnection, bool) {
+	if defaultWSCM != nil {
+		return defaultWSCM.findConnection(id)
+	}
+
+	return nil, false
+}
 
 func InitializeWSCM() error {
 	wscm, err := newWebSocketConnectionManager()
@@ -22,7 +51,7 @@ func CloseWSCM() error {
 		return defaultWSCM.close()
 	}
 
-	return NoWscmErr
+	return noWscmErr
 }
 
 func newWebSocketConnectionManager() (*WebSocketConnectionManager, error) {

@@ -12,8 +12,6 @@ import (
 	"time"
 )
 
-var NoWscmErr = errors.New("Connection Manager is not initialized")
-
 type WebsocketError struct {
 	message string
 }
@@ -118,9 +116,9 @@ func (c *WebSocketConnection) LastPingedAt() time.Time { return c.lastPingedAt }
 
 func (c *WebSocketConnection) Closed() bool { return c.closed }
 
-func (c *WebSocketConnection) MessageHandler() MessageHandler { return c.h}
+func (c *WebSocketConnection) MessageHandler() MessageHandler { return c.h }
 
-func (c *WebSocketConnection) Metadata() map[string]interface{} {return c.metadata}
+func (c *WebSocketConnection) Metadata() map[string]interface{} { return c.metadata }
 
 func (c *WebSocketConnection) SendAsyncRequest(msg []byte) error {
 	_, err := c.sendMessage(AsyncRequestMessage, msg)
@@ -317,30 +315,4 @@ func (c *WebSocketConnection) Start() {
 	c.wg.Add(2)
 	go c.rListen()
 	go c.wListen()
-}
-
-func NewWebSocketConnection(id string, ws wsConn, h MessageHandler, meta map[string]interface{}) (*WebSocketConnection, error) {
-	if defaultWSCM != nil {
-		return defaultWSCM.newConnection(id, ws, h, meta)
-	}
-
-	return nil, NoWscmErr
-}
-
-func WebSocketCount() int {
-	count := 0
-
-	if defaultWSCM != nil {
-		count = defaultWSCM.count()
-	}
-
-	return count
-}
-
-func WeSocketFindConnection(id string) (*WebSocketConnection, bool) {
-	if defaultWSCM != nil {
-		return defaultWSCM.findConnection(id)
-	}
-
-	return nil, false
 }
