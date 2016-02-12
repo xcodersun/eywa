@@ -58,10 +58,13 @@ func HttpRouter() http.Handler {
 	httpRouter.Delete("/dashboards/:id", handlers.DeleteDashboard)
 	httpRouter.Put("/dashboards/:id", handlers.UpdateDashboard)
 
-	httpRouter.Get("/connections/_count", handlers.ConnectionCounts)
 	httpRouter.Get("/channels/:id/value", handlers.QueryValue)
 	httpRouter.Get("/channels/:id/series", handlers.QuerySeries)
 	httpRouter.Get("/channels/:id/raw", handlers.QueryRaw)
+
+	httpRouter.Get("/ws/connections/_count", handlers.ConnectionCounts)
+	httpRouter.Get("/ws/channels/:channel_id/devices/:device_id/_status", handlers.ConnectionStatus)
+
 	httpRouter.Compile()
 
 	return httpRouter
