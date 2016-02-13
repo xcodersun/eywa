@@ -22,7 +22,7 @@ func QueryValue(c web.C, w http.ResponseWriter, r *http.Request) {
 	} else {
 		value, err := q.QueryES()
 		if err != nil {
-			Render.Text(w, http.StatusInternalServerError, err.Error())
+			Render.JSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
 		} else {
 			Render.JSON(w, http.StatusOK, value)
 		}
@@ -43,7 +43,7 @@ func QuerySeries(c web.C, w http.ResponseWriter, r *http.Request) {
 	} else {
 		series, err := q.QueryES()
 		if err != nil {
-			Render.Text(w, http.StatusInternalServerError, err.Error())
+			Render.JSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
 		} else {
 			Render.JSON(w, http.StatusOK, series)
 		}
@@ -64,7 +64,7 @@ func QueryRaw(c web.C, w http.ResponseWriter, r *http.Request) {
 	} else {
 		res, err := q.QueryES()
 		if err != nil {
-			Render.Text(w, http.StatusInternalServerError, err.Error())
+			Render.JSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
 		} else {
 			if f, ok := res.(map[string]interface{})["file"]; ok {
 				http.ServeFile(w, r, f.(string))

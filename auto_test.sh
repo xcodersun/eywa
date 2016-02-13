@@ -1,6 +1,6 @@
 #!/bin/bash
 
-iters=10
+iters=1
 verbose=0
 log=auto_test.log
 s=1
@@ -24,7 +24,7 @@ Usage:
   -? show this helper message.
   -f stop util fail. default: disabled
   -v enable verbose mode. default: disabled
-  -n max iteration number, 0 means infinite. default: 10
+  -n max iteration number, 0 means infinite. default: 1
   -s sleep seconds between iterations. default: 1 second
   -l log output. default: auto_test.log
   -i integration tests. default: disabled

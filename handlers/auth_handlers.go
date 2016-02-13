@@ -20,7 +20,7 @@ func Login(c web.C, w http.ResponseWriter, r *http.Request) {
 				if err != nil {
 					Render.JSON(w, http.StatusUnauthorized, map[string]string{"error": err.Error()})
 				} else {
-					Render.JSON(w, http.StatusOK, map[string]string{"auth_token": h})
+					Render.JSON(w, http.StatusOK, map[string]interface{}{"auth_token": h, "expires_at": NanoToMilli(auth.ExpiresAt.UTC().UnixNano())})
 				}
 			}
 		} else {
