@@ -51,7 +51,7 @@ func HttpHandler(c web.C, w http.ResponseWriter, r *http.Request) {
 
 	payload, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		Render.JSON(w, http.StatusBadRequest, map[string]string{"error": "in valid payload"})
+		Render.JSON(w, http.StatusBadRequest, map[string]string{"error": "invalid payload"})
 		return
 	}
 
