@@ -16,6 +16,17 @@ var defaultWSCM *WebSocketConnectionManager
 
 var noWscmErr = errors.New("Connection Manager is not initialized")
 
+func NewHttpConnection(id string, h MessageHandler, meta map[string]interface{}) (*HttpConnection, error) {
+	conn := &HttpConnection{
+		identifier:   id,
+		h:            h,
+		metadata:     meta,
+	}
+
+	return conn, nil
+}
+
+
 func NewWebSocketConnection(id string, ws wsConn, h MessageHandler, meta map[string]interface{}) (*WebSocketConnection, error) {
 	if defaultWSCM != nil {
 		return defaultWSCM.newConnection(id, ws, h, meta)

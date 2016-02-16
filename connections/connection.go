@@ -7,9 +7,7 @@ import (
 	. "github.com/vivowares/octopus/configs"
 	. "github.com/vivowares/octopus/utils"
 	"io"
-	"io/ioutil"
 	"net"
-	"net/http"
 	"strconv"
 	"sync"
 	"time"
@@ -85,30 +83,6 @@ type HttpConnection struct {
 	identifier string
 	h          MessageHandler
 	metadata   map[string]interface{}
-}
-
-func NewHttpConnection(r *http.Request, id string, h MessageHandler, meta map[string]interface{}) (*HttpConnection, error) {
-	conn := &HttpConnection{
-		identifier:   id,
-		h:            h,
-		metadata:     meta,
-	}
-
-	payload, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	msgId := strconv.FormatInt(time.Now().UnixNano(), 16)
-	msg := &Message {
-		MessageType: AsyncRequestMessage,
-		MessageId: msgId,
-		Payload: payload,
-	}
-
-	conn.MessageHandler()(conn, msg, nil)
-
-	return conn, nil
 }
 
 func (c *HttpConnection) Identifier() string { return c.identifier }

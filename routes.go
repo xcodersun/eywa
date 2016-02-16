@@ -18,7 +18,7 @@ func DeviceRouter() http.Handler {
 	DeviceRouter.Use(middleware.AutomaticOptions)
 	DeviceRouter.Get("/heartbeat", handlers.HeartBeatWs)
 	DeviceRouter.Get("/ws/channels/:channel_id/devices/:device_id", handlers.WsHandler)
-	DeviceRouter.Post("/channels/:channel_id/devices/:device_id", handlers.HttpHandler)
+	DeviceRouter.Post("/channels/:channel_id/devices/:device_id/upload", handlers.HttpHandler)
 
 	DeviceRouter.Compile()
 

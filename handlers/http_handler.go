@@ -6,6 +6,9 @@ import (
 	. "github.com/vivowares/octopus/connections"
 	. "github.com/vivowares/octopus/message_handlers"
 	"net/http"
+	"strconv"
+	"time"
+	"io/ioutil"
 )
 
 func HttpHandler(c web.C, w http.ResponseWriter, r *http.Request) {
@@ -36,12 +39,29 @@ func HttpHandler(c web.C, w http.ResponseWriter, r *http.Request) {
 	}
 	h := md.Chain(nil)
 
-	_, err := NewHttpConnection(r, deviceId, h, map[string]interface{}{
+	httpConn, err := NewHttpConnection(deviceId, h, map[string]interface{}{
 		"channel":  ch,
 		"metadata": QueryToMap(r.URL.Query()),
 	})
 
 	if err != nil {
 		Render.JSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+		return
 	}
+
+	payload, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		Render.JSON(w, http.StatusBadRequest, map[string]string{"error": "in valid payload"})
+		return
+	}
+
+	msgId := strconv.FormatInt(time.Now().UnixNano(), 16)
+	msg := &Message {
+		MessageType: AsyncRequestMessage,
+		MessageId: msgId,
+		Payload: payload,
+	}
+
+	httpConn.MessageHandler()(httpConn, msg, nil)
+
 }
