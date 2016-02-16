@@ -85,6 +85,12 @@ type HttpConnection struct {
 	metadata   map[string]interface{}
 }
 
+func (c *HttpConnection) Identifier() string { return c.identifier }
+
+func (c *HttpConnection) Metadata() map[string]interface{} { return c.metadata }
+
+func (c *HttpConnection) MessageHandler() MessageHandler { return c.h }
+
 type WebSocketConnection struct {
 	shard        *shard
 	ws           wsConn
