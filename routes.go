@@ -66,8 +66,8 @@ func HttpRouter() http.Handler {
 	httpRouter.Get("/ws/connections/_count", handlers.ConnectionCounts)
 	httpRouter.Get("/ws/channels/:channel_id/devices/:device_id/_status", handlers.ConnectionStatus)
 
-	httpRouter.Post("/channels/:channel_id/devices/:device_id/async_send", handlers.AsyncSendToDevice)
-	httpRouter.Post("/channels/:channel_id/devices/:device_id/sync_send", handlers.SyncSendToDevice)
+	httpRouter.Post("/channels/:channel_id/devices/:device_id/send", handlers.SendToDevice)
+	httpRouter.Post("/channels/:channel_id/devices/:device_id/request", handlers.RequestToDevice)
 
 	httpRouter.Compile()
 

@@ -128,18 +128,18 @@ func (c *WebSocketConnection) MessageHandler() MessageHandler { return c.h }
 
 func (c *WebSocketConnection) Metadata() map[string]interface{} { return c.metadata }
 
-func (c *WebSocketConnection) SendAsyncRequest(msg []byte) error {
-	_, err := c.sendMessage(AsyncRequestMessage, msg)
+func (c *WebSocketConnection) Send(msg []byte) error {
+	_, err := c.sendMessage(SendMessage, msg)
 	return err
 }
 
-func (c *WebSocketConnection) SendResponse(msg []byte) error {
+func (c *WebSocketConnection) Response(msg []byte) error {
 	_, err := c.sendMessage(ResponseMessage, msg)
 	return err
 }
 
-func (c *WebSocketConnection) SendSyncRequest(msg []byte) ([]byte, error) {
-	return c.sendMessage(SyncRequestMessage, msg)
+func (c *WebSocketConnection) Request(msg []byte) ([]byte, error) {
+	return c.sendMessage(RequestMessage, msg)
 }
 
 func (c *WebSocketConnection) sendMessage(messageType int, payload []byte) (respMsg []byte, err error) {
@@ -171,7 +171,7 @@ func (c *WebSocketConnection) sendMessage(messageType int, payload []byte) (resp
 	}:
 	}
 
-	if messageType == SyncRequestMessage {
+	if messageType == RequestMessage {
 		defer func() {
 			c.msgChans.delete(msgId)
 		}()
@@ -209,7 +209,7 @@ func (c *WebSocketConnection) wListen() {
 					c.Close()
 				}
 			} else {
-				if req.msg.MessageType == SyncRequestMessage {
+				if req.msg.MessageType == RequestMessage {
 					c.msgChans.put(req.msg.MessageId, req.respCh)
 				} else {
 					req.respCh <- &MessageResp{}

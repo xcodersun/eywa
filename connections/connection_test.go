@@ -127,17 +127,17 @@ func TestConnections(t *testing.T) {
 			wch:        make(chan *MessageReq, 1),
 		}
 
-		err := conn.SendResponse([]byte("resp"))
+		err := conn.Response([]byte("resp"))
 		So(err, ShouldNotBeNil)
 		So(err.Error(), ShouldContainSubstring, "response timed out")
 
-		err = conn.SendAsyncRequest([]byte("async"))
+		err = conn.Send([]byte("async"))
 		So(err, ShouldNotBeNil)
 		So(err.Error(), ShouldContainSubstring, "request timed out")
 	})
 
 	Convey("errors out closed connection", t, func() {
-		InitializeWSCM();
+		InitializeWSCM()
 		defer CloseWSCM()
 		conn, _ := NewWebSocketConnection("test", &fakeWsConn{}, h, meta)
 		So(WebSocketCount(), ShouldEqual, 1)
@@ -145,7 +145,7 @@ func TestConnections(t *testing.T) {
 		conn.Close()
 		conn.Wait()
 		So(WebSocketCount(), ShouldEqual, 0)
-		err := conn.SendAsyncRequest([]byte("async"))
+		err := conn.Send([]byte("async"))
 		So(err, ShouldNotBeNil)
 		So(err.Error(), ShouldContainSubstring, "connection is closed")
 	})
@@ -157,7 +157,7 @@ func TestConnections(t *testing.T) {
 		conn, _ := NewWebSocketConnection("test write err", ws, h, meta)
 		So(WebSocketCount(), ShouldEqual, 1)
 
-		err := conn.SendAsyncRequest([]byte("async"))
+		err := conn.Send([]byte("async"))
 		So(err, ShouldNotBeNil)
 		So(err.Error(), ShouldContainSubstring, "WebsocketError")
 		conn.Wait()
@@ -178,7 +178,7 @@ func TestConnections(t *testing.T) {
 		conn, _ := NewWebSocketConnection("test", &fakeWsConn{}, h, meta)
 		So(WebSocketCount(), ShouldEqual, 1)
 
-		err := conn.SendAsyncRequest([]byte("async"))
+		err := conn.Send([]byte("async"))
 		So(err, ShouldBeNil)
 	})
 
@@ -188,7 +188,7 @@ func TestConnections(t *testing.T) {
 		conn, _ := NewWebSocketConnection("test", &fakeWsConn{}, h, meta)
 		So(WebSocketCount(), ShouldEqual, 1)
 
-		msg, err := conn.SendSyncRequest([]byte("sync"))
+		msg, err := conn.Request([]byte("sync"))
 		So(err, ShouldBeNil)
 		So(string(msg), ShouldContainSubstring, "sync response")
 		So(conn.msgChans.len(), ShouldEqual, 0)

@@ -8,9 +8,9 @@ import (
 )
 
 const (
-	AsyncRequestMessage = 1
-	SyncRequestMessage  = 2
-	ResponseMessage     = 4
+	SendMessage     = 1
+	RequestMessage  = 2
+	ResponseMessage = 4
 
 	// these two messages are only used for connection states internally
 	StartMessage = 0
@@ -65,8 +65,8 @@ func Unmarshal(raw []byte) (*Message, error) {
 				msgType, err := strconv.Atoi(string(raw[0:idx]))
 				if err != nil {
 					return nil, err
-				} else if msgType != AsyncRequestMessage &&
-					msgType != SyncRequestMessage && msgType != ResponseMessage && msgType != CloseMessage {
+				} else if msgType != SendMessage &&
+					msgType != RequestMessage && msgType != ResponseMessage && msgType != CloseMessage {
 					return nil, errors.New(fmt.Sprintf("invalid MessageType %d, raw: %s", msgType, raw))
 				} else {
 					msg.MessageType = msgType

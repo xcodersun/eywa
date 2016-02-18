@@ -5,6 +5,7 @@ import (
 	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/satori/go.uuid"
 	. "github.com/vivowares/octopus/connections"
 	. "github.com/vivowares/octopus/models"
+	. "github.com/vivowares/octopus/utils"
 )
 
 var SupportedMessageHandlers = map[string]*Middleware{"indexer": Indexer}
@@ -21,19 +22,17 @@ var Indexer = NewMiddleware("indexer", func(h MessageHandler) MessageHandler {
 						p.Metadata(meta.(map[string]string))
 					}
 
-					resp, err := IndexClient.Index().
+					_, err := IndexClient.Index().
 						Index(TimedIndexName(ch, p.Timestamp)).
 						Type(IndexType).
 						Id(id).
 						BodyJson(p).
 						Do()
 					if err != nil {
-						fmt.Println(err)
-					} else {
-						fmt.Println(resp)
+						Logger.Error(fmt.Sprintf("error indexing point, %s", err.Error()))
 					}
 				} else {
-					fmt.Println(err)
+					Logger.Error(fmt.Sprintf("error creating point, %s", err.Error()))
 				}
 			}
 		}

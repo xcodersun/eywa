@@ -39,10 +39,10 @@ func (p *Point) MarshalJSON() ([]byte, error) {
 	switch p.msg.MessageType {
 	case ResponseMessage:
 		j["message_type"] = "response"
-	case AsyncRequestMessage:
-		j["message_type"] = "async_request"
-	case SyncRequestMessage:
-		j["message_type"] = "sync_request"
+	case SendMessage:
+		j["message_type"] = "send"
+	case RequestMessage:
+		j["message_type"] = "request"
 	case CloseMessage:
 		j["message_type"] = "close"
 	case StartMessage:

@@ -17,10 +17,6 @@ import (
 	"time"
 )
 
-import (
-// "github.com/kr/pretty"
-)
-
 func HttpUploadPath(channelId, deviceId string) string {
 	return fmt.Sprintf("%s/channels/%s/devices/%s/upload", DeviceServer, channelId, deviceId)
 }
@@ -74,6 +70,7 @@ func TestHttpUpload(t *testing.T) {
 		f.ExpectStatus(http.StatusOK)
 
 		IndexClient.Refresh().Do()
+		time.Sleep(3 * time.Second)
 
 		f = frisby.Create("get raw index").Get(GetRawIndexPath(chId)).
 			SetHeader("AuthToken", authStr()).

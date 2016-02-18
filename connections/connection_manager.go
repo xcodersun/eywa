@@ -18,14 +18,13 @@ var noWscmErr = errors.New("Connection Manager is not initialized")
 
 func NewHttpConnection(id string, h MessageHandler, meta map[string]interface{}) (*HttpConnection, error) {
 	conn := &HttpConnection{
-		identifier:   id,
-		h:            h,
-		metadata:     meta,
+		identifier: id,
+		h:          h,
+		metadata:   meta,
 	}
 
 	return conn, nil
 }
-
 
 func NewWebSocketConnection(id string, ws wsConn, h MessageHandler, meta map[string]interface{}) (*WebSocketConnection, error) {
 	if defaultWSCM != nil {
@@ -135,6 +134,13 @@ func (wscm *WebSocketConnectionManager) newConnection(id string, ws wsConn, h Me
 		conn.lastPingedAt = time.Now()
 		conn.shard.updateRegistry(conn)
 		Logger.Debug(fmt.Sprintf("connection: %s pinged", id))
+
+		//extend the read deadline after each ping
+		err := ws.SetReadDeadline(time.Now().Add(Config().WebSocketConnections.Timeouts.Read))
+		if err != nil {
+			return err
+		}
+
 		return ws.WriteControl(
 			websocket.PongMessage,
 			[]byte(strconv.FormatInt(time.Now().UnixNano()/int64(time.Millisecond), 10)),
