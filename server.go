@@ -37,17 +37,17 @@ func main() {
 
 	go func() {
 		if len(cert) > 0 && len(key) > 0 {
-			Logger.Info(fmt.Sprintf("Octopus started listening to port %d with SSL", configs.Config().Service.HttpPort))
+			Logger.Info(fmt.Sprintf("Octopus started listening to port %d with SSL", configs.Config().Service.ApiPort))
 			graceful.ListenAndServeTLS(
-				":"+strconv.Itoa(configs.Config().Service.HttpPort),
+				":"+strconv.Itoa(configs.Config().Service.ApiPort),
 				cert,
 				key,
 				HttpRouter(),
 			)
 		} else {
-			Logger.Info(fmt.Sprintf("Octopus started listening to port %d", configs.Config().Service.HttpPort))
+			Logger.Info(fmt.Sprintf("Octopus started listening to port %d", configs.Config().Service.ApiPort))
 			graceful.ListenAndServe(
-				":"+strconv.Itoa(configs.Config().Service.HttpPort),
+				":"+strconv.Itoa(configs.Config().Service.ApiPort),
 				HttpRouter(),
 			)
 		}
@@ -55,17 +55,17 @@ func main() {
 
 	go func() {
 		if len(cert) > 0 && len(key) > 0 {
-			Logger.Info(fmt.Sprintf("Connection Manager started listening to port %d with SSL", configs.Config().Service.WsPort))
+			Logger.Info(fmt.Sprintf("Connection Manager started listening to port %d with SSL", configs.Config().Service.DevicePort))
 			graceful.ListenAndServeTLS(
-				":"+strconv.Itoa(configs.Config().Service.WsPort),
+				":"+strconv.Itoa(configs.Config().Service.DevicePort),
 				cert,
 				key,
 				DeviceRouter(),
 			)
 		} else {
-			Logger.Info(fmt.Sprintf("Connection Manager started listening to port %d", configs.Config().Service.WsPort))
+			Logger.Info(fmt.Sprintf("Connection Manager started listening to port %d", configs.Config().Service.DevicePort))
 			graceful.ListenAndServe(
-				":"+strconv.Itoa(configs.Config().Service.WsPort),
+				":"+strconv.Itoa(configs.Config().Service.DevicePort),
 				DeviceRouter(),
 			)
 		}

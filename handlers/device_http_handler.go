@@ -2,13 +2,13 @@ package handlers
 
 import (
 	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/zenazn/goji/web"
-	. "github.com/vivowares/octopus/utils"
 	. "github.com/vivowares/octopus/connections"
 	. "github.com/vivowares/octopus/message_handlers"
+	. "github.com/vivowares/octopus/utils"
+	"io/ioutil"
 	"net/http"
 	"strconv"
 	"time"
-	"io/ioutil"
 )
 
 func HttpHandler(c web.C, w http.ResponseWriter, r *http.Request) {
@@ -56,10 +56,10 @@ func HttpHandler(c web.C, w http.ResponseWriter, r *http.Request) {
 	}
 
 	msgId := strconv.FormatInt(time.Now().UnixNano(), 16)
-	msg := &Message {
+	msg := &Message{
 		MessageType: AsyncRequestMessage,
-		MessageId: msgId,
-		Payload: payload,
+		MessageId:   msgId,
+		Payload:     payload,
 	}
 
 	httpConn.MessageHandler()(httpConn, msg, nil)

@@ -1,8 +1,8 @@
 auto_reload: 0m
 service:
   host: localhost
-  http_port: 9090
-  ws_port: 9091
+  api_port: 9090
+  device_port: 9091
   pid_file: {{ .octopus_home }}/tmp/pids/octopus_test.pid
 security:
   dashboard:

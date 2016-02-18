@@ -21,6 +21,7 @@ import (
 )
 
 var ApiServer string
+var DeviceServer string
 var ConfigFile string
 
 type ChannelResp struct {
@@ -39,7 +40,8 @@ func init() {
 	ConfigFile = path.Join(path.Dir(pwd), "configs", "octopus_test.yml")
 	PanicIfErr(InitializeConfig(ConfigFile))
 
-	ApiServer = "http://" + Config().Service.Host + ":" + strconv.Itoa(Config().Service.HttpPort)
+	ApiServer = "http://" + Config().Service.Host + ":" + strconv.Itoa(Config().Service.ApiPort)
+	DeviceServer = "http://" + Config().Service.Host + ":" + strconv.Itoa(Config().Service.DevicePort)
 }
 
 func authStr() string {

@@ -51,10 +51,10 @@ func Reload() error {
 	}
 
 	serviceConfig := &ServiceConf{
-		Host:     viper.GetString("service.host"),
-		HttpPort: viper.GetInt("service.http_port"),
-		WsPort:   viper.GetInt("service.ws_port"),
-		PidFile:  viper.GetString("service.pid_file"),
+		Host:       viper.GetString("service.host"),
+		ApiPort:    viper.GetInt("service.api_port"),
+		DevicePort: viper.GetInt("service.device_port"),
+		PidFile:    viper.GetString("service.pid_file"),
 	}
 
 	securityConfig := &SecurityConf{
@@ -191,10 +191,10 @@ type IndexConf struct {
 }
 
 type ServiceConf struct {
-	Host     string `json:"host"`
-	HttpPort int    `json:"http_port"`
-	WsPort   int    `json:"ws_port"`
-	PidFile  string `json:"pid_file"`
+	Host       string `json:"host"`
+	ApiPort    int    `json:"api_port"`
+	DevicePort int    `json:"device_port"`
+	PidFile    string `json:"pid_file"`
 }
 
 type WsConnectionConf struct {
