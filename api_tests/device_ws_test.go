@@ -13,6 +13,7 @@ import (
 	. "github.com/vivowares/octopus/configs"
 	. "github.com/vivowares/octopus/models"
 	. "github.com/vivowares/octopus/utils"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
@@ -21,6 +22,8 @@ import (
 	"testing"
 	"time"
 )
+
+import "github.com/kr/pretty"
 
 func CreateTestChannel() (string, *Channel) {
 	ch := &Channel{
@@ -55,8 +58,10 @@ func CreateWsConnection(chId, deviceId string, ch *Channel) *websocket.Conn {
 	}
 	h := map[string][]string{"AccessToken": ch.AccessTokens}
 
-	cli, _, err := websocket.DefaultDialer.Dial(u.String(), h)
+	cli, resp, err := websocket.DefaultDialer.Dial(u.String(), h)
 	So(err, ShouldBeNil)
+	p, _ := ioutil.ReadAll(resp.Body)
+	pretty.Println(string(p))
 	return cli
 }
 

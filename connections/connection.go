@@ -13,6 +13,9 @@ import (
 	"time"
 )
 
+var closedConnErr = errors.New("connection is closed")
+var unexpectedMessageErr = errors.New("unexpected response messages received, probably due to response timeout?")
+
 type WebsocketError struct {
 	message string
 }
@@ -147,7 +150,7 @@ func (c *WebSocketConnection) sendMessage(messageType int, payload []byte) (resp
 
 	defer func() {
 		if r := recover(); r != nil {
-			err = errors.New("connection is closed")
+			err = closedConnErr
 		}
 	}()
 
@@ -295,7 +298,7 @@ func (c *WebSocketConnection) rListen() {
 					ch <- &MessageResp{msg: message}
 					c.h(c, message, nil)
 				} else {
-					c.h(c, message, errors.New("unexpected response messages received, probably due to response timeout?"))
+					c.h(c, message, unexpectedMessageErr)
 				}
 			} else {
 				c.h(c, message, nil)

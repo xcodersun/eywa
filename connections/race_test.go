@@ -129,8 +129,8 @@ func TestRaceConditions(t *testing.T) {
 				wg.Done()
 			}(i)
 		}
-		CloseWSCM()
 		wg.Wait()
+		CloseWSCM()
 
 		So(WebSocketCount(), ShouldEqual, 0)
 
@@ -152,6 +152,8 @@ func TestRaceConditions(t *testing.T) {
 		}
 		conns := make([]*WebSocketConnection, concurrency)
 		errs := make([]error, concurrency)
+		var wg sync.WaitGroup
+		wg.Add(concurrency)
 		for i := 0; i < concurrency; i++ {
 			go func(iter int) {
 				time.Sleep(time.Duration(rand.Intn(500)) * time.Millisecond)
@@ -166,14 +168,15 @@ func TestRaceConditions(t *testing.T) {
 				case 2:
 					conn.Request([]byte("sync" + strconv.Itoa(iter)))
 				}
+				wg.Done()
 			}(i)
 		}
 
-		time.Sleep(time.Duration(200+rand.Intn(500)) * time.Millisecond)
 		CloseWSCM()
 		So(WebSocketCount(), ShouldEqual, 0)
 
 		time.Sleep(time.Duration(1+rand.Intn(3)) * time.Second)
+		wg.Wait()
 		allClosed := true
 		for i, ws := range wss {
 			if errs[i] == nil && ws.closed == false {

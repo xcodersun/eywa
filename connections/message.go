@@ -17,6 +17,8 @@ const (
 	CloseMessage = 8
 )
 
+var emptyMsgIdErr = errors.New("empty MessageId")
+
 type Message struct {
 	MessageType int
 	MessageId   string
@@ -85,7 +87,7 @@ func Unmarshal(raw []byte) (*Message, error) {
 	}
 
 	if len(msg.MessageId) == 0 && msg.MessageType != CloseMessage {
-		return nil, errors.New("empty MessageId")
+		return nil, emptyMsgIdErr
 	}
 
 	msg.Payload = raw[pip2+1:]

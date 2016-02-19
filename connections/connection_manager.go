@@ -14,7 +14,8 @@ import (
 
 var defaultWSCM *WebSocketConnectionManager
 
-var noWscmErr = errors.New("Connection Manager is not initialized")
+var noWscmErr = errors.New("connection manager is not initialized")
+var closedWscmErr = errors.New("connection manager is closed")
 
 func NewHttpConnection(id string, h MessageHandler, meta map[string]interface{}) (*HttpConnection, error) {
 	conn := &HttpConnection{
@@ -67,7 +68,7 @@ func CloseWSCM() error {
 }
 
 func newWebSocketConnectionManager() (*WebSocketConnectionManager, error) {
-	wscm := &WebSocketConnectionManager{}
+	wscm := &WebSocketConnectionManager{closed: &AtomBool{}}
 	switch Config().WebSocketConnections.Registry {
 	case "memory":
 		wscm.Registry = &InMemoryRegistry{}
@@ -90,11 +91,14 @@ func newWebSocketConnectionManager() (*WebSocketConnectionManager, error) {
 }
 
 type WebSocketConnectionManager struct {
+	closed   *AtomBool
 	shards   []*shard
 	Registry Registry
 }
 
 func (wscm *WebSocketConnectionManager) close() error {
+	wscm.closed.Set(true)
+
 	var wg sync.WaitGroup
 	wg.Add(len(wscm.shards))
 	for _, sh := range wscm.shards {
@@ -108,6 +112,11 @@ func (wscm *WebSocketConnectionManager) close() error {
 }
 
 func (wscm *WebSocketConnectionManager) newConnection(id string, ws wsConn, h MessageHandler, meta map[string]interface{}) (*WebSocketConnection, error) {
+	if wscm.closed.Get() {
+		ws.Close()
+		return nil, closedWscmErr
+	}
+
 	hasher := murmur3.New32()
 	hasher.Write([]byte(id))
 	shard := wscm.shards[hasher.Sum32()%uint32(len(wscm.shards))]
@@ -147,12 +156,13 @@ func (wscm *WebSocketConnectionManager) newConnection(id string, ws wsConn, h Me
 			time.Now().Add(Config().WebSocketConnections.Timeouts.Write))
 	})
 
-	conn.Start()
 	if err := shard.register(conn); err != nil {
 		conn.Close()
 		conn.Wait()
 		return nil, err
 	}
+
+	conn.Start()
 
 	return conn, nil
 }

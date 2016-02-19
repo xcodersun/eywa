@@ -1,21 +1,17 @@
 package connections
 
 import (
-	"errors"
 	"sync"
 )
 
 type shard struct {
-	wscm     *WebSocketConnectionManager
-	wsconns  map[string]*WebSocketConnection
-	closed bool
+	wscm    *WebSocketConnectionManager
+	wsconns map[string]*WebSocketConnection
 	sync.Mutex
 }
 
 func (sh *shard) Close() {
 	sh.Lock()
-
-	sh.closed = true
 
 	var wg sync.WaitGroup
 	wsconns := make([]*WebSocketConnection, len(sh.wsconns))
@@ -43,8 +39,8 @@ func (sh *shard) register(c *WebSocketConnection) error {
 	sh.Lock()
 	defer sh.Unlock()
 
-	if sh.closed {
-		return errors.New("shard is closed")
+	if sh.wscm.closed.Get() {
+		return closedWscmErr
 	}
 
 	if err := sh.wscm.Registry.Register(c); err != nil {

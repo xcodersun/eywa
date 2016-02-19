@@ -49,7 +49,7 @@ type StringSlice []string
 func (s *StringSlice) Scan(src interface{}) error {
 	asBytes, ok := src.([]byte)
 	if !ok {
-		return errors.New("Scan source was not []bytes")
+		return errors.New("scan source was not []bytes")
 	}
 
 	asString := string(asBytes)
