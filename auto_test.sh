@@ -80,8 +80,6 @@ fi
 
 params="$([[ $verbose != 1 ]] || echo '-v' ) $([[ ${#tag} -gt 0 ]] && echo '-tags' ${tag}) $([[ ${#testname} -gt 0 ]] && echo '--run' ${testname}) ./..."
 
-echo "Starting Tests..."
-
 serverpid=""
 
 if [[ $integration -eq 1 ]]; then
@@ -104,11 +102,14 @@ if [[ $integration -eq 1 ]]; then
     echo 'Error: test server was not started within 5 seconds'
     exit 1
   fi
+  echo "Test server started..."
 fi
 
 fail=1
 iter=0
 echo '' > $log
+
+echo "Starting Tests..."
 
 while [[ $utilFail -eq 1 && $iters -eq 0 && $fail -eq 1 ]] || [[ $utilFail -eq 1 && $iters -gt 0 && $fail -eq 1 && $iter -lt $iters ]] || [[ $utilFail -ne 1 && $iters -eq 0 ]] || [[ $utilFail -ne 1 && $iters -gt 0 && $iter -lt $iters ]]; do
 
