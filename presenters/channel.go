@@ -1,7 +1,7 @@
 package presenters
 
 import (
-	. "github.com/vivowares/octopus/models"
+	. "github.com/vivowares/eywa/models"
 )
 
 type ChannelBrief struct {

@@ -1,5 +1,5 @@
 {
-	"ImportPath": "github.com/vivowares/octopus",
+	"ImportPath": "github.com/vivowares/eywa",
 	"GoVersion": "go1.5",
 	"Packages": [
 		"./..."

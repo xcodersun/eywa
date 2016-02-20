@@ -10,7 +10,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/vivowares/octopus/Godeps/_workspace/src/gopkg.in/olivere/elastic.v3/uritemplates"
+	"github.com/vivowares/eywa/Godeps/_workspace/src/gopkg.in/olivere/elastic.v3/uritemplates"
 )
 
 // PercolateService is documented at http://www.elasticsearch.org/guide/en/elasticsearch/reference/1.4/search-percolate.html.

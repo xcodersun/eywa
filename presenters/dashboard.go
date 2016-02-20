@@ -2,7 +2,7 @@ package presenters
 
 import (
 	"encoding/base64"
-	. "github.com/vivowares/octopus/models"
+	. "github.com/vivowares/eywa/models"
 	"strconv"
 )
 

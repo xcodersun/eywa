@@ -1,11 +1,11 @@
 package main
 
 import (
-	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/rs/cors"
-	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/zenazn/goji/web"
-	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/zenazn/goji/web/middleware"
-	"github.com/vivowares/octopus/handlers"
-	"github.com/vivowares/octopus/middlewares"
+	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/rs/cors"
+	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/zenazn/goji/web"
+	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/zenazn/goji/web/middleware"
+	"github.com/vivowares/eywa/handlers"
+	"github.com/vivowares/eywa/middlewares"
 	"net/http"
 )
 

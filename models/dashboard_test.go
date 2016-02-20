@@ -1,8 +1,8 @@
 package models
 
 import (
-	. "github.com/vivowares/octopus/Godeps/_workspace/src/github.com/smartystreets/goconvey/convey"
-	. "github.com/vivowares/octopus/configs"
+	. "github.com/vivowares/eywa/Godeps/_workspace/src/github.com/smartystreets/goconvey/convey"
+	. "github.com/vivowares/eywa/configs"
 	"log"
 	"os"
 	"path"
@@ -11,7 +11,7 @@ import (
 
 func TestDashboard(t *testing.T) {
 	pwd, _ := os.Getwd()
-	dbFile := path.Join(pwd, "octopus_test.db")
+	dbFile := path.Join(pwd, "eywa_test.db")
 
 	SetConfig(&Conf{
 		Database: &DbConf{

@@ -3,7 +3,7 @@ package xhandler
 import (
 	"net/http"
 
-	"github.com/vivowares/octopus/Godeps/_workspace/src/golang.org/x/net/context"
+	"github.com/vivowares/eywa/Godeps/_workspace/src/golang.org/x/net/context"
 )
 
 // Chain is an helper to chain middleware handlers together for an easier

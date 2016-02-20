@@ -4,11 +4,11 @@ package api_tests
 
 import (
 	"fmt"
-	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/gorilla/websocket"
-	. "github.com/vivowares/octopus/Godeps/_workspace/src/github.com/smartystreets/goconvey/convey"
-	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/verdverm/frisby"
-	. "github.com/vivowares/octopus/connections"
-	. "github.com/vivowares/octopus/models"
+	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/gorilla/websocket"
+	. "github.com/vivowares/eywa/Godeps/_workspace/src/github.com/smartystreets/goconvey/convey"
+	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/verdverm/frisby"
+	. "github.com/vivowares/eywa/connections"
+	. "github.com/vivowares/eywa/models"
 	"log"
 	"net/http"
 	"os"

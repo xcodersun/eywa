@@ -3,7 +3,7 @@
 // packages from this project as they serve internal purposes.
 package convey
 
-import "github.com/vivowares/octopus/Godeps/_workspace/src/github.com/smartystreets/goconvey/convey/reporting"
+import "github.com/vivowares/eywa/Godeps/_workspace/src/github.com/smartystreets/goconvey/convey/reporting"
 
 ////////////////////////////////// suite //////////////////////////////////
 

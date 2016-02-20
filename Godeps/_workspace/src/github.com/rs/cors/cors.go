@@ -27,8 +27,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/rs/xhandler"
-	"github.com/vivowares/octopus/Godeps/_workspace/src/golang.org/x/net/context"
+	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/rs/xhandler"
+	"github.com/vivowares/eywa/Godeps/_workspace/src/golang.org/x/net/context"
 )
 
 // Options is a configuration container to setup the CORS middleware.

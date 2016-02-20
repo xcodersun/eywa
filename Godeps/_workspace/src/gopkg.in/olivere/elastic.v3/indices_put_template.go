@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"net/url"
 
-	"github.com/vivowares/octopus/Godeps/_workspace/src/gopkg.in/olivere/elastic.v3/uritemplates"
+	"github.com/vivowares/eywa/Godeps/_workspace/src/gopkg.in/olivere/elastic.v3/uritemplates"
 )
 
 // IndicesPutTemplateService creates or updates index mappings.

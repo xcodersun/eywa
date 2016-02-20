@@ -21,11 +21,11 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/BurntSushi/toml"
-	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/magiconair/properties"
-	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/spf13/cast"
-	jww "github.com/vivowares/octopus/Godeps/_workspace/src/github.com/spf13/jwalterweatherman"
-	"github.com/vivowares/octopus/Godeps/_workspace/src/gopkg.in/yaml.v2"
+	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/BurntSushi/toml"
+	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/magiconair/properties"
+	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/spf13/cast"
+	jww "github.com/vivowares/eywa/Godeps/_workspace/src/github.com/spf13/jwalterweatherman"
+	"github.com/vivowares/eywa/Godeps/_workspace/src/gopkg.in/yaml.v2"
 )
 
 // Denotes failing to parse configuration file.

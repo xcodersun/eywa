@@ -1,9 +1,9 @@
 package middlewares
 
 import (
-	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/zenazn/goji/web"
-	. "github.com/vivowares/octopus/models"
-	. "github.com/vivowares/octopus/utils"
+	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/zenazn/goji/web"
+	. "github.com/vivowares/eywa/models"
+	. "github.com/vivowares/eywa/utils"
 	"net/http"
 )
 

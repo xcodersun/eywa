@@ -1,9 +1,9 @@
-auto_reload: 10m
+auto_reload: 0m
 service:
   host: localhost
-  api_port: 80
-  device_port: 8081
-  pid_file: /var/octopus/octopus.pid
+  api_port: 9090
+  device_port: 9091
+  pid_file: {{ .eywa_home }}/tmp/pids/eywa_test.pid
 security:
   dashboard:
     username: root
@@ -13,8 +13,8 @@ security:
       key: abcdefg123456789
       iv: abcdefg123456789
   ssl:
-    certfile: /etc/octopus/server.crt
-    keyfile: /etc/octopus/server.key
+    certfile:
+    keyfile:
 websocket_connections:
   registry: memory
   nshards: 4
@@ -39,26 +39,26 @@ indices:
   ttl: '336h'
 database:
   db_type: sqlite3
-  db_file: /var/octopus/octopus.db
+  db_file: {{ .eywa_home }}/db/eywa_test.db
 logging:
-  octopus:
-    filename: /var/octopus/octopus.log
+  eywa:
+    filename: {{ .eywa_home }}/logs/test/eywa.log
     maxsize: 1024
     maxage: 7
     maxbackups: 5
-    level: info
-    buffer_size: 512
+    level: debug
+    buffer_size: 0
   indices:
-    filename: /var/octopus/indices.log
+    filename: {{ .eywa_home }}/logs/test/indices.log
     maxsize: 1024
     maxage: 7
     maxbackups: 5
-    level: warn
-    buffer_size: 512
+    level: debug
+    buffer_size: 0
   database:
-    filename: /var/octopus/db.log
+    filename: {{ .eywa_home }}/logs/test/db.log
     maxsize: 1024
     maxage: 7
     maxbackups: 5
-    level: warn
-    buffer_size: 512
+    level: debug
+    buffer_size: 0

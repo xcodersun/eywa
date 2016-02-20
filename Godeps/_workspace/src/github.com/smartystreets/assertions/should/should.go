@@ -2,7 +2,7 @@
 // functions in the assertions package.
 package should
 
-import "github.com/vivowares/octopus/Godeps/_workspace/src/github.com/smartystreets/assertions"
+import "github.com/vivowares/eywa/Godeps/_workspace/src/github.com/smartystreets/assertions"
 
 var (
 	Equal          = assertions.ShouldEqual

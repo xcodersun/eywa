@@ -4,12 +4,12 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/zenazn/goji/graceful"
-	"github.com/vivowares/octopus/configs"
-	"github.com/vivowares/octopus/connections"
-	"github.com/vivowares/octopus/handlers"
-	"github.com/vivowares/octopus/models"
-	. "github.com/vivowares/octopus/utils"
+	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/zenazn/goji/graceful"
+	"github.com/vivowares/eywa/configs"
+	"github.com/vivowares/eywa/connections"
+	"github.com/vivowares/eywa/handlers"
+	"github.com/vivowares/eywa/models"
+	. "github.com/vivowares/eywa/utils"
 	"io/ioutil"
 	"os"
 	"path"
@@ -37,7 +37,7 @@ func main() {
 
 	go func() {
 		if len(cert) > 0 && len(key) > 0 {
-			Logger.Info(fmt.Sprintf("Octopus started listening to port %d with SSL", configs.Config().Service.ApiPort))
+			Logger.Info(fmt.Sprintf("Eywa started listening to port %d with SSL", configs.Config().Service.ApiPort))
 			graceful.ListenAndServeTLS(
 				":"+strconv.Itoa(configs.Config().Service.ApiPort),
 				cert,
@@ -45,7 +45,7 @@ func main() {
 				HttpRouter(),
 			)
 		} else {
-			Logger.Info(fmt.Sprintf("Octopus started listening to port %d", configs.Config().Service.ApiPort))
+			Logger.Info(fmt.Sprintf("Eywa started listening to port %d", configs.Config().Service.ApiPort))
 			graceful.ListenAndServe(
 				":"+strconv.Itoa(configs.Config().Service.ApiPort),
 				HttpRouter(),
@@ -74,7 +74,7 @@ func main() {
 
 	graceful.HandleSignals()
 	graceful.PreHook(func() {
-		Logger.Info("Octopus received signal, gracefully stopping...")
+		Logger.Info("Eywa received signal, gracefully stopping...")
 	})
 
 	graceful.PostHook(func() {
@@ -86,7 +86,7 @@ func main() {
 	graceful.PostHook(func() { models.CloseDB() })
 	graceful.PostHook(func() { models.CloseIndexClient() })
 	graceful.PostHook(func() {
-		Logger.Info("Octopus stopped")
+		Logger.Info("Eywa stopped")
 	})
 	graceful.PostHook(func() { CloseLogger() })
 	graceful.PostHook(func() { removePidFile() })
@@ -100,11 +100,11 @@ func Initialize() {
 	configFile := flag.String("conf", "", "config file location")
 	flag.Parse()
 	if len(*configFile) == 0 {
-		defaultConf := "/etc/octopus/octopus.yml"
+		defaultConf := "/etc/eywa/eywa.yml"
 		if _, err := os.Stat(defaultConf); os.IsNotExist(err) {
 			pwd, err := os.Getwd()
 			PanicIfErr(err)
-			*configFile = path.Join(pwd, "configs", "octopus_development.yml")
+			*configFile = path.Join(pwd, "configs", "eywa_development.yml")
 		} else {
 			*configFile = defaultConf
 		}

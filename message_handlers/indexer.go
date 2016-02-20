@@ -2,10 +2,10 @@ package message_handlers
 
 import (
 	"fmt"
-	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/satori/go.uuid"
-	. "github.com/vivowares/octopus/connections"
-	. "github.com/vivowares/octopus/models"
-	. "github.com/vivowares/octopus/utils"
+	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/satori/go.uuid"
+	. "github.com/vivowares/eywa/connections"
+	. "github.com/vivowares/eywa/models"
+	. "github.com/vivowares/eywa/utils"
 )
 
 var SupportedMessageHandlers = map[string]*Middleware{"indexer": Indexer}

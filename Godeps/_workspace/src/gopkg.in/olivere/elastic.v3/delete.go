@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"net/url"
 
-	"github.com/vivowares/octopus/Godeps/_workspace/src/gopkg.in/olivere/elastic.v3/uritemplates"
+	"github.com/vivowares/eywa/Godeps/_workspace/src/gopkg.in/olivere/elastic.v3/uritemplates"
 )
 
 // DeleteService allows to delete a typed JSON document from a specified

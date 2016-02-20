@@ -20,8 +20,8 @@ import (
 	"log"
 	"testing"
 
-	. "github.com/vivowares/octopus/Godeps/_workspace/src/github.com/smartystreets/assertions/internal/oglematchers"
-	. "github.com/vivowares/octopus/Godeps/_workspace/src/github.com/smartystreets/assertions/internal/ogletest"
+	. "github.com/vivowares/eywa/Godeps/_workspace/src/github.com/smartystreets/assertions/internal/oglematchers"
+	. "github.com/vivowares/eywa/Godeps/_workspace/src/github.com/smartystreets/assertions/internal/ogletest"
 )
 
 func TestPanickingTest(t *testing.T) { RunTests(t) }

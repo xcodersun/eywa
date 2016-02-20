@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/mozillazg/request"
+	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/mozillazg/request"
 )
 
 type global_data struct {

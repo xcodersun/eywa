@@ -3,7 +3,7 @@ package main
 import (
 	"github.com/go-martini/martini"
 	"github.com/martini-contrib/render"
-	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/rs/cors"
+	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/rs/cors"
 )
 
 func main() {

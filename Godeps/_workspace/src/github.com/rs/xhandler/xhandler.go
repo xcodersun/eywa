@@ -14,7 +14,7 @@ package xhandler
 import (
 	"net/http"
 
-	"github.com/vivowares/octopus/Godeps/_workspace/src/golang.org/x/net/context"
+	"github.com/vivowares/eywa/Godeps/_workspace/src/golang.org/x/net/context"
 )
 
 // HandlerC is a net/context aware http.Handler

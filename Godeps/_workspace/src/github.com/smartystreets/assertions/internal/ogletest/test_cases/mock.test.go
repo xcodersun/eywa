@@ -16,10 +16,10 @@
 package oglematchers_test
 
 import (
-	. "github.com/vivowares/octopus/Godeps/_workspace/src/github.com/smartystreets/assertions/internal/oglematchers"
-	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/smartystreets/assertions/internal/oglemock"
-	. "github.com/vivowares/octopus/Godeps/_workspace/src/github.com/smartystreets/assertions/internal/ogletest"
-	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/smartystreets/assertions/internal/ogletest/test_cases/mock_image"
+	. "github.com/vivowares/eywa/Godeps/_workspace/src/github.com/smartystreets/assertions/internal/oglematchers"
+	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/smartystreets/assertions/internal/oglemock"
+	. "github.com/vivowares/eywa/Godeps/_workspace/src/github.com/smartystreets/assertions/internal/ogletest"
+	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/smartystreets/assertions/internal/ogletest/test_cases/mock_image"
 	"image/color"
 	"testing"
 )

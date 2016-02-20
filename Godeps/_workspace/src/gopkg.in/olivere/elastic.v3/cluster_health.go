@@ -10,7 +10,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/vivowares/octopus/Godeps/_workspace/src/gopkg.in/olivere/elastic.v3/uritemplates"
+	"github.com/vivowares/eywa/Godeps/_workspace/src/gopkg.in/olivere/elastic.v3/uritemplates"
 )
 
 // ClusterHealthService allows to get a very simple status on the health of the cluster.

@@ -6,7 +6,7 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/smartystreets/goconvey/convey/gotest"
+	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/smartystreets/goconvey/convey/gotest"
 )
 
 ////////////////// ScopeReport ////////////////////

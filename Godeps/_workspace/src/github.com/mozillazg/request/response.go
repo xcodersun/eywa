@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/bitly/go-simplejson"
+	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/bitly/go-simplejson"
 )
 
 type Response struct {

@@ -16,7 +16,7 @@
 package ogletest
 
 import (
-	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/smartystreets/assertions/internal/oglemock"
+	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/smartystreets/assertions/internal/oglemock"
 	"runtime"
 )
 

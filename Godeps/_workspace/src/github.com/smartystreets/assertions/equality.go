@@ -7,7 +7,7 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/smartystreets/assertions/internal/oglematchers"
+	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/smartystreets/assertions/internal/oglematchers"
 )
 
 // default acceptable delta for ShouldAlmostEqual

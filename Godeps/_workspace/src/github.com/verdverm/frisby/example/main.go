@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/bitly/go-simplejson"
-	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/verdverm/frisby"
+	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/bitly/go-simplejson"
+	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/verdverm/frisby"
 )
 
 func main() {

@@ -5,7 +5,7 @@
 package main
 
 import (
-	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/gorilla/websocket"
+	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/gorilla/websocket"
 	"log"
 	"net/http"
 	"time"

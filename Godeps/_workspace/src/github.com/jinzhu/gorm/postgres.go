@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/lib/pq/hstore"
+	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/lib/pq/hstore"
 )
 
 type postgres struct {

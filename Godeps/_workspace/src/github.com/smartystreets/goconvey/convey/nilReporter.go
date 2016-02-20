@@ -1,7 +1,7 @@
 package convey
 
 import (
-	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/smartystreets/goconvey/convey/reporting"
+	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/smartystreets/goconvey/convey/reporting"
 )
 
 type nilReporter struct{}

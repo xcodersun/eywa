@@ -30,11 +30,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/kr/pretty"
-	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/mitchellh/mapstructure"
-	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/spf13/cast"
-	jww "github.com/vivowares/octopus/Godeps/_workspace/src/github.com/spf13/jwalterweatherman"
-	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/spf13/pflag"
+	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/kr/pretty"
+	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/mitchellh/mapstructure"
+	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/spf13/cast"
+	jww "github.com/vivowares/eywa/Godeps/_workspace/src/github.com/spf13/jwalterweatherman"
+	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/spf13/pflag"
 )
 
 var v *Viper

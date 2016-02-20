@@ -1,9 +1,9 @@
 package utils
 
 import (
-	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/vivowares/waterwheel"
-	"github.com/vivowares/octopus/Godeps/_workspace/src/gopkg.in/natefinch/lumberjack.v2"
-	. "github.com/vivowares/octopus/configs"
+	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/vivowares/waterwheel"
+	"github.com/vivowares/eywa/Godeps/_workspace/src/gopkg.in/natefinch/lumberjack.v2"
+	. "github.com/vivowares/eywa/configs"
 	"log"
 )
 
@@ -17,17 +17,17 @@ var DBLogger *log.Logger
 
 func InitialLogger() {
 	rl := &lumberjack.Logger{
-		Filename:   Config().Logging.Octopus.Filename,
-		MaxSize:    Config().Logging.Octopus.MaxSize,
-		MaxBackups: Config().Logging.Octopus.MaxBackups,
-		MaxAge:     Config().Logging.Octopus.MaxAge,
+		Filename:   Config().Logging.Eywa.Filename,
+		MaxSize:    Config().Logging.Eywa.MaxSize,
+		MaxBackups: Config().Logging.Eywa.MaxBackups,
+		MaxAge:     Config().Logging.Eywa.MaxAge,
 	}
 
 	Logger = waterwheel.NewAsyncLogger(
-		waterwheel.NewBufferedWriteCloser(Config().Logging.Octopus.BufferSize, rl),
+		waterwheel.NewBufferedWriteCloser(Config().Logging.Eywa.BufferSize, rl),
 		waterwheel.SimpleFormatter,
-		Config().Logging.Octopus.BufferSize,
-		Config().Logging.Octopus.Level,
+		Config().Logging.Eywa.BufferSize,
+		Config().Logging.Eywa.Level,
 	)
 
 	esWc = waterwheel.NewBufferedWriteCloser(Config().Logging.Indices.BufferSize,

@@ -9,7 +9,7 @@ import (
 	"strings"
 	"sync/atomic"
 
-	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/zenazn/goji/web"
+	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/zenazn/goji/web"
 )
 
 // Key to use when setting the request ID.

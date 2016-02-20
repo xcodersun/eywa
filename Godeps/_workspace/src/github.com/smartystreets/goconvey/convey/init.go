@@ -4,9 +4,9 @@ import (
 	"flag"
 	"os"
 
-	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/jtolds/gls"
-	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/smartystreets/assertions"
-	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/smartystreets/goconvey/convey/reporting"
+	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/jtolds/gls"
+	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/smartystreets/assertions"
+	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/smartystreets/goconvey/convey/reporting"
 )
 
 func init() {

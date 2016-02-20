@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/zenazn/goji/web"
-	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/zenazn/goji/web/mutil"
+	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/zenazn/goji/web"
+	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/zenazn/goji/web/mutil"
 )
 
 // Logger is a middleware that logs the start and end of each request, along

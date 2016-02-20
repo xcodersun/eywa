@@ -12,7 +12,7 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/gorilla/websocket"
+	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/gorilla/websocket"
 )
 
 var addr = flag.String("addr", "localhost:8081", "http service address")

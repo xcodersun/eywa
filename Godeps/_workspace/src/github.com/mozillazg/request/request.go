@@ -7,7 +7,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/vivowares/octopus/Godeps/_workspace/src/golang.org/x/net/publicsuffix"
+	"github.com/vivowares/eywa/Godeps/_workspace/src/golang.org/x/net/publicsuffix"
 )
 
 const Version = "0.5.0"

@@ -12,7 +12,7 @@ import (
 	"runtime"
 	"sync/atomic"
 
-	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/zenazn/goji/graceful/listener"
+	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/zenazn/goji/graceful/listener"
 )
 
 // WrapListener wraps an arbitrary net.Listener for use with graceful shutdowns.

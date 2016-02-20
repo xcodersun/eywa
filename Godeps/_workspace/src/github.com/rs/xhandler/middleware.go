@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/vivowares/octopus/Godeps/_workspace/src/golang.org/x/net/context"
+	"github.com/vivowares/eywa/Godeps/_workspace/src/golang.org/x/net/context"
 )
 
 // CloseHandler returns a Handler cancelling the context when the client

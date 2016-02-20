@@ -2,10 +2,10 @@ package middlewares
 
 import (
 	"fmt"
-	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/zenazn/goji/web"
-	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/zenazn/goji/web/middleware"
-	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/zenazn/goji/web/mutil"
-	. "github.com/vivowares/octopus/utils"
+	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/zenazn/goji/web"
+	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/zenazn/goji/web/middleware"
+	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/zenazn/goji/web/mutil"
+	. "github.com/vivowares/eywa/utils"
 	"net/http"
 	"net/url"
 	"time"

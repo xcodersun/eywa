@@ -15,7 +15,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/vivowares/octopus/Godeps/_workspace/src/golang.org/x/crypto/scrypt"
+	"github.com/vivowares/eywa/Godeps/_workspace/src/golang.org/x/crypto/scrypt"
 )
 
 // Constants

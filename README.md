@@ -1,10 +1,10 @@
 ### A Little Introduction
 
-#### What is Octopus?
+#### What is Eywa?
 
-Octopus is essentially a connection manager that keeps track of the connected devices. But more than just connecting devices, it is also capable of controlling them, collecting the metrics sent from them, indexing the data, and providing query interfaces that can be used for data visualizations.
+Eywa is essentially a connection manager that keeps track of the connected devices. But more than just connecting devices, it is also capable of controlling them, collecting the metrics sent from them, indexing the data, and providing query interfaces that can be used for data visualizations.
 
-Octopus lets the team of embedded system developers to forget about reinventing the backend services and provides a commonly used protocol, websocket, to make real-time control easily achievable.
+Eywa lets the team of embedded system developers to forget about reinventing the backend services and provides a commonly used protocol, websocket, to make real-time control easily achievable.
 
 ***
 #### Why is it useful?
@@ -38,12 +38,12 @@ Please let us know if you want more features by creating issues. Pull requests a
 ***
 #### Performance
 
-How reliable is Octopus? Well we did a simple benchmark and the benchmark script is also available in the repo under `tasks` directory.
+How reliable is Eywa? Well we did a simple benchmark and the benchmark script is also available in the repo under `tasks` directory.
 
-On a very basic machine: 1 CPU + 1GB mem on [Digital Ocean](https://www.digitalocean.com/). A single Octopus node can keep track of more than 15k devices easily. For more detail please check out [Performance]
-(https://github.com/vivowares/octopus/wiki/Performance).
+On a very basic machine: 1 CPU + 1GB mem on [Digital Ocean](https://www.digitalocean.com/). A single Eywa node can keep track of more than 15k devices easily. For more detail please check out [Performance]
+(https://github.com/vivowares/eywa/wiki/Performance).
 
 ***
 #### Usages
 
-Please check out our project [wiki](https://github.com/vivowares/octopus/wiki)
+Please check out our project [wiki](https://github.com/vivowares/eywa/wiki)

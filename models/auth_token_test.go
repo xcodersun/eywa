@@ -1,8 +1,8 @@
 package models
 
 import (
-	. "github.com/vivowares/octopus/Godeps/_workspace/src/github.com/smartystreets/goconvey/convey"
-	. "github.com/vivowares/octopus/configs"
+	. "github.com/vivowares/eywa/Godeps/_workspace/src/github.com/smartystreets/goconvey/convey"
+	. "github.com/vivowares/eywa/configs"
 	"reflect"
 	"testing"
 	"time"

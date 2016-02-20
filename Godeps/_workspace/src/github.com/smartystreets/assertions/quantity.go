@@ -3,7 +3,7 @@ package assertions
 import (
 	"fmt"
 
-	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/smartystreets/assertions/internal/oglematchers"
+	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/smartystreets/assertions/internal/oglematchers"
 )
 
 // ShouldBeGreaterThan receives exactly two parameters and ensures that the first is greater than the second.

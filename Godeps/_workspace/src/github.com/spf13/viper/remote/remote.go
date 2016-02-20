@@ -8,7 +8,7 @@ package remote
 
 import (
 	"bytes"
-	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/spf13/viper"
+	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/spf13/viper"
 	crypt "github.com/xordataexchange/crypt/config"
 	"io"
 	"os"

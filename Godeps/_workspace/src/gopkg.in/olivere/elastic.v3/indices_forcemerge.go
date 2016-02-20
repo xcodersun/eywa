@@ -10,7 +10,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/olivere/elastic/uritemplates"
+	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/olivere/elastic/uritemplates"
 )
 
 // IndicesForcemergeService allows to force merging of one or more indices.

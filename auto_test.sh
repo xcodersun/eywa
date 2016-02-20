@@ -13,9 +13,9 @@ rebuild=0
 
 OPTIND=1
 
-if [[ "${#OCTOPUS_HOME}" -eq 0 ]]; then
-  echo 'Warn: OCTOPUS_HOME is not set. Using current directory as OCTOPUS_HOME.'
-  export OCTOPUS_HOME=$PWD
+if [[ "${#EYWA_HOME}" -eq 0 ]]; then
+  echo 'Warn: EYWA_HOME is not set. Using current directory as EYWA_HOME.'
+  export EYWA_HOME=$PWD
 fi
 
 read -r -d '' USAGE << EOM
@@ -86,20 +86,20 @@ serverpid=""
 
 if [[ $integration -eq 1 ]]; then
   if [[ $rebuild -eq 1 ]]; then
-    echo "Rebuilding octopus binary..."
+    echo "Rebuilding eywa binary..."
     go build -a
   fi
 
   echo "Running test setup..."
-  go run "$OCTOPUS_HOME"/tasks/migration.go -conf="$OCTOPUS_HOME/configs/octopus_test.yml" > /dev/null
+  go run "$EYWA_HOME"/tasks/migration.go -conf="$EYWA_HOME/configs/eywa_test.yml" > /dev/null
   curl -XDELETE 127.0.0.1:9200/channels.* > /dev/null 2>&1
   curl -XDELETE 127.0.0.1:9200/_template/* > /dev/null 2>&1
-  go run "$OCTOPUS_HOME"/tasks/setup_es.go -conf="$OCTOPUS_HOME/configs/octopus_test.yml" > /dev/null
+  go run "$EYWA_HOME"/tasks/setup_es.go -conf="$EYWA_HOME/configs/eywa_test.yml" > /dev/null
 
   echo "Starting test server..."
-  "$OCTOPUS_HOME"/octopus -conf="$OCTOPUS_HOME/configs/octopus_test.yml" &
+  "$EYWA_HOME"/eywa -conf="$EYWA_HOME/configs/eywa_test.yml" &
   sleep 5
-  serverpid="$(cat "${OCTOPUS_HOME}"/tmp/pids/octopus_test.pid)"
+  serverpid="$(cat "${EYWA_HOME}"/tmp/pids/eywa_test.pid)"
   if [[ ${#serverpid} -eq 0 ]]; then
     echo 'Error: test server was not started within 5 seconds'
     exit 1

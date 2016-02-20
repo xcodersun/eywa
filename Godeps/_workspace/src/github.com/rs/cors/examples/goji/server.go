@@ -3,7 +3,7 @@ package main
 import (
 	"net/http"
 
-	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/rs/cors"
+	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/rs/cors"
 	"github.com/zenazn/goji"
 )
 

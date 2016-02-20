@@ -5,12 +5,12 @@ package api_tests
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/bitly/go-simplejson"
-	. "github.com/vivowares/octopus/Godeps/_workspace/src/github.com/smartystreets/goconvey/convey"
-	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/verdverm/frisby"
-	. "github.com/vivowares/octopus/configs"
-	. "github.com/vivowares/octopus/models"
-	. "github.com/vivowares/octopus/utils"
+	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/bitly/go-simplejson"
+	. "github.com/vivowares/eywa/Godeps/_workspace/src/github.com/smartystreets/goconvey/convey"
+	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/verdverm/frisby"
+	. "github.com/vivowares/eywa/configs"
+	. "github.com/vivowares/eywa/models"
+	. "github.com/vivowares/eywa/utils"
 	"log"
 	"net/http"
 	"os"
@@ -37,7 +37,7 @@ type ChannelResp struct {
 func init() {
 	pwd, err := os.Getwd()
 	PanicIfErr(err)
-	ConfigFile = path.Join(path.Dir(pwd), "configs", "octopus_test.yml")
+	ConfigFile = path.Join(path.Dir(pwd), "configs", "eywa_test.yml")
 	PanicIfErr(InitializeConfig(ConfigFile))
 
 	ApiServer = "http://" + Config().Service.Host + ":" + strconv.Itoa(Config().Service.ApiPort)

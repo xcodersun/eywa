@@ -4,10 +4,10 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/gorilla/websocket"
-	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/parnurzeal/gorequest"
-	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/satori/go.uuid"
-	. "github.com/vivowares/octopus/utils"
+	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/gorilla/websocket"
+	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/parnurzeal/gorequest"
+	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/satori/go.uuid"
+	. "github.com/vivowares/eywa/utils"
 	"log"
 	"math/rand"
 	"net"
@@ -36,8 +36,8 @@ func main() {
 	host := flag.String("host", "localhost", "the target server host")
 	ports := flag.String("ports", "8080:8081", "the http port and device port")
 	fields := flag.String("fields", "temperature:float", "fields that are used for bench test. Format: 'field1:type1,field2:type2'")
-	user := flag.String("user", "root", "username for authenticating octopus")
-	passwd := flag.String("passwd", "waterISwide", "passwd for authenticating octopus")
+	user := flag.String("user", "root", "username for authenticating eywa")
+	passwd := flag.String("passwd", "waterISwide", "passwd for authenticating eywa")
 
 	c := flag.Int("c", 1000, "number of concurrent clients")
 	p := flag.Int("p", 100, "number of ping messages to send")
@@ -90,7 +90,7 @@ func main() {
 	httpPort := _ports[0]
 	devicePort := _ports[1]
 
-	log.Println("Login the octopus and get the auth token...")
+	log.Println("Login the eywa and get the auth token...")
 	url := fmt.Sprintf("http://%s:%s/login", *host, httpPort)
 	req := gorequest.New()
 	response, bodyBytes, errs := req.Get(url).SetBasicAuth(*user, *passwd).EndBytes()
@@ -98,7 +98,7 @@ func main() {
 		log.Fatalln(errs[0].Error())
 	}
 	if response.StatusCode != 200 {
-		log.Fatalln("Unable to authenticate to Octopus. Please check the user/passwd pair.")
+		log.Fatalln("Unable to authenticate to Eywa. Please check the user/passwd pair.")
 	}
 	var loggedIn map[string]string
 	err := json.Unmarshal(bodyBytes, &loggedIn)

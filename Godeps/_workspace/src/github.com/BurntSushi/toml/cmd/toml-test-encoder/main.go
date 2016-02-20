@@ -11,7 +11,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/BurntSushi/toml"
+	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/BurntSushi/toml"
 )
 
 func init() {

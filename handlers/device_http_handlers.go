@@ -1,10 +1,10 @@
 package handlers
 
 import (
-	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/zenazn/goji/web"
-	. "github.com/vivowares/octopus/connections"
-	. "github.com/vivowares/octopus/message_handlers"
-	. "github.com/vivowares/octopus/utils"
+	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/zenazn/goji/web"
+	. "github.com/vivowares/eywa/connections"
+	. "github.com/vivowares/eywa/message_handlers"
+	. "github.com/vivowares/eywa/utils"
 	"io/ioutil"
 	"net/http"
 	"strconv"

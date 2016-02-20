@@ -8,7 +8,7 @@ package some_pkg
 
 import (
 	fmt "fmt"
-	oglemock "github.com/vivowares/octopus/Godeps/_workspace/src/github.com/smartystreets/assertions/internal/oglemock"
+	oglemock "github.com/vivowares/eywa/Godeps/_workspace/src/github.com/smartystreets/assertions/internal/oglemock"
 	image "image"
 	color "image/color"
 	runtime "runtime"

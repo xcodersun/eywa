@@ -18,7 +18,7 @@
 package complicated_pkg
 
 import (
-	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/smartystreets/assertions/internal/oglemock/generate/test_cases/renamed_pkg"
+	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/smartystreets/assertions/internal/oglemock/generate/test_cases/renamed_pkg"
 	"image"
 	"io"
 	"net"

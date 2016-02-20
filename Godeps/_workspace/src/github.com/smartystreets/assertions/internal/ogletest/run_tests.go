@@ -28,7 +28,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/smartystreets/assertions/internal/reqtrace"
+	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/smartystreets/assertions/internal/reqtrace"
 )
 
 var fTestFilter = flag.String(

@@ -1,6 +1,6 @@
 package convey
 
-import "github.com/vivowares/octopus/Godeps/_workspace/src/github.com/smartystreets/assertions"
+import "github.com/vivowares/eywa/Godeps/_workspace/src/github.com/smartystreets/assertions"
 
 var (
 	ShouldEqual          = assertions.ShouldEqual

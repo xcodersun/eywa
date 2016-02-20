@@ -3,7 +3,7 @@ package configs
 import (
 	"bytes"
 	"errors"
-	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/spf13/viper"
+	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/spf13/viper"
 	"os"
 	"path/filepath"
 	"sync/atomic"
@@ -29,17 +29,17 @@ func Reload() error {
 		return err
 	}
 	buf := bytes.NewBuffer([]byte{})
-	octopus_home := os.Getenv("OCTOPUS_HOME")
-	if len(octopus_home) == 0 {
-		return errors.New("ENV OCTOPUS_HOME is not set")
+	eywa_home := os.Getenv("EYWA_HOME")
+	if len(eywa_home) == 0 {
+		return errors.New("ENV EYWA_HOME is not set")
 	}
 
-	octopus_home, err = filepath.Abs(octopus_home)
+	eywa_home, err = filepath.Abs(eywa_home)
 	if err != nil {
 		return err
 	}
 
-	err = t.Execute(buf, map[string]string{"octopus_home": octopus_home})
+	err = t.Execute(buf, map[string]string{"eywa_home": eywa_home})
 	if err != nil {
 		return err
 	}
@@ -106,13 +106,13 @@ func Reload() error {
 		},
 	}
 
-	logOctopus := &LogConf{
-		Filename:   viper.GetString("logging.octopus.filename"),
-		MaxSize:    viper.GetInt("logging.octopus.maxsize"),
-		MaxAge:     viper.GetInt("logging.octopus.maxage"),
-		MaxBackups: viper.GetInt("logging.octopus.maxbackups"),
-		Level:      viper.GetString("logging.octopus.level"),
-		BufferSize: viper.GetInt("logging.octopus.buffer_size"),
+	logEywa := &LogConf{
+		Filename:   viper.GetString("logging.eywa.filename"),
+		MaxSize:    viper.GetInt("logging.eywa.maxsize"),
+		MaxAge:     viper.GetInt("logging.eywa.maxage"),
+		MaxBackups: viper.GetInt("logging.eywa.maxbackups"),
+		Level:      viper.GetString("logging.eywa.level"),
+		BufferSize: viper.GetInt("logging.eywa.buffer_size"),
 	}
 
 	logIndices := &LogConf{
@@ -141,7 +141,7 @@ func Reload() error {
 		Indices:              indexConfig,
 		Database:             dbConfig,
 		Logging: &LogsConf{
-			Octopus:  logOctopus,
+			Eywa:     logEywa,
 			Indices:  logIndices,
 			Database: logDatabase,
 		},
@@ -220,7 +220,7 @@ type WsConnectionBufferSizeConf struct {
 }
 
 type LogsConf struct {
-	Octopus  *LogConf `json:"octopus"`
+	Eywa     *LogConf `json:"eywa"`
 	Indices  *LogConf `json:"indices"`
 	Database *LogConf `json:"database"`
 }

@@ -3,9 +3,9 @@ package connections
 import (
 	"errors"
 	"fmt"
-	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/gorilla/websocket"
-	. "github.com/vivowares/octopus/configs"
-	. "github.com/vivowares/octopus/utils"
+	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/gorilla/websocket"
+	. "github.com/vivowares/eywa/configs"
+	. "github.com/vivowares/eywa/utils"
 	"io"
 	"net"
 	"strconv"

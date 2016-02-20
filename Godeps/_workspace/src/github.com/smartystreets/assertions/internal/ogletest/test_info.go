@@ -18,9 +18,9 @@ package ogletest
 import (
 	"sync"
 
-	"github.com/vivowares/octopus/Godeps/_workspace/src/golang.org/x/net/context"
+	"github.com/vivowares/eywa/Godeps/_workspace/src/golang.org/x/net/context"
 
-	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/smartystreets/assertions/internal/oglemock"
+	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/smartystreets/assertions/internal/oglemock"
 )
 
 // TestInfo represents information about a currently running or previously-run

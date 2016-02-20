@@ -8,7 +8,7 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/vivowares/octopus/Godeps/_workspace/src/golang.org/x/net/proxy"
+	"github.com/vivowares/eywa/Godeps/_workspace/src/golang.org/x/net/proxy"
 )
 
 func applyProxy(a *Args) (err error) {

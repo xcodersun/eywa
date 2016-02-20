@@ -8,9 +8,9 @@ package some_pkg
 
 import (
 	fmt "fmt"
-	oglemock "github.com/vivowares/octopus/Godeps/_workspace/src/github.com/smartystreets/assertions/internal/oglemock"
-	complicated_pkg "github.com/vivowares/octopus/Godeps/_workspace/src/github.com/smartystreets/assertions/internal/oglemock/generate/test_cases/complicated_pkg"
-	tony "github.com/vivowares/octopus/Godeps/_workspace/src/github.com/smartystreets/assertions/internal/oglemock/generate/test_cases/renamed_pkg"
+	oglemock "github.com/vivowares/eywa/Godeps/_workspace/src/github.com/smartystreets/assertions/internal/oglemock"
+	complicated_pkg "github.com/vivowares/eywa/Godeps/_workspace/src/github.com/smartystreets/assertions/internal/oglemock/generate/test_cases/complicated_pkg"
+	tony "github.com/vivowares/eywa/Godeps/_workspace/src/github.com/smartystreets/assertions/internal/oglemock/generate/test_cases/renamed_pkg"
 	image "image"
 	io "io"
 	net "net"

@@ -11,7 +11,7 @@ package main
 
 import (
 	"github.com/kr/pty"
-	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/kr/text/colwriter"
+	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/kr/text/colwriter"
 	"io"
 	"log"
 	"os"
