@@ -57,7 +57,7 @@ func HttpHandler(c web.C, w http.ResponseWriter, r *http.Request) {
 
 	msgId := strconv.FormatInt(time.Now().UnixNano(), 16)
 	msg := &Message{
-		MessageType: SendMessage,
+		MessageType: TypeSendMessage,
 		MessageId:   msgId,
 		Payload:     payload,
 	}

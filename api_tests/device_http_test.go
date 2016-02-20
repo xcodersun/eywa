@@ -8,8 +8,8 @@ import (
 	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/satori/go.uuid"
 	. "github.com/vivowares/octopus/Godeps/_workspace/src/github.com/smartystreets/goconvey/convey"
 	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/verdverm/frisby"
+	"github.com/vivowares/octopus/Godeps/_workspace/src/gopkg.in/olivere/elastic.v3"
 	. "github.com/vivowares/octopus/models"
-	. "github.com/vivowares/octopus/utils"
 	"log"
 	"net/http"
 	"os"
@@ -36,8 +36,6 @@ func TestHttpUpload(t *testing.T) {
 	InitializeIndexClient()
 
 	Convey("successfully uploads the structed data and indexed into ES via http", t, func() {
-		startTime := NanoToMilli(time.Now().UnixNano())
-
 		reqBody := Channel{
 			Name:            "test http upload",
 			Description:     "desc",
@@ -72,17 +70,9 @@ func TestHttpUpload(t *testing.T) {
 		IndexClient.Refresh().Do()
 		time.Sleep(3 * time.Second)
 
-		f = frisby.Create("get raw index").Get(GetRawIndexPath(chId)).
-			SetHeader("AuthToken", authStr()).
-			SetParam("time_range", fmt.Sprintf("%d:", startTime)).
-			SetParam("nop", "false").Send()
-
-		f.ExpectStatus(http.StatusOK).
-			AfterContent(func(F *frisby.Frisby, content []byte, err error) {
-			js, _ := simplejson.NewJson(content)
-			So(js.MustMap()["tag1"].(string), ShouldEqual, tag1)
-		})
-
+		searchRes, err := IndexClient.Search().Index("_all").Query(elastic.NewTermQuery("tag1", tag1)).Do()
+		So(err, ShouldBeNil)
+		So(searchRes.TotalHits(), ShouldEqual, 1)
 	})
 
 	frisby.Global.PrintReport()

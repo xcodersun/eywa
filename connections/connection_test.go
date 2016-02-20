@@ -74,7 +74,7 @@ func (f *fakeWsConn) ReadMessage() (int, []byte, error) {
 	f.Unlock()
 	if strings.HasSuffix(m, "sync") {
 		msg, _ := Unmarshal(f.message)
-		return websocket.BinaryMessage, []byte(fmt.Sprintf("%d|%s|sync response", ResponseMessage, msg.MessageId)), nil
+		return websocket.BinaryMessage, []byte(fmt.Sprintf("%d|%s|sync response", TypeResponseMessage, msg.MessageId)), nil
 	}
 
 	if f.randomErr && rand.Intn(3) == 0 {

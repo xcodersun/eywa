@@ -10,10 +10,9 @@ import (
 	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/satori/go.uuid"
 	. "github.com/vivowares/octopus/Godeps/_workspace/src/github.com/smartystreets/goconvey/convey"
 	"github.com/vivowares/octopus/Godeps/_workspace/src/github.com/verdverm/frisby"
+	"github.com/vivowares/octopus/Godeps/_workspace/src/gopkg.in/olivere/elastic.v3"
 	. "github.com/vivowares/octopus/configs"
 	. "github.com/vivowares/octopus/models"
-	. "github.com/vivowares/octopus/utils"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
@@ -22,8 +21,6 @@ import (
 	"testing"
 	"time"
 )
-
-import "github.com/kr/pretty"
 
 func CreateTestChannel() (string, *Channel) {
 	ch := &Channel{
@@ -58,10 +55,8 @@ func CreateWsConnection(chId, deviceId string, ch *Channel) *websocket.Conn {
 	}
 	h := map[string][]string{"AccessToken": ch.AccessTokens}
 
-	cli, resp, err := websocket.DefaultDialer.Dial(u.String(), h)
+	cli, _, err := websocket.DefaultDialer.Dial(u.String(), h)
 	So(err, ShouldBeNil)
-	p, _ := ioutil.ReadAll(resp.Body)
-	pretty.Println(string(p))
 	return cli
 }
 
@@ -99,7 +94,6 @@ func TestWsConnection(t *testing.T) {
 	Convey("successfully ping the server and get the timestamp", t, func() {
 		cli := CreateWsConnection(chId, "abc", ch)
 		So(CheckConnectionCount(), ShouldEqual, 1)
-		//test ping
 		cli.SetPongHandler(func(data string) error {
 			_, err := strconv.ParseInt(data, 10, 64)
 			So(err, ShouldBeNil)
@@ -114,10 +108,10 @@ func TestWsConnection(t *testing.T) {
 	})
 
 	Convey("successfully uploads structured data and get it indexed", t, func() {
+
 		cli := CreateWsConnection(chId, "abc", ch)
 		So(CheckConnectionCount(), ShouldEqual, 1)
 
-		startTime := NanoToMilli(time.Now().UnixNano())
 		tag1 := uuid.NewV4().String()
 		data := fmt.Sprintf("1|123|tag1=%s&field1=100", tag1)
 		cli.SetWriteDeadline(time.Now().Add(1 * time.Second))
@@ -126,16 +120,9 @@ func TestWsConnection(t *testing.T) {
 		IndexClient.Refresh().Do()
 		time.Sleep(3 * time.Second)
 
-		f := frisby.Create("get raw index").Get(GetRawIndexPath(chId)).
-			SetHeader("AuthToken", authStr()).
-			SetParam("time_range", fmt.Sprintf("%d:", startTime)).
-			SetParam("nop", "false").Send()
-
-		f.ExpectStatus(http.StatusOK).
-			AfterContent(func(F *frisby.Frisby, content []byte, err error) {
-			js, _ := simplejson.NewJson(content)
-			So(js.MustMap()["tag1"].(string), ShouldEqual, tag1)
-		})
+		searchRes, err := IndexClient.Search().Index("_all").Query(elastic.NewTermQuery("tag1", tag1)).Do()
+		So(err, ShouldBeNil)
+		So(searchRes.TotalHits(), ShouldEqual, 1)
 
 		cli.Close()
 		So(CheckConnectionCount(), ShouldEqual, 0)

@@ -8,13 +8,13 @@ import (
 )
 
 const (
-	SendMessage     = 1
-	RequestMessage  = 2
-	ResponseMessage = 4
+	TypeSendMessage     = 1
+	TypeRequestMessage  = 2
+	TypeResponseMessage = 4
 
 	// these two messages are only used for connection states internally
-	StartMessage = 0
-	CloseMessage = 8
+	TypeStartMessage = 0
+	TypeCloseMessage = 8
 )
 
 var emptyMsgIdErr = errors.New("empty MessageId")
@@ -67,8 +67,8 @@ func Unmarshal(raw []byte) (*Message, error) {
 				msgType, err := strconv.Atoi(string(raw[0:idx]))
 				if err != nil {
 					return nil, err
-				} else if msgType != SendMessage &&
-					msgType != RequestMessage && msgType != ResponseMessage && msgType != CloseMessage {
+				} else if msgType != TypeSendMessage &&
+					msgType != TypeRequestMessage && msgType != TypeResponseMessage && msgType != TypeCloseMessage {
 					return nil, errors.New(fmt.Sprintf("invalid MessageType %d, raw: %s", msgType, raw))
 				} else {
 					msg.MessageType = msgType
@@ -86,7 +86,7 @@ func Unmarshal(raw []byte) (*Message, error) {
 		return nil, errors.New(fmt.Sprintf("expected 2 pips instead of %d, raw: %s", pips, raw))
 	}
 
-	if len(msg.MessageId) == 0 && msg.MessageType != CloseMessage {
+	if len(msg.MessageId) == 0 && msg.MessageType != TypeCloseMessage {
 		return nil, emptyMsgIdErr
 	}
 

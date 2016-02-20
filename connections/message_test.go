@@ -10,7 +10,7 @@ import (
 func TestMessageSerializations(t *testing.T) {
 	Convey("message can be marshaled/unmarshaled", t, func() {
 		m := &Message{
-			MessageType: RequestMessage,
+			MessageType: TypeRequestMessage,
 			MessageId:   "1",
 			Payload:     []byte("\u2318|\u2317"),
 		}

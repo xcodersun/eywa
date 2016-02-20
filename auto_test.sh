@@ -108,7 +108,7 @@ fi
 
 fail=1
 iter=0
-rm $log >/dev/null 2>&1
+echo '' > $log
 
 while [[ $utilFail -eq 1 && $iters -eq 0 && $fail -eq 1 ]] || [[ $utilFail -eq 1 && $iters -gt 0 && $fail -eq 1 && $iter -lt $iters ]] || [[ $utilFail -ne 1 && $iters -eq 0 ]] || [[ $utilFail -ne 1 && $iters -gt 0 && $iter -lt $iters ]]; do
 

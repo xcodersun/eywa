@@ -132,17 +132,17 @@ func (c *WebSocketConnection) MessageHandler() MessageHandler { return c.h }
 func (c *WebSocketConnection) Metadata() map[string]interface{} { return c.metadata }
 
 func (c *WebSocketConnection) Send(msg []byte) error {
-	_, err := c.sendMessage(SendMessage, msg)
+	_, err := c.sendMessage(TypeSendMessage, msg)
 	return err
 }
 
 func (c *WebSocketConnection) Response(msg []byte) error {
-	_, err := c.sendMessage(ResponseMessage, msg)
+	_, err := c.sendMessage(TypeResponseMessage, msg)
 	return err
 }
 
 func (c *WebSocketConnection) Request(msg []byte) ([]byte, error) {
-	return c.sendMessage(RequestMessage, msg)
+	return c.sendMessage(TypeRequestMessage, msg)
 }
 
 func (c *WebSocketConnection) sendMessage(messageType int, payload []byte) (respMsg []byte, err error) {
@@ -174,7 +174,7 @@ func (c *WebSocketConnection) sendMessage(messageType int, payload []byte) (resp
 	}:
 	}
 
-	if messageType == RequestMessage {
+	if messageType == TypeRequestMessage {
 		defer func() {
 			c.msgChans.delete(msgId)
 		}()
@@ -212,7 +212,7 @@ func (c *WebSocketConnection) wListen() {
 					c.Close()
 				}
 			} else {
-				if req.msg.MessageType == RequestMessage {
+				if req.msg.MessageType == TypeRequestMessage {
 					c.msgChans.put(req.msg.MessageId, req.respCh)
 				} else {
 					req.respCh <- &MessageResp{}
@@ -220,7 +220,7 @@ func (c *WebSocketConnection) wListen() {
 			}
 		} else {
 			<-c.closewch
-			c.sendWsMessage(&Message{MessageType: CloseMessage})
+			c.sendWsMessage(&Message{MessageType: TypeCloseMessage})
 			return
 		}
 	}
@@ -232,7 +232,7 @@ func (c *WebSocketConnection) sendWsMessage(message *Message) error {
 		return &WebsocketError{message: "error setting write deadline, " + err.Error()}
 	}
 
-	if message.MessageType == CloseMessage {
+	if message.MessageType == TypeCloseMessage {
 		err = c.ws.WriteMessage(websocket.CloseMessage, message.Payload)
 		err = c.ws.Close()
 	} else {
@@ -267,7 +267,7 @@ func (c *WebSocketConnection) readWsMessage() (*Message, error) {
 
 	if messageType == websocket.CloseMessage {
 		return &Message{
-			MessageType: CloseMessage,
+			MessageType: TypeCloseMessage,
 		}, nil
 	}
 
@@ -288,10 +288,10 @@ func (c *WebSocketConnection) rListen() {
 					c.Close()
 					return
 				}
-			} else if message.MessageType == CloseMessage {
+			} else if message.MessageType == TypeCloseMessage {
 				c.Close()
 				return
-			} else if message.MessageType == ResponseMessage {
+			} else if message.MessageType == TypeResponseMessage {
 				ch, found := c.msgChans.find(message.MessageId)
 				if found {
 					c.msgChans.delete(message.MessageId)
@@ -316,7 +316,7 @@ func (c *WebSocketConnection) Close() {
 		c.closewch <- true
 		c.shard.unregister(c)
 		Logger.Debug(fmt.Sprintf("connection: %s closed", c.Identifier()))
-		c.h(c, &Message{MessageType: CloseMessage}, nil)
+		c.h(c, &Message{MessageType: TypeCloseMessage}, nil)
 	})
 }
 
@@ -329,5 +329,5 @@ func (c *WebSocketConnection) Start() {
 	go c.rListen()
 	go c.wListen()
 	Logger.Debug(fmt.Sprintf("connection: %s started", c.Identifier()))
-	c.h(c, &Message{MessageType: StartMessage}, nil)
+	c.h(c, &Message{MessageType: TypeStartMessage}, nil)
 }

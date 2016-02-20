@@ -37,15 +37,15 @@ func (p *Point) MarshalJSON() ([]byte, error) {
 	j["timestamp"] = p.Timestamp.UTC().UnixNano() / int64(time.Millisecond)
 	j["message_id"] = p.msg.MessageId
 	switch p.msg.MessageType {
-	case ResponseMessage:
+	case TypeResponseMessage:
 		j["message_type"] = "response"
-	case SendMessage:
+	case TypeSendMessage:
 		j["message_type"] = "send"
-	case RequestMessage:
+	case TypeRequestMessage:
 		j["message_type"] = "request"
-	case CloseMessage:
+	case TypeCloseMessage:
 		j["message_type"] = "close"
-	case StartMessage:
+	case TypeStartMessage:
 		j["message_type"] = "start"
 	}
 
