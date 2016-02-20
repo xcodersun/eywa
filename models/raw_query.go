@@ -113,7 +113,7 @@ func (q *RawQuery) QueryES() (interface{}, error) {
 		resp, err := IndexClient.Search().
 			SearchType("count").
 			Index(indexName).
-			Type(IndexType).
+			Type(IndexTypeMessages).
 			Aggregation("name", filterAgg).
 			Do()
 
@@ -150,7 +150,7 @@ func (q *RawQuery) QueryES() (interface{}, error) {
 		}
 
 		size := ScrollSize / Config().Indices.NumberOfShards
-		resp, err := IndexClient.Scroll().KeepAlive(KeepAlive).Index(indexName).Type(IndexType).Query(boolQ).Size(size).Do()
+		resp, err := IndexClient.Scroll().KeepAlive(KeepAlive).Index(indexName).Type(IndexTypeMessages).Query(boolQ).Size(size).Do()
 		for err == nil {
 			resp, err = IndexClient.Scroll().KeepAlive(KeepAlive).ScrollId(resp.ScrollId).GetNextPage()
 			if err == nil {

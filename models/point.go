@@ -13,7 +13,8 @@ import (
 
 var jsonParsingErr = errors.New("json parsing err")
 var urlParsingErr = errors.New("url parsing err")
-var IndexType = "messages"
+var IndexTypeMessages = "messages"
+var IndexTypeActivities = "activities"
 
 type Point struct {
 	ch   *Channel
@@ -197,6 +198,13 @@ func (p *Point) Metadata(meta map[string]string) {
 			}
 		}
 	}
+}
+
+func (p *Point) IndexType() string {
+	if p.msg.MessageType == TypeStartMessage || p.msg.MessageType == TypeCloseMessage {
+		return IndexTypeActivities
+	}
+	return IndexTypeMessages
 }
 
 func NewPoint(id string, ch *Channel, conn Connection, m *Message) (*Point, error) {

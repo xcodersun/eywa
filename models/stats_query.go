@@ -75,7 +75,7 @@ func (q *StatsQuery) QueryES() (interface{}, error) {
 	resp, err := IndexClient.Search().
 		SearchType("count").
 		Index(indexName).
-		Type(IndexType).
+		Type(IndexTypeMessages).
 		Aggregation("name", filterAgg).
 		Do()
 

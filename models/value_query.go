@@ -164,7 +164,7 @@ func (q *ValueQuery) QueryES() (interface{}, error) {
 		resp, err := IndexClient.Search().
 			SearchType("count").
 			Index(indexName).
-			Type(IndexType).
+			Type(IndexTypeMessages).
 			Aggregation("name", filterAgg).
 			Do()
 		if err != nil {
@@ -195,7 +195,7 @@ func (q *ValueQuery) QueryES() (interface{}, error) {
 	} else {
 		resp, err := IndexClient.Search().
 			Index(GlobIndexName(q.Channel)).
-			Type(IndexType).
+			Type(IndexTypeMessages).
 			FetchSource(false).
 			Field(q.Field).
 			Query(boolQ).

@@ -154,7 +154,7 @@ func (q *SeriesQuery) QueryES() (interface{}, error) {
 	resp, err := IndexClient.Search().
 		SearchType("count").
 		Index(indexName).
-		Type(IndexType).
+		Type(IndexTypeMessages).
 		Aggregation("name", filterAgg).
 		Do()
 	if err != nil {

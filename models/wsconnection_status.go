@@ -54,7 +54,7 @@ func FindWebSocketConnectionStatus(ch *Channel, devId string, withHistory bool) 
 		orQs = append(orQs, elastic.NewTermQuery("message_type", "close"))
 		boolQ.Should(orQs...)
 
-		resp, err := IndexClient.Search().Index(GlobIndexName(ch)).Type(IndexType).Query(boolQ).Sort("timestamp", false).Size(HistoryLength).Do()
+		resp, err := IndexClient.Search().Index(GlobIndexName(ch)).Type(IndexTypeActivities).Query(boolQ).Sort("timestamp", false).Size(HistoryLength).Do()
 		if err == nil {
 			for _, hit := range resp.Hits.Hits {
 				var t map[string]interface{}

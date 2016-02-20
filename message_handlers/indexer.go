@@ -24,7 +24,7 @@ var Indexer = NewMiddleware("indexer", func(h MessageHandler) MessageHandler {
 
 					_, err := IndexClient.Index().
 						Index(TimedIndexName(ch, p.Timestamp)).
-						Type(IndexType).
+						Type(p.IndexType()).
 						Id(id).
 						BodyJson(p).
 						Do()
