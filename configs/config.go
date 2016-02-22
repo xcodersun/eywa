@@ -2,10 +2,7 @@ package configs
 
 import (
 	"bytes"
-	"errors"
 	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/spf13/viper"
-	"os"
-	"path/filepath"
 	"sync/atomic"
 	"text/template"
 	"time"
@@ -14,6 +11,7 @@ import (
 
 var cfgPtr unsafe.Pointer
 var filename string
+var params map[string]string
 
 func Config() *Conf {
 	return (*Conf)(cfgPtr)
@@ -28,24 +26,15 @@ func Reload() error {
 	if err != nil {
 		return err
 	}
+
 	buf := bytes.NewBuffer([]byte{})
-	eywa_home := os.Getenv("EYWA_HOME")
-	if len(eywa_home) == 0 {
-		return errors.New("ENV EYWA_HOME is not set")
-	}
-
-	eywa_home, err = filepath.Abs(eywa_home)
-	if err != nil {
-		return err
-	}
-
-	err = t.Execute(buf, map[string]string{"eywa_home": eywa_home})
+	err = t.Execute(buf, params)
 	if err != nil {
 		return err
 	}
 
 	viper.SetConfigType("yml")
-	viper.ReadConfig(buf)
+	err = viper.ReadConfig(buf)
 	if err != nil {
 		return err
 	}
@@ -151,8 +140,10 @@ func Reload() error {
 	return nil
 }
 
-func InitializeConfig(f string) error {
+func InitializeConfig(f string, p map[string]string) error {
 	filename = f
+	params = p
+
 	err := Reload()
 	if err == nil && Config().AutoReload.Nanoseconds() > 0 {
 		go func() {

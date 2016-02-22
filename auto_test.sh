@@ -89,13 +89,13 @@ if [[ $integration -eq 1 ]]; then
   fi
 
   echo "Running test setup..."
-  go run "$EYWA_HOME"/tasks/migration.go -conf="$EYWA_HOME/configs/eywa_test.yml" > /dev/null
+  "$EYWA_HOME"/eywa migrate -conf="$EYWA_HOME/configs/eywa_test.yml"
   curl -XDELETE 127.0.0.1:9200/channels.* > /dev/null 2>&1
   curl -XDELETE 127.0.0.1:9200/_template/* > /dev/null 2>&1
-  go run "$EYWA_HOME"/tasks/setup_es.go -conf="$EYWA_HOME/configs/eywa_test.yml" > /dev/null
+  "$EYWA_HOME"/eywa setup_es -conf="$EYWA_HOME/configs/eywa_test.yml"
 
   echo "Starting test server..."
-  "$EYWA_HOME"/eywa -conf="$EYWA_HOME/configs/eywa_test.yml" &
+  "$EYWA_HOME"/eywa serve -conf="$EYWA_HOME/configs/eywa_test.yml" &
   sleep 5
   serverpid="$(cat "${EYWA_HOME}"/tmp/pids/eywa_test.pid)"
   if [[ ${#serverpid} -eq 0 ]]; then

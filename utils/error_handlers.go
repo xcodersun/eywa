@@ -1,7 +1,9 @@
 package utils
 
-func PanicIfErr(err error) {
+import "log"
+
+func FatalIfErr(err error) {
 	if err != nil {
-		panic(err)
+		log.Fatalln(err.Error())
 	}
 }

@@ -36,9 +36,11 @@ type ChannelResp struct {
 
 func init() {
 	pwd, err := os.Getwd()
-	PanicIfErr(err)
+	FatalIfErr(err)
 	ConfigFile = path.Join(path.Dir(pwd), "configs", "eywa_test.yml")
-	PanicIfErr(InitializeConfig(ConfigFile))
+	eywaHome := os.Getenv("EYWA_HOME")
+	params := map[string]string{"eywa_home": eywaHome}
+	FatalIfErr(InitializeConfig(ConfigFile, params))
 
 	ApiServer = "http://" + Config().Service.Host + ":" + strconv.Itoa(Config().Service.ApiPort)
 	DeviceServer = "http://" + Config().Service.Host + ":" + strconv.Itoa(Config().Service.DevicePort)
@@ -49,10 +51,10 @@ func authStr() string {
 		Config().Security.Dashboard.Username,
 		Config().Security.Dashboard.Password,
 	)
-	PanicIfErr(err)
+	FatalIfErr(err)
 
 	str, err := auth.Encrypt()
-	PanicIfErr(err)
+	FatalIfErr(err)
 	return str
 }
 

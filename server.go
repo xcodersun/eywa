@@ -2,129 +2,76 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
-	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/zenazn/goji/graceful"
 	"github.com/vivowares/eywa/configs"
 	"github.com/vivowares/eywa/connections"
 	"github.com/vivowares/eywa/handlers"
 	"github.com/vivowares/eywa/models"
 	. "github.com/vivowares/eywa/utils"
-	"io/ioutil"
 	"os"
 	"path"
 	"runtime"
-	"strconv"
-	"time"
+	"strings"
 )
 
 func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
-	Initialize()
 
-	cert := configs.Config().Security.SSL.CertFile
-	key := configs.Config().Security.SSL.KeyFile
-	if len(cert) > 0 {
-		if _, err := os.Stat(cert); os.IsNotExist(err) {
-			panic(fmt.Sprintf("cert file doesn't exist at: %s\n", cert))
-		}
+	args := os.Args
+	tasks := []string{"serve", "migrate", "setup_es"}
+	if len(args) < 2 {
+		FatalIfErr(
+			errors.New(fmt.Sprintf("task is not specified, available tasks are: %s", strings.Join(tasks, ","))),
+		)
 	}
-	if len(key) > 0 {
-		if _, err := os.Stat(key); os.IsNotExist(err) {
-			panic(fmt.Sprintf("key file doesn't exist at: %s\n", key))
-		}
+	task := args[1]
+	if !StringSliceContains(tasks, task) {
+		FatalIfErr(
+			errors.New(fmt.Sprintf("unknown task: %s, available tasks are: %s", task, strings.Join(tasks, ","))),
+		)
 	}
 
-	go func() {
-		if len(cert) > 0 && len(key) > 0 {
-			Logger.Info(fmt.Sprintf("Eywa started listening to port %d with SSL", configs.Config().Service.ApiPort))
-			graceful.ListenAndServeTLS(
-				":"+strconv.Itoa(configs.Config().Service.ApiPort),
-				cert,
-				key,
-				HttpRouter(),
-			)
-		} else {
-			Logger.Info(fmt.Sprintf("Eywa started listening to port %d", configs.Config().Service.ApiPort))
-			graceful.ListenAndServe(
-				":"+strconv.Itoa(configs.Config().Service.ApiPort),
-				HttpRouter(),
-			)
-		}
-	}()
+	initialize()
 
-	go func() {
-		if len(cert) > 0 && len(key) > 0 {
-			Logger.Info(fmt.Sprintf("Connection Manager started listening to port %d with SSL", configs.Config().Service.DevicePort))
-			graceful.ListenAndServeTLS(
-				":"+strconv.Itoa(configs.Config().Service.DevicePort),
-				cert,
-				key,
-				DeviceRouter(),
-			)
-		} else {
-			Logger.Info(fmt.Sprintf("Connection Manager started listening to port %d", configs.Config().Service.DevicePort))
-			graceful.ListenAndServe(
-				":"+strconv.Itoa(configs.Config().Service.DevicePort),
-				DeviceRouter(),
-			)
-		}
-
-	}()
-
-	graceful.HandleSignals()
-	graceful.PreHook(func() {
-		Logger.Info("Eywa received signal, gracefully stopping...")
-	})
-
-	graceful.PostHook(func() {
-		connections.CloseWSCM()
-		Logger.Info("Waiting for websockets to drain...")
-		time.Sleep(3 * time.Second)
-		Logger.Info("Connection Manager closed.")
-	})
-	graceful.PostHook(func() { models.CloseDB() })
-	graceful.PostHook(func() { models.CloseIndexClient() })
-	graceful.PostHook(func() {
-		Logger.Info("Eywa stopped")
-	})
-	graceful.PostHook(func() { CloseLogger() })
-	graceful.PostHook(func() { removePidFile() })
-
-	createPidFile()
-
-	graceful.Wait()
+	switch args[1] {
+	case "serve":
+		serve()
+	case "migrate":
+		migrate()
+	case "setup_es":
+		setupES()
+	}
 }
 
-func Initialize() {
-	configFile := flag.String("conf", "", "config file location")
-	flag.Parse()
+func initialize() {
+	fSet := flag.NewFlagSet("skip first arg", flag.ExitOnError)
+	configFile := fSet.String("conf", "", "config file location")
+	fSet.Parse(os.Args[2:])
+
+	home := os.Getenv("EYWA_HOME")
+	if len(home) == 0 {
+		FatalIfErr(errors.New("ENV EYWA_HOME is not set"))
+	}
+
 	if len(*configFile) == 0 {
 		defaultConf := "/etc/eywa/eywa.yml"
 		if _, err := os.Stat(defaultConf); os.IsNotExist(err) {
-			pwd, err := os.Getwd()
-			PanicIfErr(err)
-			*configFile = path.Join(pwd, "configs", "eywa_development.yml")
+			*configFile = path.Join(home, "configs", "eywa_development.yml")
 		} else {
 			*configFile = defaultConf
 		}
 	}
-	PanicIfErr(configs.InitializeConfig(*configFile))
+
+	params := map[string]string{"eywa_home": home}
+	FatalIfErr(configs.InitializeConfig(*configFile, params))
 
 	InitialLogger()
 	p, _ := json.Marshal(configs.Config())
 	Logger.Debug(string(p))
-	PanicIfErr(models.InitializeDB())
-	PanicIfErr(models.InitializeIndexClient())
-	PanicIfErr(connections.InitializeWSCM())
+	FatalIfErr(models.InitializeDB())
+	FatalIfErr(models.InitializeIndexClient())
+	FatalIfErr(connections.InitializeWSCM())
 	handlers.InitWsUpgrader()
-}
-
-func createPidFile() error {
-	pid := os.Getpid()
-	return ioutil.WriteFile(configs.Config().Service.PidFile, []byte(strconv.Itoa(pid)), 0644)
-}
-
-func removePidFile() error {
-	return os.Remove(configs.Config().Service.PidFile)
 }

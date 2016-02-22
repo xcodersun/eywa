@@ -339,7 +339,7 @@ func (c *WsClient) StartTest() {
 				}
 			}
 			asBytes, err := json.Marshal(msgBody)
-			PanicIfErr(err)
+			FatalIfErr(err)
 			if n >= c.NPing {
 				err := cli.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("1|%d|%s", rand.Int31(), string(asBytes))))
 				m += 1
