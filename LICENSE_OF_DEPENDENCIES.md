@@ -28,3 +28,8 @@
 |github.com/unrolled/render|https://github.com/unrolled/render/blob/master/LICENSE|
 |github.com/verdverm/frisby|https://github.com/verdverm/frisby/blob/master/LICENSE|
 |gopkg.in/yaml.v2|https://github.com/go-yaml/yaml/blob/v2/LICENSE|
+|github.com/elithrar/simple-scrypt|https://github.com/elithrar/simple-scrypt/blob/master/LICENSE|
+|github.com/lib/pq|https://github.com/lib/pq/blob/master/LICENSE.md|
+|github.com/vivowares/waterwheel|https://github.com/vivowares/waterwheel/blob/master/LICENSE|
+|github.com/zenazn/goji|https://github.com/zenazn/goji/blob/master/LICENSE|
+|gopkg.in/natefinch/lumberjack.v2|https://github.com/natefinch/lumberjack/blob/v2.0/LICENSE|
