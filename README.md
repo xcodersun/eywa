@@ -1,49 +1,65 @@
-### A Little Introduction
+Eywa
+====
 
-#### What is Eywa?
 
-Eywa is essentially a connection manager that keeps track of the connected devices. But more than just connecting devices, it is also capable of controlling them, collecting the metrics sent from them, indexing the data, and providing query interfaces that can be used for data visualizations.
+What is Eywa?
+-------------
 
-Eywa lets the team of embedded system developers to forget about reinventing the backend services and provides a commonly used protocol, websocket, to make real-time control easily achievable.
+**"Eywa is the guiding force and deity of Pandora and the Na'vi. All living things on Pandora connect to Eywa."** -- [Avatar Wiki](http://james-camerons-avatar.wikia.com/wiki/Eywa)
 
-***
-#### Why is it useful?
+**Project Eywa** is essentially a connection manager that keeps track of the connected devices. But more than just connecting devices, it is also capable of controlling them, collecting and indexing the data sent from them, in the end, providing query interfaces that can be used for data visualization.
 
-We are a group of people who are interested into **Home Automations** and **Smart Devices**. Often time, these projects involve connecting devices into cloud, track the usage of different functionalities, collecting the data and also controlling them. After worked on several similar projects, we found there is no reason to reinventing the wheel each time for different applications. So we came up this Project to help small teams to reduce the development their circle.
+Eywa lets the teams of embedded system developers to forget about reinventing the backend services and provides a commonly used protocol, websocket, to make real-time communication easily achievable.
 
-***
-#### What features does it have?
 
-Here is a complete list of supported features. And more will be supported.
+Why is it useful?
+-----------------
+
+We are a group of people who are interested in **Home Automations** and **Smart Devices**. Often time, these projects involve connecting devices into cloud, tracking the usage of different functionalities, collecting the data and also controlling them. After worked on several similar projects, we found there is no reason to reinvent the wheel each time for different applications. So we came up with **Project Eywa** to help small teams like us reduce their development circles.
+
+What features does it have?
+---------------------------
+
+Here is a growing list of features we want to support:
 
 - [x] Connection Manager
 - [x] Device Control
+- [ ] Admin Panel
 - [x] Basic Authentication
 - [x] SSL protection
 - [x] Data Indexing
 - [ ] Data Streaming
 - [x] Data Export
 - [x] Data Retention
-- [x] Data Visualization
+- [ ] Data Visualization
 - [x] Query Interface
 - [ ] Clustering
 - [ ] Custom Web hooks
-- [ ] Custom Alerters
+- [ ] Custom Monitors
 - [ ] M2M (machine to machine) communication
 - [ ] MQTT integration
 - [x] Dockerized image
 
 Please let us know if you want more features by creating issues. Pull requests are also very much welcome!
 
-***
-#### Performance
+Performance
+-----------
 
-How reliable is Eywa? Well we did a simple benchmark and the benchmark script is also available in the repo under `tasks` directory.
+How performant is Eywa? Well, we did a simple benchmark and the [benchmark script](https://github.com/vivowares/eywa/blob/master/benchmark/benchmark.go) is also available in the repo under `benchmark` directory.
 
-On a very basic machine: 1 CPU + 1GB mem on [Digital Ocean](https://www.digitalocean.com/). A single Eywa node can keep track of more than 15k devices easily. For more detail please check out [Performance]
-(https://github.com/vivowares/eywa/wiki/Performance).
+On a machine of 12 CPUs + 32GB mem from [Digital Ocean](https://www.digitalocean.com/). A single Eywa node can keep track of more than 1.5 million devices easily, with a lot of potential. CPU is merely used, but memory is the limiting factor.
 
-***
-#### Usages
+For more details please check out wiki on [Performance](https://github.com/vivowares/eywa/wiki/Performance).
 
-Please check out our project [wiki](https://github.com/vivowares/eywa/wiki)
+How to use?
+-----------
+
+You can get started with our [wiki](https://github.com/vivowares/eywa/wiki).
+
+
+Community / Contributing
+------------------------
+
+Eywa maintains a forum [goeywa](https://groups.google.com/forum/#!forum/goeywa), where you should feel free to ask questions, request features, or to announce projects that are built with Eywa. You should also see updates and road maps on Eywa in this forum.
+
+Contributions to Eywa are very much welcomed. Fork us if you would like to.
