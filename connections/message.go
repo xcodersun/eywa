@@ -13,8 +13,8 @@ const (
 	TypeResponseMessage = 4
 
 	// these two messages are only used for connection states internally
-	TypeStartMessage = 0
-	TypeCloseMessage = 8
+	TypeConnectMessage    = 0
+	TypeDisconnectMessage = 8
 )
 
 var emptyMsgIdErr = errors.New("empty MessageId")
@@ -68,7 +68,7 @@ func Unmarshal(raw []byte) (*Message, error) {
 				if err != nil {
 					return nil, err
 				} else if msgType != TypeSendMessage &&
-					msgType != TypeRequestMessage && msgType != TypeResponseMessage && msgType != TypeCloseMessage {
+					msgType != TypeRequestMessage && msgType != TypeResponseMessage && msgType != TypeDisconnectMessage {
 					return nil, errors.New(fmt.Sprintf("invalid MessageType %d, raw: %s", msgType, raw))
 				} else {
 					msg.MessageType = msgType
@@ -86,7 +86,7 @@ func Unmarshal(raw []byte) (*Message, error) {
 		return nil, errors.New(fmt.Sprintf("expected 2 pips instead of %d, raw: %s", pips, raw))
 	}
 
-	if len(msg.MessageId) == 0 && msg.MessageType != TypeCloseMessage {
+	if len(msg.MessageId) == 0 && msg.MessageType != TypeDisconnectMessage {
 		return nil, emptyMsgIdErr
 	}
 

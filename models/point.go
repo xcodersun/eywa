@@ -33,10 +33,7 @@ func (p *Point) MarshalJSON() ([]byte, error) {
 	j["id"] = p.Id
 	j["device_id"] = p.conn.Identifier()
 	j["channel_name"] = p.ch.Name
-	j["channel_id"] = p.ch.Id
-	j["channel_based64_id"] = p.ch.Base64Id()
 	j["timestamp"] = p.Timestamp.UTC().UnixNano() / int64(time.Millisecond)
-	j["message_id"] = p.msg.MessageId
 	switch p.msg.MessageType {
 	case TypeResponseMessage:
 		j["message_type"] = "response"
@@ -44,10 +41,10 @@ func (p *Point) MarshalJSON() ([]byte, error) {
 		j["message_type"] = "send"
 	case TypeRequestMessage:
 		j["message_type"] = "request"
-	case TypeCloseMessage:
-		j["message_type"] = "close"
-	case TypeStartMessage:
-		j["message_type"] = "start"
+	case TypeDisconnectMessage:
+		j["message_type"] = "disconnect"
+	case TypeConnectMessage:
+		j["message_type"] = "connect"
 	}
 
 	for k, v := range p.Tags {
@@ -201,7 +198,7 @@ func (p *Point) Metadata(meta map[string]string) {
 }
 
 func (p *Point) IndexType() string {
-	if p.msg.MessageType == TypeStartMessage || p.msg.MessageType == TypeCloseMessage {
+	if p.msg.MessageType == TypeConnectMessage || p.msg.MessageType == TypeDisconnectMessage {
 		return IndexTypeActivities
 	}
 	return IndexTypeMessages

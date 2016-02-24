@@ -7,10 +7,9 @@ What is Eywa?
 
 **"Eywa is the guiding force and deity of Pandora and the Na'vi. All living things on Pandora connect to Eywa."** -- [Avatar Wiki](http://james-camerons-avatar.wikia.com/wiki/Eywa)
 
-**Project Eywa** is essentially a connection manager that keeps track of the connected devices. But more than just connecting devices, it is also capable of controlling them, collecting and indexing the data sent from them, in the end, providing query interfaces that can be used for data visualization.
+**Project Eywa** is essentially a connection manager that keeps track of connected devices. But more than just connecting devices, it is also capable of sending control commands to them, collecting data from them, and in the end, providing query interfaces that can be used for data visualization.
 
 Eywa lets the teams of embedded system developers to forget about reinventing the backend services and provides a commonly used protocol, websocket, to make real-time communication easily achievable.
-
 
 Why is it useful?
 -----------------
@@ -39,6 +38,8 @@ Here is a growing list of features we want to support:
 - [ ] M2M (machine to machine) communication
 - [ ] MQTT integration
 - [x] Dockerized image
+
+Our Admin Panel and Data Visualization dashboard will be releasing soon.
 
 Please let us know if you want more features by creating issues. Pull requests are also very much welcome!
 

@@ -220,7 +220,7 @@ func (c *WebSocketConnection) wListen() {
 			}
 		} else {
 			<-c.closewch
-			c.sendWsMessage(&Message{MessageType: TypeCloseMessage})
+			c.sendWsMessage(&Message{MessageType: TypeDisconnectMessage})
 			return
 		}
 	}
@@ -232,7 +232,7 @@ func (c *WebSocketConnection) sendWsMessage(message *Message) error {
 		return &WebsocketError{message: "error setting write deadline, " + err.Error()}
 	}
 
-	if message.MessageType == TypeCloseMessage {
+	if message.MessageType == TypeDisconnectMessage {
 		err = c.ws.WriteMessage(websocket.CloseMessage, message.Payload)
 		err = c.ws.Close()
 	} else {
@@ -267,7 +267,7 @@ func (c *WebSocketConnection) readWsMessage() (*Message, error) {
 
 	if messageType == websocket.CloseMessage {
 		return &Message{
-			MessageType: TypeCloseMessage,
+			MessageType: TypeDisconnectMessage,
 		}, nil
 	}
 
@@ -288,7 +288,7 @@ func (c *WebSocketConnection) rListen() {
 					c.Close()
 					return
 				}
-			} else if message.MessageType == TypeCloseMessage {
+			} else if message.MessageType == TypeDisconnectMessage {
 				c.Close()
 				return
 			} else if message.MessageType == TypeResponseMessage {
@@ -316,7 +316,7 @@ func (c *WebSocketConnection) Close() {
 		c.closewch <- true
 		c.shard.unregister(c)
 		Logger.Debug(fmt.Sprintf("connection: %s closed", c.Identifier()))
-		c.h(c, &Message{MessageType: TypeCloseMessage}, nil)
+		c.h(c, &Message{MessageType: TypeDisconnectMessage}, nil)
 	})
 }
 
@@ -329,5 +329,5 @@ func (c *WebSocketConnection) Start() {
 	go c.rListen()
 	go c.wListen()
 	Logger.Debug(fmt.Sprintf("connection: %s started", c.Identifier()))
-	c.h(c, &Message{MessageType: TypeStartMessage}, nil)
+	c.h(c, &Message{MessageType: TypeConnectMessage}, nil)
 }
