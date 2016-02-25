@@ -38,6 +38,8 @@ func HttpRouter() http.Handler {
 	})
 	httpRouter.Use(c.Handler)
 
+	httpRouter.Get("/", handlers.Greeting)
+
 	httpRouter.Get("/heartbeat", handlers.HeartBeatHttp)
 
 	httpRouter.Get("/configs", handlers.GetConfig)
