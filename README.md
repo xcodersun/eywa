@@ -28,6 +28,7 @@ Here is a growing list of features we want to support:
 - [x] SSL protection
 - [x] Data Indexing
 - [ ] Data Streaming
+- [ ] File Upload
 - [x] Data Export
 - [x] Data Retention
 - [ ] Data Visualization
