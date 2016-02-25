@@ -9,7 +9,7 @@ What is Eywa?
 
 **Project Eywa** is essentially a connection manager that keeps track of connected devices. But more than just connecting devices, it is also capable of sending control commands to them, collecting data from them, and in the end, providing query interfaces that can be used for data visualization.
 
-Eywa lets the teams of embedded system developers to forget about reinventing the backend services and provides a commonly used protocol, websocket, to make real-time communication easily achievable.
+Eywa lets the teams of embedded system developers forget about reinventing the backend services and provides a commonly used protocol, websocket, to make real-time communication easily achievable.
 
 Why is it useful?
 -----------------
@@ -49,7 +49,7 @@ Performance
 
 How performant is Eywa? Well, we did a simple benchmark and the [benchmark script](https://github.com/vivowares/eywa/blob/master/benchmark/benchmark.go) is also available in the repo under `benchmark` directory.
 
-On a machine of 12 CPUs + 32GB mem from [Digital Ocean](https://www.digitalocean.com/). A single Eywa node can keep track of more than 1.5 million devices easily, with a lot of potential. CPU is merely used, but memory is the limiting factor.
+On a machine of 12 CPUs + 32GB mem from [Digital Ocean](https://www.digitalocean.com/). A single Eywa node can keep track of more than 1.5 million devices, with a lot of potential. CPU is merely used, but memory is the limiting factor.
 
 For more details please check out wiki on [Performance](https://github.com/vivowares/eywa/wiki/Performance).
 

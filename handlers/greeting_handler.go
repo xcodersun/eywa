@@ -7,5 +7,5 @@ import (
 )
 
 func Greeting(c web.C, w http.ResponseWriter, r *http.Request) {
-	Render.JSON(w, http.StatusOK, map[string]string{"greeting": "with Eywa, we connect"})
+	Render.JSON(w, http.StatusOK, map[string]string{"greeting": "I See You..."})
 }

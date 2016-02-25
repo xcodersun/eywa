@@ -1,7 +1,7 @@
 auto_reload: 10m
 service:
   host: localhost
-  api_port: 80
+  api_port: 8080
   device_port: 8081
   pid_file: /var/eywa/eywa.pid
 security:
@@ -13,8 +13,8 @@ security:
       key: abcdefg123456789
       iv: abcdefg123456789
   ssl:
-    certfile: /etc/eywa/server.crt
-    keyfile: /etc/eywa/server.key
+    certfile:
+    keyfile:
 websocket_connections:
   registry: memory
   nshards: 4

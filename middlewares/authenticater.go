@@ -7,9 +7,11 @@ import (
 	"net/http"
 )
 
+var PublicPaths = []string{"/login", "/heartbeat", "/", ""}
+
 func Authenticator(c *web.C, h http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path == "/login" || r.URL.Path == "/heartbeat" {
+		if StringSliceContains(PublicPaths, r.URL.Path) {
 			h.ServeHTTP(w, r)
 		} else {
 			if len(r.Header.Get("AuthToken")) != 0 {

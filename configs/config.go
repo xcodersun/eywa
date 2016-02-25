@@ -231,15 +231,15 @@ type SecurityConf struct {
 }
 
 type DashboardSecurityConf struct {
-	Username    string        `json:"username"`
-	Password    string        `json:"password"`
+	Username    string        `json:"-"`
+	Password    string        `json:"-"`
 	TokenExpiry time.Duration `json:"token_expiry"`
-	AES         *AESConf      `json:"aes"`
+	AES         *AESConf      `json:"-"`
 }
 
 type AESConf struct {
-	KEY string `json:"key"`
-	IV  string `json:"iv"`
+	KEY string `json:"-"`
+	IV  string `json:"-"`
 }
 
 type SSLConf struct {
