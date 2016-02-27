@@ -2,6 +2,7 @@ package configs
 
 import (
 	"bytes"
+	"encoding/json"
 	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/spf13/viper"
 	"sync/atomic"
 	"text/template"
@@ -136,7 +137,22 @@ func Reload() error {
 		},
 	}
 
-	atomic.StorePointer(&cfgPtr, unsafe.Pointer(cfg))
+	SetConfig(cfg)
+	return nil
+}
+
+func Update(p []byte) error {
+	cfg, err := Config().DeepCopy()
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(p, cfg)
+	if err != nil {
+		return err
+	}
+
+	SetConfig(cfg)
 	return nil
 }
 
@@ -164,6 +180,25 @@ type Conf struct {
 	Indices              *IndexConf        `json:"indices"`
 	Database             *DbConf           `json:"database"`
 	Logging              *LogsConf         `json:"logging"`
+}
+
+func (cfg *Conf) DeepCopy() (*Conf, error) {
+	js, err := json.Marshal(cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	_cfg := &Conf{}
+	err = json.Unmarshal(js, _cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	_cfg.Security.Dashboard.Username = cfg.Security.Dashboard.Username
+	_cfg.Security.Dashboard.Password = cfg.Security.Dashboard.Password
+	_cfg.Security.Dashboard.AES = cfg.Security.Dashboard.AES
+
+	return _cfg, nil
 }
 
 type DbConf struct {

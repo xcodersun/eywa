@@ -56,7 +56,7 @@ func TestApiToDevice(t *testing.T) {
 		}()
 
 		f := frisby.Create("send message to device").Post(ApiSendToDevicePath(chId, deviceId)).
-			SetHeader("Auth-Token", authStr()).SetJson(map[string]string{"test": message}).Send()
+			SetHeader("Authentication", authStr()).SetJson(map[string]string{"test": message}).Send()
 		f.ExpectStatus(http.StatusOK)
 
 		So(rcvErr, ShouldBeNil)
@@ -96,7 +96,7 @@ func TestApiToDevice(t *testing.T) {
 		}()
 
 		f := frisby.Create("send message to device").Post(ApiRequestToDevicePath(chId, deviceId)).
-			SetHeader("Auth-Token", authStr()).SetJson(map[string]string{"test": reqMsg}).Send()
+			SetHeader("Authentication", authStr()).SetJson(map[string]string{"test": reqMsg}).Send()
 		f.ExpectStatus(http.StatusOK).
 			AfterContent(func(F *frisby.Frisby, content []byte, err error) {
 			So(string(content), ShouldEqual, respMsg)

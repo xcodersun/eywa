@@ -77,7 +77,7 @@ func TestApiChannels(t *testing.T) {
 
 	frisby.Global.SetHeader("Content-Type", "application/json").
 		SetHeader("Accept", "application/json").
-		SetHeader("Auth-Token", authStr())
+		SetHeader("Authentication", authStr())
 
 	Convey("successfully creates/gets/lists/updates channel", t, func() {
 		f := frisby.Create("list channels").Get(ListChannelPath()).Send()
