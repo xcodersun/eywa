@@ -14,7 +14,7 @@ var PublicPaths = []string{"/login", "/heartbeat", "/", ""}
 
 func Authenticator(c *web.C, h http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
-		if StringSliceContains(PublicPaths, r.URL.Path) {
+		if StringSliceContains(PublicPaths, r.URL.Path) || r.Method == "OPTIONS" {
 			h.ServeHTTP(w, r)
 		} else {
 			if len(r.Header.Get("Authentication")) != 0 {
