@@ -24,6 +24,11 @@
 			"Rev": "527637c0f38a8035d7856bb758e56f7ee2c704a9"
 		},
 		{
+			"ImportPath": "github.com/imdario/mergo",
+			"Comment": "0.2.0-8-gbb554f9",
+			"Rev": "bb554f9fd6ee4cd190eef868de608ced813aeda1"
+		},
+		{
 			"ImportPath": "github.com/jinzhu/gorm",
 			"Rev": "8ee49893d1428fda97e2a2f8e5ce55a824b112c7"
 		},

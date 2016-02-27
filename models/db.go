@@ -8,7 +8,7 @@ import (
 	_ "github.com/vivowares/eywa/Godeps/_workspace/src/github.com/mattn/go-sqlite3"
 	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/vivowares/waterwheel"
 	. "github.com/vivowares/eywa/configs"
-	. "github.com/vivowares/eywa/utils"
+	. "github.com/vivowares/eywa/loggers"
 	"strings"
 )
 

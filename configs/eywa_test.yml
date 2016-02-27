@@ -1,4 +1,3 @@
-auto_reload: 0m
 service:
   host: localhost
   api_port: 9090
@@ -13,17 +12,16 @@ security:
       key: abcdefg123456789
       iv: abcdefg123456789
   ssl:
-    certfile:
-    keyfile:
+    cert_file:
+    key_file:
 websocket_connections:
   registry: memory
   nshards: 4
   init_shard_size: 128
   request_queue_size: 8
-  expiry: &expiry 300s
   timeouts:
     write: 2s
-    read: *expiry
+    read: 300s
     request: 2s
     response: 8s
   buffer_sizes:
@@ -36,7 +34,7 @@ indices:
   number_of_shards: 8
   number_of_replicas: 0
   ttl_enabled: true
-  ttl: '336h'
+  ttl: 336h
 database:
   db_type: sqlite3
   db_file: {{ .eywa_home }}/db/eywa_test.db

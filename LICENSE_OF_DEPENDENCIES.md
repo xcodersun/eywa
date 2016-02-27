@@ -33,3 +33,5 @@
 |github.com/vivowares/waterwheel|https://github.com/vivowares/waterwheel/blob/master/LICENSE|
 |github.com/zenazn/goji|https://github.com/zenazn/goji/blob/master/LICENSE|
 |gopkg.in/natefinch/lumberjack.v2|https://github.com/natefinch/lumberjack/blob/v2.0/LICENSE|
+|github.com/imdario/mergo|https://github.com/imdario/mergo/blob/master/LICENSE|
+|gopkg.in/yaml.v2|https://github.com/go-yaml/yaml/blob/v2/LICENSE|

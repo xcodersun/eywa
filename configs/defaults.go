@@ -1,3 +1,6 @@
+package configs
+
+var DefaultConfigs = `
 service:
   host: localhost
   api_port: 8080
@@ -60,3 +63,4 @@ logging:
     maxbackups: 5
     level: warn
     buffer_size: 512
+`

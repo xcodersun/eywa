@@ -5,8 +5,8 @@ import (
 	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/satori/go.uuid"
 	. "github.com/vivowares/eywa/configs"
 	. "github.com/vivowares/eywa/connections"
+	. "github.com/vivowares/eywa/loggers"
 	. "github.com/vivowares/eywa/models"
-	. "github.com/vivowares/eywa/utils"
 )
 
 var SupportedMessageHandlers = map[string]*Middleware{"indexer": Indexer}

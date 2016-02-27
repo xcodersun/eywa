@@ -102,7 +102,6 @@ func TestConnections(t *testing.T) {
 			NShards:          2,
 			InitShardSize:    8,
 			RequestQueueSize: 8,
-			Expiry:           300 * time.Second,
 			Timeouts: &WsConnectionTimeoutConf{
 				Write:    2 * time.Second,
 				Read:     300 * time.Second,

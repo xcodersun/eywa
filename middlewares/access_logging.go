@@ -5,7 +5,7 @@ import (
 	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/zenazn/goji/web"
 	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/zenazn/goji/web/middleware"
 	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/zenazn/goji/web/mutil"
-	. "github.com/vivowares/eywa/utils"
+	. "github.com/vivowares/eywa/loggers"
 	"net/http"
 	"net/url"
 	"time"

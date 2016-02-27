@@ -4,7 +4,7 @@ import (
 	"fmt"
 	. "github.com/vivowares/eywa/Godeps/_workspace/src/gopkg.in/olivere/elastic.v3"
 	. "github.com/vivowares/eywa/configs"
-	. "github.com/vivowares/eywa/utils"
+	. "github.com/vivowares/eywa/loggers"
 	"log"
 	"strings"
 )

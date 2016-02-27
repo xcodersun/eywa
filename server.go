@@ -8,6 +8,7 @@ import (
 	"github.com/vivowares/eywa/configs"
 	"github.com/vivowares/eywa/connections"
 	"github.com/vivowares/eywa/handlers"
+	. "github.com/vivowares/eywa/loggers"
 	"github.com/vivowares/eywa/models"
 	. "github.com/vivowares/eywa/utils"
 	"os"

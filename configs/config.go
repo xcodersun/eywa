@@ -3,7 +3,14 @@ package configs
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
+	"fmt"
+	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/imdario/mergo"
 	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/spf13/viper"
+	"github.com/vivowares/eywa/Godeps/_workspace/src/gopkg.in/yaml.v2"
+	. "github.com/vivowares/eywa/utils"
+	"io"
+	"strings"
 	"sync/atomic"
 	"text/template"
 	"time"
@@ -14,6 +21,19 @@ var cfgPtr unsafe.Pointer
 var filename string
 var params map[string]string
 
+var DynamicSettings = []string{
+	"security.dashboard.username",
+	"security.dashboard.password",
+	"security.dashboard.token_expiry",
+	"websocket_connections.request_queue_size",
+	"websocket_connections.timeouts.write",
+	"websocket_connections.timeouts.read",
+	"websocket_connections.timeouts.request",
+	"websocket_connections.timeouts.response",
+	"websocket_connections.buffer_sizes.read",
+	"websocket_connections.buffer_sizes.write",
+}
+
 func Config() *Conf {
 	return (*Conf)(cfgPtr)
 }
@@ -22,109 +42,97 @@ func SetConfig(cfg *Conf) {
 	atomic.StorePointer(&cfgPtr, unsafe.Pointer(cfg))
 }
 
-func Reload() error {
-	t, err := template.ParseFiles(filename)
+func ReadConfig(buf io.Reader) (*Conf, error) {
+	v := viper.New()
+	v.SetConfigType("yml")
+	err := v.ReadConfig(buf)
 	if err != nil {
-		return err
-	}
-
-	buf := bytes.NewBuffer([]byte{})
-	err = t.Execute(buf, params)
-	if err != nil {
-		return err
-	}
-
-	viper.SetConfigType("yml")
-	err = viper.ReadConfig(buf)
-	if err != nil {
-		return err
+		return nil, err
 	}
 
 	serviceConfig := &ServiceConf{
-		Host:       viper.GetString("service.host"),
-		ApiPort:    viper.GetInt("service.api_port"),
-		DevicePort: viper.GetInt("service.device_port"),
-		PidFile:    viper.GetString("service.pid_file"),
+		Host:       v.GetString("service.host"),
+		ApiPort:    v.GetInt("service.api_port"),
+		DevicePort: v.GetInt("service.device_port"),
+		PidFile:    v.GetString("service.pid_file"),
 	}
 
 	securityConfig := &SecurityConf{
 		Dashboard: &DashboardSecurityConf{
-			Username:    viper.GetString("security.dashboard.username"),
-			Password:    viper.GetString("security.dashboard.password"),
-			TokenExpiry: viper.GetDuration("security.dashboard.token_expiry"),
+			Username:    v.GetString("security.dashboard.username"),
+			Password:    v.GetString("security.dashboard.password"),
+			TokenExpiry: v.GetDuration("security.dashboard.token_expiry"),
 			AES: &AESConf{
-				KEY: viper.GetString("security.dashboard.aes.key"),
-				IV:  viper.GetString("security.dashboard.aes.iv"),
+				KEY: v.GetString("security.dashboard.aes.key"),
+				IV:  v.GetString("security.dashboard.aes.iv"),
 			},
 		},
 		SSL: &SSLConf{
-			CertFile: viper.GetString("security.ssl.certfile"),
-			KeyFile:  viper.GetString("security.ssl.keyfile"),
+			CertFile: v.GetString("security.ssl.cert_file"),
+			KeyFile:  v.GetString("security.ssl.key_file"),
 		},
 	}
 
 	dbConfig := &DbConf{
-		DbType: viper.GetString("database.db_type"),
-		DbFile: viper.GetString("database.db_file"),
+		DbType: v.GetString("database.db_type"),
+		DbFile: v.GetString("database.db_file"),
 	}
 
 	indexConfig := &IndexConf{
-		Disable:          viper.GetBool("indices.disable"),
-		Host:             viper.GetString("indices.host"),
-		Port:             viper.GetInt("indices.port"),
-		NumberOfShards:   viper.GetInt("indices.number_of_shards"),
-		NumberOfReplicas: viper.GetInt("indices.number_of_replicas"),
-		TTLEnabled:       viper.GetBool("indices.ttl_enabled"),
-		TTL:              viper.GetDuration("indices.ttl"),
+		Disable:          v.GetBool("indices.disable"),
+		Host:             v.GetString("indices.host"),
+		Port:             v.GetInt("indices.port"),
+		NumberOfShards:   v.GetInt("indices.number_of_shards"),
+		NumberOfReplicas: v.GetInt("indices.number_of_replicas"),
+		TTLEnabled:       v.GetBool("indices.ttl_enabled"),
+		TTL:              v.GetDuration("indices.ttl"),
 	}
 
 	wsConnConfig := &WsConnectionConf{
-		Registry:         viper.GetString("websocket_connections.registry"),
-		NShards:          viper.GetInt("websocket_connections.nshards"),
-		InitShardSize:    viper.GetInt("websocket_connections.init_shard_size"),
-		RequestQueueSize: viper.GetInt("websocket_connections.request_queue_size"),
-		Expiry:           viper.GetDuration("websocket_connections.expiry"),
+		Registry:         v.GetString("websocket_connections.registry"),
+		NShards:          v.GetInt("websocket_connections.nshards"),
+		InitShardSize:    v.GetInt("websocket_connections.init_shard_size"),
+		RequestQueueSize: v.GetInt("websocket_connections.request_queue_size"),
 		Timeouts: &WsConnectionTimeoutConf{
-			Write:    viper.GetDuration("websocket_connections.timeouts.write"),
-			Read:     viper.GetDuration("websocket_connections.timeouts.read"),
-			Request:  viper.GetDuration("websocket_connections.timeouts.request"),
-			Response: viper.GetDuration("websocket_connections.timeouts.response"),
+			Write:    v.GetDuration("websocket_connections.timeouts.write"),
+			Read:     v.GetDuration("websocket_connections.timeouts.read"),
+			Request:  v.GetDuration("websocket_connections.timeouts.request"),
+			Response: v.GetDuration("websocket_connections.timeouts.response"),
 		},
 		BufferSizes: &WsConnectionBufferSizeConf{
-			Write: viper.GetInt("websocket_connections.buffer_sizes.write"),
-			Read:  viper.GetInt("websocket_connections.buffer_sizes.read"),
+			Write: v.GetInt("websocket_connections.buffer_sizes.write"),
+			Read:  v.GetInt("websocket_connections.buffer_sizes.read"),
 		},
 	}
 
 	logEywa := &LogConf{
-		Filename:   viper.GetString("logging.eywa.filename"),
-		MaxSize:    viper.GetInt("logging.eywa.maxsize"),
-		MaxAge:     viper.GetInt("logging.eywa.maxage"),
-		MaxBackups: viper.GetInt("logging.eywa.maxbackups"),
-		Level:      viper.GetString("logging.eywa.level"),
-		BufferSize: viper.GetInt("logging.eywa.buffer_size"),
+		Filename:   v.GetString("logging.eywa.filename"),
+		MaxSize:    v.GetInt("logging.eywa.maxsize"),
+		MaxAge:     v.GetInt("logging.eywa.maxage"),
+		MaxBackups: v.GetInt("logging.eywa.maxbackups"),
+		Level:      v.GetString("logging.eywa.level"),
+		BufferSize: v.GetInt("logging.eywa.buffer_size"),
 	}
 
 	logIndices := &LogConf{
-		Filename:   viper.GetString("logging.indices.filename"),
-		MaxSize:    viper.GetInt("logging.indices.maxsize"),
-		MaxAge:     viper.GetInt("logging.indices.maxage"),
-		MaxBackups: viper.GetInt("logging.indices.maxbackups"),
-		Level:      viper.GetString("logging.indices.level"),
-		BufferSize: viper.GetInt("logging.indices.buffer_size"),
+		Filename:   v.GetString("logging.indices.filename"),
+		MaxSize:    v.GetInt("logging.indices.maxsize"),
+		MaxAge:     v.GetInt("logging.indices.maxage"),
+		MaxBackups: v.GetInt("logging.indices.maxbackups"),
+		Level:      v.GetString("logging.indices.level"),
+		BufferSize: v.GetInt("logging.indices.buffer_size"),
 	}
 
 	logDatabase := &LogConf{
-		Filename:   viper.GetString("logging.database.filename"),
-		MaxSize:    viper.GetInt("logging.database.maxsize"),
-		MaxAge:     viper.GetInt("logging.database.maxage"),
-		MaxBackups: viper.GetInt("logging.database.maxbackups"),
-		Level:      viper.GetString("logging.database.level"),
-		BufferSize: viper.GetInt("logging.database.buffer_size"),
+		Filename:   v.GetString("logging.database.filename"),
+		MaxSize:    v.GetInt("logging.database.maxsize"),
+		MaxAge:     v.GetInt("logging.database.maxage"),
+		MaxBackups: v.GetInt("logging.database.maxbackups"),
+		Level:      v.GetString("logging.database.level"),
+		BufferSize: v.GetInt("logging.database.buffer_size"),
 	}
 
 	cfg := &Conf{
-		AutoReload:           viper.GetDuration("auto_reload"),
 		Service:              serviceConfig,
 		Security:             securityConfig,
 		WebSocketConnections: wsConnConfig,
@@ -137,22 +145,43 @@ func Reload() error {
 		},
 	}
 
-	SetConfig(cfg)
-	return nil
+	return cfg, nil
 }
 
-func Update(p []byte) error {
-	cfg, err := Config().DeepCopy()
+func Update(settings map[string]interface{}) error {
+	notAllowed := []string{}
+	for k, _ := range settings {
+		if !StringSliceContains(DynamicSettings, k) {
+			notAllowed = append(notAllowed, k)
+		}
+	}
+	if len(notAllowed) > 0 {
+		if len(notAllowed) == 1 {
+			return errors.New(fmt.Sprintf("setting: %s is not dynamic", notAllowed[0]))
+		} else {
+			return errors.New(fmt.Sprintf("settings: %s are not dynamic", strings.Join(notAllowed, ",")))
+		}
+	}
+
+	_cfg, err := Config().DeepCopy()
 	if err != nil {
 		return err
 	}
 
-	err = json.Unmarshal(p, cfg)
+	p, err := yaml.Marshal(settings)
+	if err != nil {
+		return err
+	}
+	cfg, err := ReadConfig(bytes.NewBuffer(p))
+	if err != nil {
+		return err
+	}
+	err = mergo.MergeWithOverwrite(_cfg, *cfg)
 	if err != nil {
 		return err
 	}
 
-	SetConfig(cfg)
+	SetConfig(_cfg)
 	return nil
 }
 
@@ -160,20 +189,41 @@ func InitializeConfig(f string, p map[string]string) error {
 	filename = f
 	params = p
 
-	err := Reload()
-	if err == nil && Config().AutoReload.Nanoseconds() > 0 {
-		go func() {
-			for {
-				time.Sleep(Config().AutoReload)
-				Reload()
-			}
-		}()
+	buf := bytes.NewBuffer([]byte{})
+	_, err := buf.WriteString(DefaultConfigs)
+	if err != nil {
+		return err
 	}
-	return err
+	_cfg, err := ReadConfig(buf)
+	if err != nil {
+		return err
+	}
+
+	t, err := template.ParseFiles(filename)
+	if err != nil {
+		return err
+	}
+
+	buf = bytes.NewBuffer([]byte{})
+	err = t.Execute(buf, params)
+	if err != nil {
+		return err
+	}
+	cfg, err := ReadConfig(buf)
+	if err != nil {
+		return err
+	}
+
+	err = mergo.MergeWithOverwrite(_cfg, *cfg)
+	if err != nil {
+		return err
+	}
+
+	SetConfig(_cfg)
+	return nil
 }
 
 type Conf struct {
-	AutoReload           time.Duration     `json:"auto_reload"`
 	Service              *ServiceConf      `json:"service"`
 	Security             *SecurityConf     `json:"security"`
 	WebSocketConnections *WsConnectionConf `json:"websocket_connections"`
@@ -193,10 +243,6 @@ func (cfg *Conf) DeepCopy() (*Conf, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	_cfg.Security.Dashboard.Username = cfg.Security.Dashboard.Username
-	_cfg.Security.Dashboard.Password = cfg.Security.Dashboard.Password
-	_cfg.Security.Dashboard.AES = cfg.Security.Dashboard.AES
 
 	return _cfg, nil
 }
@@ -228,7 +274,6 @@ type WsConnectionConf struct {
 	NShards          int                         `json:"nshards"`
 	InitShardSize    int                         `json:"init_shard_size"`
 	RequestQueueSize int                         `json:"request_queue_size"`
-	Expiry           time.Duration               `json:"expiry"`
 	Timeouts         *WsConnectionTimeoutConf    `json:"timeouts"`
 	BufferSizes      *WsConnectionBufferSizeConf `json:"buffer_sizes"`
 }
@@ -266,15 +311,15 @@ type SecurityConf struct {
 }
 
 type DashboardSecurityConf struct {
-	Username    string        `json:"-"`
-	Password    string        `json:"-"`
+	Username    string        `json:"username"`
+	Password    string        `json:"password"`
 	TokenExpiry time.Duration `json:"token_expiry"`
-	AES         *AESConf      `json:"-"`
+	AES         *AESConf      `json:"aes"`
 }
 
 type AESConf struct {
-	KEY string `json:"-"`
-	IV  string `json:"-"`
+	KEY string `json:"key"`
+	IV  string `json:"iv"`
 }
 
 type SSLConf struct {

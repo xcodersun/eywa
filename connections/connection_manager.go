@@ -6,6 +6,7 @@ import (
 	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/gorilla/websocket"
 	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/spaolacci/murmur3"
 	. "github.com/vivowares/eywa/configs"
+	. "github.com/vivowares/eywa/loggers"
 	. "github.com/vivowares/eywa/utils"
 	"strconv"
 	"sync"
