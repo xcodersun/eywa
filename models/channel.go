@@ -19,7 +19,7 @@ type Channel struct {
 	Description     string      `sql:"type:text" json:"description"`
 	Tags            StringSlice `sql:"type:text" json:"tags"`
 	Fields          StringMap   `sql:"type:text" json:"fields"`
-	MessageHandlers StringSlice `sql:"type:text" json:"message_handlers"`
+	MessageHandlers StringSlice `sql:"type:text" json:"-"`
 	AccessTokens    StringSlice `sql:"type:text" json:"access_tokens"`
 }
 
@@ -40,9 +40,11 @@ func (c *Channel) validate() error {
 		c.Fields = StringMap(make(map[string]string, 0))
 	}
 
-	if c.MessageHandlers == nil {
-		c.MessageHandlers = StringSlice(make([]string, 0))
-	}
+	// enable indexer on all channels
+	// if c.MessageHandlers == nil {
+	// 	c.MessageHandlers = StringSlice(make([]string, 0))
+	// }
+	c.MessageHandlers = []string{"indexer"}
 
 	if c.AccessTokens == nil {
 		c.AccessTokens = StringSlice(make([]string, 0))

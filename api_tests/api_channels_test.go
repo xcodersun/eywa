@@ -20,18 +20,19 @@ import (
 	"testing"
 )
 
+import "github.com/vivowares/eywa/Godeps/_workspace/src/github.com/kr/pretty"
+
 var ApiServer string
 var DeviceServer string
 var ConfigFile string
 
 type ChannelResp struct {
-	Id              string            `json:"id"`
-	Name            string            `json:"name"`
-	Description     string            `json:"description"`
-	Tags            []string          `json:"tags"`
-	Fields          map[string]string `json:"fields"`
-	MessageHandlers []string          `json:"message_handlers"`
-	AccessTokens    []string          `json:"access_tokens"`
+	Id           string            `json:"id"`
+	Name         string            `json:"name"`
+	Description  string            `json:"description"`
+	Tags         []string          `json:"tags"`
+	Fields       map[string]string `json:"fields"`
+	AccessTokens []string          `json:"access_tokens"`
 }
 
 func init() {
@@ -87,12 +88,11 @@ func TestApiChannels(t *testing.T) {
 		})
 
 		reqBody := Channel{
-			Name:            "test",
-			Description:     "desc",
-			Tags:            []string{"tag1", "tag2"},
-			Fields:          map[string]string{"field1": "int"},
-			MessageHandlers: []string{"logger", "indexer"},
-			AccessTokens:    []string{"token1"},
+			Name:         "test",
+			Description:  "desc",
+			Tags:         []string{"tag1", "tag2"},
+			Fields:       map[string]string{"field1": "int"},
+			AccessTokens: []string{"token1"},
 		}
 		f = frisby.Create("create channel").Post(ListChannelPath())
 		f.SetJson(reqBody).Send()
@@ -110,19 +110,21 @@ func TestApiChannels(t *testing.T) {
 		})
 
 		expResp := &ChannelResp{
-			Id:              chId,
-			Name:            reqBody.Name,
-			Description:     reqBody.Description,
-			Tags:            reqBody.Tags,
-			Fields:          reqBody.Fields,
-			MessageHandlers: reqBody.MessageHandlers,
-			AccessTokens:    reqBody.AccessTokens,
+			Id:           chId,
+			Name:         reqBody.Name,
+			Description:  reqBody.Description,
+			Tags:         reqBody.Tags,
+			Fields:       reqBody.Fields,
+			AccessTokens: reqBody.AccessTokens,
 		}
 
 		f = frisby.Create("get channel").Get(GetChannelPath(chId)).Send()
 		f.ExpectStatus(http.StatusOK).AfterContent(func(F *frisby.Frisby, resp []byte, err error) {
 			ch := &ChannelResp{}
 			json.Unmarshal(resp, ch)
+			pretty.Println("****************************************")
+			pretty.Println(ch)
+			pretty.Println("****************************************")
 			So(reflect.DeepEqual(ch, expResp), ShouldBeTrue)
 		})
 
@@ -136,6 +138,9 @@ func TestApiChannels(t *testing.T) {
 		f.ExpectStatus(http.StatusOK).AfterContent(func(F *frisby.Frisby, resp []byte, err error) {
 			ch := &ChannelResp{}
 			json.Unmarshal(resp, ch)
+			pretty.Println("****************************************")
+			pretty.Println(ch)
+			pretty.Println("****************************************")
 			So(reflect.DeepEqual(ch, expResp), ShouldBeTrue)
 		})
 
@@ -159,12 +164,11 @@ func TestApiChannels(t *testing.T) {
 		})
 
 		reqBody := Channel{
-			Name:            "test",
-			Description:     "desc",
-			Tags:            []string{"tag1", "tag2"},
-			Fields:          map[string]string{"field1": "int"},
-			MessageHandlers: []string{"logger", "indexer"},
-			AccessTokens:    []string{"token1"},
+			Name:         "test",
+			Description:  "desc",
+			Tags:         []string{"tag1", "tag2"},
+			Fields:       map[string]string{"field1": "int"},
+			AccessTokens: []string{"token1"},
 		}
 		f = frisby.Create("create channel").Post(ListChannelPath())
 		f.SetJson(reqBody).Send()
@@ -211,19 +215,21 @@ func TestApiChannels(t *testing.T) {
 		f.ExpectStatus(http.StatusOK)
 
 		expResp := &ChannelResp{
-			Id:              chId,
-			Name:            reqBody.Name,
-			Description:     reqBody.Description,
-			Tags:            []string{"tag1", "tag2", "tag3"},
-			Fields:          map[string]string{"field1": "int", "field2": "boolean"},
-			MessageHandlers: reqBody.MessageHandlers,
-			AccessTokens:    reqBody.AccessTokens,
+			Id:           chId,
+			Name:         reqBody.Name,
+			Description:  reqBody.Description,
+			Tags:         []string{"tag1", "tag2", "tag3"},
+			Fields:       map[string]string{"field1": "int", "field2": "boolean"},
+			AccessTokens: reqBody.AccessTokens,
 		}
 
 		f = frisby.Create("get channel").Get(GetChannelPath(chId)).Send()
 		f.ExpectStatus(http.StatusOK).AfterContent(func(F *frisby.Frisby, resp []byte, err error) {
 			ch := &ChannelResp{}
 			json.Unmarshal(resp, ch)
+			pretty.Println("****************************************")
+			pretty.Println(ch)
+			pretty.Println("****************************************")
 			So(reflect.DeepEqual(ch, expResp), ShouldBeTrue)
 		})
 

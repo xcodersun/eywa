@@ -34,12 +34,11 @@ func TestChannel(t *testing.T) {
 
 	Convey("creates/updates/deletes channel", t, func() {
 		c := &Channel{
-			Name:            "test",
-			Description:     "desc",
-			Tags:            []string{"tag1", "tag2"},
-			Fields:          map[string]string{"field1": "int"},
-			MessageHandlers: []string{"logger", "indexer"},
-			AccessTokens:    []string{"token1"},
+			Name:         "test",
+			Description:  "desc",
+			Tags:         []string{"tag1", "tag2"},
+			Fields:       map[string]string{"field1": "int"},
+			AccessTokens: []string{"token1"},
 		}
 
 		c.Create()
@@ -47,12 +46,18 @@ func TestChannel(t *testing.T) {
 		DB.Model(&Channel{}).Count(&count)
 		So(count, ShouldEqual, 1)
 
+		_c := &Channel{}
+		DB.Model(&Channel{}).First(_c)
+		So(_c.Name, ShouldEqual, "test")
+		So(reflect.DeepEqual(_c.MessageHandlers, StringSlice([]string{"indexer"})), ShouldBeTrue)
+
 		c.Name = "updated test"
 		c.Update()
 
-		_c := &Channel{}
+		_c = &Channel{}
 		DB.Model(&Channel{}).First(_c)
 		So(_c.Name, ShouldEqual, "updated test")
+		So(reflect.DeepEqual(_c.MessageHandlers, StringSlice([]string{"indexer"})), ShouldBeTrue)
 
 		c.Delete()
 		DB.Model(&Channel{}).Count(&count)
@@ -134,12 +139,11 @@ func TestChannel(t *testing.T) {
 
 	Convey("does not allow removing tags/fields or updating fields' types", t, func() {
 		c := &Channel{
-			Name:            "test",
-			Description:     "desc",
-			Tags:            []string{"tag1", "tag2"},
-			Fields:          map[string]string{"field1": "int"},
-			MessageHandlers: []string{"logger", "indexer"},
-			AccessTokens:    []string{"token1"},
+			Name:         "test",
+			Description:  "desc",
+			Tags:         []string{"tag1", "tag2"},
+			Fields:       map[string]string{"field1": "int"},
+			AccessTokens: []string{"token1"},
 		}
 
 		c.Create()
