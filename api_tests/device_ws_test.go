@@ -34,7 +34,7 @@ func CreateTestChannel() (string, *Channel) {
 	f := frisby.Create("create channel").Post(ListChannelPath()).
 		SetHeader("Content-Type", "application/json").
 		SetHeader("Accept", "application/json").
-		SetHeader("AuthToken", authStr()).
+		SetHeader("Auth-Token", authStr()).
 		SetJson(ch).Send()
 
 	var chId string
@@ -68,7 +68,7 @@ func CheckConnectionCount() int64 {
 	f := frisby.Create("check connection count").Get(ConnectionCountPath()).
 		SetHeader("Content-Type", "application/json").
 		SetHeader("Accept", "application/json").
-		SetHeader("AuthToken", authStr()).
+		SetHeader("Auth-Token", authStr()).
 		Send()
 
 	var count int64

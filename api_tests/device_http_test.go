@@ -47,7 +47,7 @@ func TestHttpUpload(t *testing.T) {
 		f := frisby.Create("create channel").Post(ListChannelPath()).
 			SetHeader("Content-Type", "application/json").
 			SetHeader("Accept", "application/json").
-			SetHeader("AuthToken", authStr()).
+			SetHeader("Auth-Token", authStr()).
 			SetJson(reqBody).Send()
 
 		var chId string

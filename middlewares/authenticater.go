@@ -14,8 +14,8 @@ func Authenticator(c *web.C, h http.Handler) http.Handler {
 		if StringSliceContains(PublicPaths, r.URL.Path) {
 			h.ServeHTTP(w, r)
 		} else {
-			if len(r.Header.Get("AuthToken")) != 0 {
-				tokenStr := r.Header.Get("AuthToken")
+			if len(r.Header.Get("Auth-Token")) != 0 {
+				tokenStr := r.Header.Get("Auth-Token")
 				auth, err := DecryptAuthToken(tokenStr)
 				if err != nil {
 					Render.JSON(w, http.StatusUnauthorized, map[string]string{"error": err.Error()})

@@ -11,7 +11,7 @@ security:
     token_expiry: 24h
     aes:
       key: abcdefg123456789
-      iv: abcdefg123456789
+      iv: 123456789abcdefg
   ssl:
     certfile:
     keyfile:

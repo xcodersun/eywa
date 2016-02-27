@@ -134,7 +134,7 @@ func main() {
 	}
 
 	req = gorequest.New()
-	response, bodyBytes, errs = req.Post(url).Set("AuthToken", auth).
+	response, bodyBytes, errs = req.Post(url).Set("Auth-Token", auth).
 		Send(string(asBytes)).EndBytes()
 	if len(errs) > 0 {
 		log.Fatalln(errs[0].Error())
@@ -156,7 +156,7 @@ func main() {
 			log.Println("Deleting test channel...")
 			req = gorequest.New()
 			url = fmt.Sprintf("http://%s:%s/channels/%s", *host, httpPort, chId)
-			_, _, errs = req.Delete(url).Set("AuthToken", auth).End()
+			_, _, errs = req.Delete(url).Set("Auth-Token", auth).End()
 			if len(errs) > 0 {
 				log.Fatalln(errs[0].Error())
 			}
