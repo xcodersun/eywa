@@ -18,7 +18,7 @@ package reqtrace
 import (
 	"flag"
 
-	"github.com/vivowares/eywa/Godeps/_workspace/src/golang.org/x/net/context"
+	"golang.org/x/net/context"
 )
 
 type contextKey int
