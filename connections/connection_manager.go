@@ -146,7 +146,7 @@ func (wscm *WebSocketConnectionManager) newConnection(id string, ws wsConn, h Me
 		Logger.Debug(fmt.Sprintf("connection: %s pinged", id))
 
 		//extend the read deadline after each ping
-		err := ws.SetReadDeadline(time.Now().Add(Config().WebSocketConnections.Timeouts.Read))
+		err := ws.SetReadDeadline(time.Now().Add(Config().WebSocketConnections.Timeouts.Read.Duration))
 		if err != nil {
 			return err
 		}
@@ -154,7 +154,7 @@ func (wscm *WebSocketConnectionManager) newConnection(id string, ws wsConn, h Me
 		return ws.WriteControl(
 			websocket.PongMessage,
 			[]byte(strconv.FormatInt(time.Now().UnixNano()/int64(time.Millisecond), 10)),
-			time.Now().Add(Config().WebSocketConnections.Timeouts.Write))
+			time.Now().Add(Config().WebSocketConnections.Timeouts.Write.Duration))
 	})
 
 	if err := shard.register(conn); err != nil {

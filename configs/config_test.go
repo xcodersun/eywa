@@ -3,6 +3,7 @@ package configs
 import (
 	"bytes"
 	. "github.com/vivowares/eywa/Godeps/_workspace/src/github.com/smartystreets/goconvey/convey"
+	. "github.com/vivowares/eywa/utils"
 	"io/ioutil"
 	"log"
 	"os"
@@ -59,7 +60,7 @@ func TestConfig(t *testing.T) {
 		expConf.Service.DevicePort = 9091
 		expConf.Security.SSL.CertFile = "test_cert_file"
 		expConf.Security.Dashboard.AES.KEY = "aes_key"
-		expConf.WebSocketConnections.Timeouts.Write = 5 * time.Second
+		expConf.WebSocketConnections.Timeouts.Write = &JSONDuration{5 * time.Second}
 		expConf.Indices.Disable = true
 
 		So(reflect.DeepEqual(expConf, Config()), ShouldBeTrue)
@@ -100,12 +101,12 @@ func TestConfig(t *testing.T) {
 		}
 		expConf.Security.Dashboard.Username = "root1"
 		expConf.Security.Dashboard.Password = "cookiecats"
-		expConf.Security.Dashboard.TokenExpiry = 12 * time.Hour
+		expConf.Security.Dashboard.TokenExpiry = &JSONDuration{12 * time.Hour}
 		expConf.WebSocketConnections.RequestQueueSize = 16
-		expConf.WebSocketConnections.Timeouts.Write = 4 * time.Second
-		expConf.WebSocketConnections.Timeouts.Read = 12 * time.Second
-		expConf.WebSocketConnections.Timeouts.Request = 6 * time.Second
-		expConf.WebSocketConnections.Timeouts.Response = 24 * time.Second
+		expConf.WebSocketConnections.Timeouts.Write = &JSONDuration{4 * time.Second}
+		expConf.WebSocketConnections.Timeouts.Read = &JSONDuration{12 * time.Second}
+		expConf.WebSocketConnections.Timeouts.Request = &JSONDuration{6 * time.Second}
+		expConf.WebSocketConnections.Timeouts.Response = &JSONDuration{24 * time.Second}
 		expConf.WebSocketConnections.BufferSizes.Read = 2048
 		expConf.WebSocketConnections.BufferSizes.Write = 4096
 
@@ -129,4 +130,20 @@ func TestConfig(t *testing.T) {
 		So(err, ShouldNotBeNil)
 	})
 
+	Convey("deep copy returns identical conf", t, func() {
+		tmpfile, err := ioutil.TempFile("", "test_config")
+		if err != nil {
+			log.Fatalln(err.Error())
+		}
+		defer os.Remove(tmpfile.Name())
+
+		f := tmpfile.Name()
+		p := map[string]string{}
+
+		err = InitializeConfig(f, p)
+
+		So(err, ShouldBeNil)
+		_conf, _ := Config().DeepCopy()
+		So(reflect.DeepEqual(Config(), _conf), ShouldBeTrue)
+	})
 }

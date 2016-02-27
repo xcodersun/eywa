@@ -20,8 +20,6 @@ import (
 	"testing"
 )
 
-import "github.com/vivowares/eywa/Godeps/_workspace/src/github.com/kr/pretty"
-
 var ApiServer string
 var DeviceServer string
 var ConfigFile string
@@ -40,6 +38,9 @@ func init() {
 	FatalIfErr(err)
 	ConfigFile = path.Join(path.Dir(pwd), "configs", "eywa_test.yml")
 	eywaHome := os.Getenv("EYWA_HOME")
+	if len(eywaHome) == 0 {
+		log.Fatalln("EYWA_HOME is not set")
+	}
 	params := map[string]string{"eywa_home": eywaHome}
 	FatalIfErr(InitializeConfig(ConfigFile, params))
 
@@ -122,9 +123,6 @@ func TestApiChannels(t *testing.T) {
 		f.ExpectStatus(http.StatusOK).AfterContent(func(F *frisby.Frisby, resp []byte, err error) {
 			ch := &ChannelResp{}
 			json.Unmarshal(resp, ch)
-			pretty.Println("****************************************")
-			pretty.Println(ch)
-			pretty.Println("****************************************")
 			So(reflect.DeepEqual(ch, expResp), ShouldBeTrue)
 		})
 
@@ -138,9 +136,6 @@ func TestApiChannels(t *testing.T) {
 		f.ExpectStatus(http.StatusOK).AfterContent(func(F *frisby.Frisby, resp []byte, err error) {
 			ch := &ChannelResp{}
 			json.Unmarshal(resp, ch)
-			pretty.Println("****************************************")
-			pretty.Println(ch)
-			pretty.Println("****************************************")
 			So(reflect.DeepEqual(ch, expResp), ShouldBeTrue)
 		})
 
@@ -227,9 +222,6 @@ func TestApiChannels(t *testing.T) {
 		f.ExpectStatus(http.StatusOK).AfterContent(func(F *frisby.Frisby, resp []byte, err error) {
 			ch := &ChannelResp{}
 			json.Unmarshal(resp, ch)
-			pretty.Println("****************************************")
-			pretty.Println(ch)
-			pretty.Println("****************************************")
 			So(reflect.DeepEqual(ch, expResp), ShouldBeTrue)
 		})
 

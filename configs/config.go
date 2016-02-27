@@ -13,7 +13,6 @@ import (
 	"strings"
 	"sync/atomic"
 	"text/template"
-	"time"
 	"unsafe"
 )
 
@@ -61,7 +60,7 @@ func ReadConfig(buf io.Reader) (*Conf, error) {
 		Dashboard: &DashboardSecurityConf{
 			Username:    v.GetString("security.dashboard.username"),
 			Password:    v.GetString("security.dashboard.password"),
-			TokenExpiry: v.GetDuration("security.dashboard.token_expiry"),
+			TokenExpiry: &JSONDuration{v.GetDuration("security.dashboard.token_expiry")},
 			AES: &AESConf{
 				KEY: v.GetString("security.dashboard.aes.key"),
 				IV:  v.GetString("security.dashboard.aes.iv"),
@@ -85,7 +84,7 @@ func ReadConfig(buf io.Reader) (*Conf, error) {
 		NumberOfShards:   v.GetInt("indices.number_of_shards"),
 		NumberOfReplicas: v.GetInt("indices.number_of_replicas"),
 		TTLEnabled:       v.GetBool("indices.ttl_enabled"),
-		TTL:              v.GetDuration("indices.ttl"),
+		TTL:              &JSONDuration{v.GetDuration("indices.ttl")},
 	}
 
 	wsConnConfig := &WsConnectionConf{
@@ -94,10 +93,10 @@ func ReadConfig(buf io.Reader) (*Conf, error) {
 		InitShardSize:    v.GetInt("websocket_connections.init_shard_size"),
 		RequestQueueSize: v.GetInt("websocket_connections.request_queue_size"),
 		Timeouts: &WsConnectionTimeoutConf{
-			Write:    v.GetDuration("websocket_connections.timeouts.write"),
-			Read:     v.GetDuration("websocket_connections.timeouts.read"),
-			Request:  v.GetDuration("websocket_connections.timeouts.request"),
-			Response: v.GetDuration("websocket_connections.timeouts.response"),
+			Write:    &JSONDuration{v.GetDuration("websocket_connections.timeouts.write")},
+			Read:     &JSONDuration{v.GetDuration("websocket_connections.timeouts.read")},
+			Request:  &JSONDuration{v.GetDuration("websocket_connections.timeouts.request")},
+			Response: &JSONDuration{v.GetDuration("websocket_connections.timeouts.response")},
 		},
 		BufferSizes: &WsConnectionBufferSizeConf{
 			Write: v.GetInt("websocket_connections.buffer_sizes.write"),
@@ -259,7 +258,7 @@ type IndexConf struct {
 	NumberOfShards   int           `json:"number_of_shards"`
 	NumberOfReplicas int           `json:"number_of_replicas"`
 	TTLEnabled       bool          `json:"ttl_enabled"`
-	TTL              time.Duration `json:"ttl"`
+	TTL              *JSONDuration `json:"ttl"`
 }
 
 type ServiceConf struct {
@@ -279,10 +278,10 @@ type WsConnectionConf struct {
 }
 
 type WsConnectionTimeoutConf struct {
-	Write    time.Duration `json:"write"`
-	Read     time.Duration `json:"read"`
-	Request  time.Duration `json:"request"`
-	Response time.Duration `json:"response"`
+	Write    *JSONDuration `json:"write"`
+	Read     *JSONDuration `json:"read"`
+	Request  *JSONDuration `json:"request"`
+	Response *JSONDuration `json:"response"`
 }
 
 type WsConnectionBufferSizeConf struct {
@@ -313,7 +312,7 @@ type SecurityConf struct {
 type DashboardSecurityConf struct {
 	Username    string        `json:"username"`
 	Password    string        `json:"password"`
-	TokenExpiry time.Duration `json:"token_expiry"`
+	TokenExpiry *JSONDuration `json:"token_expiry"`
 	AES         *AESConf      `json:"aes"`
 }
 

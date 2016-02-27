@@ -3,6 +3,7 @@ package models
 import (
 	. "github.com/vivowares/eywa/Godeps/_workspace/src/github.com/smartystreets/goconvey/convey"
 	. "github.com/vivowares/eywa/configs"
+	. "github.com/vivowares/eywa/utils"
 	"reflect"
 	"testing"
 	"time"
@@ -14,7 +15,7 @@ func TestAuthToken(t *testing.T) {
 			Dashboard: &DashboardSecurityConf{
 				Username:    "test_user",
 				Password:    "test_password",
-				TokenExpiry: 24 * time.Hour,
+				TokenExpiry: &JSONDuration{24 * time.Hour},
 				AES: &AESConf{
 					KEY: "abcdefg123456789",
 					IV:  "abcdefg123456789",

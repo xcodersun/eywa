@@ -38,7 +38,7 @@ func NewAuthToken(u, p string) (*AuthToken, error) {
 		Username:    u,
 		TokenString: base64.URLEncoding.EncodeToString(asBytes),
 		CreatedAt:   time.Now(),
-		ExpiresAt:   time.Now().Add(Config().Security.Dashboard.TokenExpiry),
+		ExpiresAt:   time.Now().Add(Config().Security.Dashboard.TokenExpiry.Duration),
 	}, nil
 }
 

@@ -3,6 +3,7 @@ package connections
 import (
 	. "github.com/vivowares/eywa/Godeps/_workspace/src/github.com/smartystreets/goconvey/convey"
 	. "github.com/vivowares/eywa/configs"
+	. "github.com/vivowares/eywa/utils"
 	"math/rand"
 	"strconv"
 	"strings"
@@ -20,10 +21,10 @@ func TestRaceConditions(t *testing.T) {
 			InitShardSize:    8,
 			RequestQueueSize: 8,
 			Timeouts: &WsConnectionTimeoutConf{
-				Write:    2 * time.Second,
-				Read:     300 * time.Second,
-				Request:  1 * time.Second,
-				Response: 2 * time.Second,
+				Write:    &JSONDuration{2 * time.Second},
+				Read:     &JSONDuration{300 * time.Second},
+				Request:  &JSONDuration{1 * time.Second},
+				Response: &JSONDuration{2 * time.Second},
 			},
 			BufferSizes: &WsConnectionBufferSizeConf{
 				Write: 1024,

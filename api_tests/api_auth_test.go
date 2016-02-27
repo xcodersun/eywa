@@ -34,7 +34,7 @@ func TestAuthLogin(t *testing.T) {
 			So(len(js.MustMap()["auth_token"].(string)), ShouldBeGreaterThan, 0)
 			ts, _ := js.MustMap()["expires_at"].(json.Number).Int64()
 			exp := time.Unix(MilliSecToSec(ts), MilliSecToNano(ts))
-			So(exp.After(time.Now().Add(-1*time.Minute).Add(Config().Security.Dashboard.TokenExpiry)), ShouldBeTrue)
+			So(exp.After(time.Now().Add(-1*time.Minute).Add(Config().Security.Dashboard.TokenExpiry.Duration)), ShouldBeTrue)
 		})
 	})
 

@@ -165,7 +165,7 @@ func (c *WebSocketConnection) sendMessage(messageType int, payload []byte) (resp
 
 	timeout := Config().WebSocketConnections.Timeouts.Request
 	select {
-	case <-time.After(timeout):
+	case <-time.After(timeout.Duration):
 		err = errors.New(fmt.Sprintf("request timed out for %s", timeout))
 		return
 	case c.wch <- &MessageReq{
@@ -183,7 +183,7 @@ func (c *WebSocketConnection) sendMessage(messageType int, payload []byte) (resp
 	}
 
 	select {
-	case <-time.After(timeout):
+	case <-time.After(timeout.Duration):
 		err = errors.New(fmt.Sprintf("response timed out for %s", timeout))
 		return
 	case resp := <-respCh:
@@ -227,7 +227,7 @@ func (c *WebSocketConnection) wListen() {
 }
 
 func (c *WebSocketConnection) sendWsMessage(message *Message) error {
-	err := c.ws.SetWriteDeadline(time.Now().Add(Config().WebSocketConnections.Timeouts.Write))
+	err := c.ws.SetWriteDeadline(time.Now().Add(Config().WebSocketConnections.Timeouts.Write.Duration))
 	if err != nil {
 		return &WebsocketError{message: "error setting write deadline, " + err.Error()}
 	}
@@ -249,7 +249,7 @@ func (c *WebSocketConnection) sendWsMessage(message *Message) error {
 }
 
 func (c *WebSocketConnection) readWsMessage() (*Message, error) {
-	if err := c.ws.SetReadDeadline(time.Now().Add(Config().WebSocketConnections.Timeouts.Read)); err != nil {
+	if err := c.ws.SetReadDeadline(time.Now().Add(Config().WebSocketConnections.Timeouts.Read.Duration)); err != nil {
 		return nil, &WebsocketError{
 			message: fmt.Sprintf("error setting read deadline, %s", err.Error()),
 		}
