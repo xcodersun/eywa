@@ -15,6 +15,8 @@
 |github.com/mozillazg/request|https://github.com/mozillazg/request/blob/master/LICENSE|
 |github.com/olivere/elastic/uritemplates|https://github.com/olivere/elastic/blob/release-branch.v3/LICENSE|
 |github.com/parnurzeal/gorequest|https://github.com/parnurzeal/gorequest/blob/master/LICENSE|
+|github.com/rs/cors|https://github.com/rs/cors/blob/master/LICENSE|
+|github.com/rs/xhandler|https://github.com/rs/xhandler/blob/master/LICENSE|
 |github.com/satori/go.uuid|https://github.com/satori/go.uuid/blob/master/LICENSE|
 |github.com/smartystreets/assertions|https://github.com/smartystreets/assertions/blob/master/LICENSE.md|
 |github.com/smartystreets/goconvey/convey|https://github.com/smartystreets/goconvey/blob/master/LICENSE.md|

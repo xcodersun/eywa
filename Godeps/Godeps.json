@@ -83,6 +83,14 @@
 			"Rev": "27bfb0dcbcc020d11b7839af416fb8dafc2ab01c"
 		},
 		{
+			"ImportPath": "github.com/rs/cors",
+			"Rev": "ceb1fbf238d7711a11a86a2622d0b85305348aeb"
+		},
+		{
+			"ImportPath": "github.com/rs/xhandler",
+			"Rev": "d9d9599b6aaf6a058cb7b1f48291ded2cbd13390"
+		},
+		{
 			"ImportPath": "github.com/satori/go.uuid",
 			"Rev": "d41af8bb6a7704f00bc3b7cba9355ae6a5a80048"
 		},
@@ -146,6 +154,10 @@
 		{
 			"ImportPath": "golang.org/x/crypto/scrypt",
 			"Rev": "3760e016850398b85094c4c99e955b8c3dea5711"
+		},
+		{
+			"ImportPath": "golang.org/x/net/context",
+			"Rev": "1796f9b8b7178e3c7587dff118d3bb9d37f9b0b3"
 		},
 		{
 			"ImportPath": "golang.org/x/net/proxy",

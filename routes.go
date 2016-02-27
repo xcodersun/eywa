@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/rs/cors"
 	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/zenazn/goji/web"
 	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/zenazn/goji/web/middleware"
 	"github.com/vivowares/eywa/handlers"
@@ -32,7 +33,13 @@ func HttpRouter() http.Handler {
 	httpRouter.Use(middlewares.Authenticator)
 	httpRouter.Use(middleware.Recoverer)
 	httpRouter.Use(middleware.AutomaticOptions)
-
+	c := cors.New(cors.Options{
+		AllowedOrigins:   []string{"*"},
+		AllowedHeaders:   []string{"*"},
+		AllowedMethods:   []string{"GET", "POST", "DELETE", "PUT"},
+		AllowCredentials: true,
+	})
+	httpRouter.Use(c.Handler)
 	httpRouter.Get("/", handlers.Greeting)
 
 	httpRouter.Get("/heartbeat", handlers.HeartBeatHttp)
