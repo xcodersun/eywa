@@ -33,7 +33,7 @@ indices:
   port: 9200
   number_of_shards: 8
   number_of_replicas: 0
-  ttl_enabled: true
+  ttl_enabled: false
   ttl: 336h
 database:
   db_type: sqlite3

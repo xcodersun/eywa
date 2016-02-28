@@ -74,5 +74,52 @@ func TestHttpUpload(t *testing.T) {
 		So(searchRes.TotalHits(), ShouldEqual, 1)
 	})
 
+	Convey("data won't be indexed if indices.disable is enabled", t, func() {
+		f := frisby.Create("disable index").SetHeader("Authentication", authStr()).
+			Put(ConfigsPath()).SetJson(map[string]interface{}{"indices.disable": true}).Send()
+		f.ExpectStatus(http.StatusOK)
+
+		reqBody := Channel{
+			Name:         "test http upload2",
+			Description:  "desc",
+			Tags:         []string{"tag1", "tag2"},
+			Fields:       map[string]string{"field1": "int"},
+			AccessTokens: []string{"token1"},
+		}
+		f = frisby.Create("create channel").Post(ListChannelPath()).
+			SetHeader("Content-Type", "application/json").
+			SetHeader("Accept", "application/json").
+			SetHeader("Authentication", authStr()).
+			SetJson(reqBody).Send()
+
+		var chId string
+		f.ExpectStatus(http.StatusCreated).
+			AfterJson(func(F *frisby.Frisby, js *simplejson.Json, err error) {
+			chId = js.MustMap()["id"].(string)
+		})
+
+		deviceId := "abc"
+		tag1 := uuid.NewV4().String()
+		data := map[string]interface{}{
+			"tag1":   tag1,
+			"tag2":   "monday",
+			"field1": 100,
+		}
+		f = frisby.Create("http upload").Post(HttpUploadPath(chId, deviceId)).
+			SetHeader("AccessToken", "token1").SetJson(data).Send()
+		f.ExpectStatus(http.StatusOK)
+
+		IndexClient.Refresh().Do()
+		time.Sleep(3 * time.Second)
+
+		searchRes, err := IndexClient.Search().Index("_all").Query(elastic.NewTermQuery("tag1", tag1)).Do()
+		So(err, ShouldBeNil)
+		So(searchRes.TotalHits(), ShouldEqual, 0)
+
+		f = frisby.Create("enable index").SetHeader("Authentication", authStr()).
+			Put(ConfigsPath()).SetJson(map[string]interface{}{"indices.disable": false}).Send()
+		f.ExpectStatus(http.StatusOK)
+	})
+
 	frisby.Global.PrintReport()
 }

@@ -16,20 +16,16 @@ func CloseIndexClient() error {
 }
 
 func InitializeIndexClient() error {
-	if Config().Indices.Disable {
-		return nil
-	}
-
 	url := fmt.Sprintf("http://%s:%d", Config().Indices.Host, Config().Indices.Port)
 	client, err := NewClient(
 		SetURL(url),
 		setLogger(ESLogger),
 	)
-	if err != nil {
+	if err != nil && !Config().Indices.Disable {
 		return err
 	}
 	_, _, err = client.Ping(url).Do()
-	if err != nil {
+	if err != nil && !Config().Indices.Disable {
 		return err
 	}
 	IndexClient = client
