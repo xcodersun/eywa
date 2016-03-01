@@ -2,20 +2,15 @@ package configs
 
 import (
 	"bytes"
-	"encoding/json"
-	// "errors"
-	// "fmt"
+	"encoding/xml"
 	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/spf13/viper"
 	"github.com/vivowares/eywa/Godeps/_workspace/src/gopkg.in/yaml.v2"
 	. "github.com/vivowares/eywa/utils"
 	"io"
-	// "strings"
 	"sync/atomic"
 	"text/template"
 	"unsafe"
 )
-
-import "github.com/kr/pretty"
 
 var cfgPtr unsafe.Pointer
 var filename string
@@ -136,39 +131,17 @@ func ReadConfig(buf io.Reader) (*Conf, error) {
 }
 
 func Update(settings map[string]interface{}) error {
-	// notAllowed := []string{}
-	// for k, _ := range settings {
-	// 	if !StringSliceContains(DynamicSettings, k) {
-	// 		notAllowed = append(notAllowed, k)
-	// 	}
-	// }
-	// if len(notAllowed) > 0 {
-	// 	if len(notAllowed) == 1 {
-	// 		return errors.New(fmt.Sprintf("setting: %s is not dynamic", notAllowed[0]))
-	// 	} else {
-	// 		return errors.New(fmt.Sprintf("settings: %s are not dynamic", strings.Join(notAllowed, ",")))
-	// 	}
-	// }
+	_cfg, err := Config().DeepCopy()
+	if err != nil {
+		return err
+	}
 
-	// _cfg, err := Config().DeepCopy()
-	// if err != nil {
-	// 	return err
-	// }
+	err = Assign(_cfg, settings, map[string]AssignReader{"jsonduration": JSONDurationAssignReader})
+	if err != nil {
+		return err
+	}
 
-	// p, err := yaml.Marshal(settings)
-	// if err != nil {
-	// 	return err
-	// }
-	// cfg, err := ReadConfig(bytes.NewBuffer(p))
-	// if err != nil {
-	// 	return err
-	// }
-	// err = mergo.MergeWithOverwrite(_cfg, *cfg)
-	// if err != nil {
-	// 	return err
-	// }
-
-	// SetConfig(_cfg)
+	SetConfig(_cfg)
 	return nil
 }
 
@@ -209,13 +182,10 @@ func InitializeConfig(f string, p map[string]string) error {
 		return err
 	}
 
-	pretty.Println(strMap)
 	err = ForceAssign(_cfg, strMap, map[string]AssignReader{"jsonduration": JSONDurationAssignReader})
 	if err != nil {
 		return err
 	}
-
-	pretty.Println(_cfg)
 
 	SetConfig(_cfg)
 	return nil
@@ -225,19 +195,19 @@ type Conf struct {
 	Service              *ServiceConf      `json:"service" assign:"service;;-"`
 	Security             *SecurityConf     `json:"security" assign:"security;;"`
 	WebSocketConnections *WsConnectionConf `json:"websocket_connections" assign:"websocket_connections;;"`
-	Indices              *IndexConf        `json:"indices" assign:"indices;;-"`
+	Indices              *IndexConf        `json:"indices" assign:"indices;;"`
 	Database             *DbConf           `json:"database" assign:"database;;-"`
 	Logging              *LogsConf         `json:"logging" assign:"logging;;-"`
 }
 
 func (cfg *Conf) DeepCopy() (*Conf, error) {
-	js, err := json.Marshal(cfg)
+	asBytes, err := xml.Marshal(cfg)
 	if err != nil {
 		return nil, err
 	}
 
 	_cfg := &Conf{}
-	err = json.Unmarshal(js, _cfg)
+	err = xml.Unmarshal(asBytes, _cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -251,7 +221,7 @@ type DbConf struct {
 }
 
 type IndexConf struct {
-	Disable          bool          `json:"disable" assign:"disable;;-"`
+	Disable          bool          `json:"disable" assign:"disable;;"`
 	Host             string        `json:"host" assign:"host;;-"`
 	Port             int           `json:"port" assign:"port;;-"`
 	NumberOfShards   int           `json:"number_of_shards" assign:"number_of_shards;;-"`

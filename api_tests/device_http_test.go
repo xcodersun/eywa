@@ -76,7 +76,7 @@ func TestHttpUpload(t *testing.T) {
 
 	Convey("data won't be indexed if indices.disable is enabled", t, func() {
 		f := frisby.Create("disable index").SetHeader("Authentication", authStr()).
-			Put(ConfigsPath()).SetJson(map[string]interface{}{"indices.disable": true}).Send()
+			Put(ConfigsPath()).SetJson(map[string]interface{}{"indices": map[string]interface{}{"disable": true}}).Send()
 		f.ExpectStatus(http.StatusOK)
 
 		reqBody := Channel{
@@ -117,7 +117,7 @@ func TestHttpUpload(t *testing.T) {
 		So(searchRes.TotalHits(), ShouldEqual, 0)
 
 		f = frisby.Create("enable index").SetHeader("Authentication", authStr()).
-			Put(ConfigsPath()).SetJson(map[string]interface{}{"indices.disable": false}).Send()
+			Put(ConfigsPath()).SetJson(map[string]interface{}{"indices": map[string]interface{}{"disable": false}}).Send()
 		f.ExpectStatus(http.StatusOK)
 	})
 

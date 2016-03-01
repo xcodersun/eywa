@@ -21,26 +21,22 @@ func TestConfig(t *testing.T) {
 		defer os.Remove(tmpfile.Name())
 
 		content := `
-      service:
-        host: anotherhost
-        device_port: 9091
-      security:
-        ssl:
-          cert_file: test_cert_file
-        dashboard:
-          aes:
-            key: aes_key
-      websocket_connections:
-        timeouts:
-          write: 5s
-          request:
-      indices:
-        disable: true
-        host:
-        port:
-        ttl_enabled:
-    `
-
+service:
+  host: anotherhost
+  device_port: 9091
+security:
+  ssl:
+    cert_file: test_cert_file
+  dashboard:
+    aes:
+      key: aes_key
+websocket_connections:
+  timeouts:
+    write: 5s
+indices:
+  disable: true
+  ttl_enabled:
+`
 		if _, err := tmpfile.WriteString(content); err != nil {
 			log.Fatalln(err.Error())
 		}
@@ -51,6 +47,7 @@ func TestConfig(t *testing.T) {
 		p := map[string]string{}
 
 		err = InitializeConfig(f, p)
+		So(err, ShouldBeNil)
 
 		expConf, err := ReadConfig(bytes.NewBuffer([]byte(DefaultConfigs)))
 		if err != nil {
@@ -78,56 +75,53 @@ func TestConfig(t *testing.T) {
 		p := map[string]string{}
 
 		err = InitializeConfig(f, p)
-		oldConfPtr := Config()
+
+		expConf, err := Config().DeepCopy()
+		So(err, ShouldBeNil)
+
 		settings := map[string]interface{}{
-			"security.dashboard.username":              "root1",
-			"security.dashboard.password":              "cookiecats",
-			"security.dashboard.token_expiry":          "12h",
-			"websocket_connections.request_queue_size": 16,
-			"websocket_connections.timeouts.write":     "4s",
-			"websocket_connections.timeouts.read":      "12s",
-			"websocket_connections.timeouts.request":   "6s",
-			"websocket_connections.timeouts.response":  "24s",
-			"websocket_connections.buffer_sizes.read":  2048,
-			"websocket_connections.buffer_sizes.write": 4096,
-		}
-		if err = Update(settings); err != nil {
-			log.Fatalln(err.Error())
-		}
-
-		expConf, err := ReadConfig(bytes.NewBuffer([]byte(DefaultConfigs)))
-		if err != nil {
-			log.Fatalln(err.Error())
-		}
-		expConf.Security.Dashboard.Username = "root1"
-		expConf.Security.Dashboard.Password = "cookiecats"
-		expConf.Security.Dashboard.TokenExpiry = &JSONDuration{12 * time.Hour}
-		expConf.WebSocketConnections.RequestQueueSize = 16
-		expConf.WebSocketConnections.Timeouts.Write = &JSONDuration{4 * time.Second}
-		expConf.WebSocketConnections.Timeouts.Read = &JSONDuration{12 * time.Second}
-		expConf.WebSocketConnections.Timeouts.Request = &JSONDuration{6 * time.Second}
-		expConf.WebSocketConnections.Timeouts.Response = &JSONDuration{24 * time.Second}
-		expConf.WebSocketConnections.BufferSizes.Read = 2048
-		expConf.WebSocketConnections.BufferSizes.Write = 4096
-
-		So(reflect.DeepEqual(expConf, Config()), ShouldBeTrue)
-		So(reflect.DeepEqual(expConf, oldConfPtr), ShouldBeFalse)
-
-		settings = map[string]interface{}{
-			"service.host":                             "localhost",
-			"security.dashboard.username":              "root1",
-			"security.dashboard.password":              "cookiecats",
-			"security.dashboard.token_expiry":          "12h",
-			"websocket_connections.request_queue_size": 16,
-			"websocket_connections.timeouts.write":     "4s",
-			"websocket_connections.timeouts.read":      "12s",
-			"websocket_connections.timeouts.request":   "6s",
-			"websocket_connections.timeouts.response":  "24s",
-			"websocket_connections.buffer_sizes.read":  2048,
-			"websocket_connections.buffer_sizes.write": 4096,
+			"security": map[string]interface{}{
+				"dashboard": map[string]interface{}{
+					"username":     "root1",
+					"password":     "cookiecats",
+					"token_expiry": "1h",
+				},
+			},
+			"websocket_connections": map[string]interface{}{
+				"request_queue_size": 22,
+				"timeouts": map[string]interface{}{
+					"write":    "40s",
+					"read":     "120s",
+					"request":  "60s",
+					"response": "240s",
+				},
+				"buffer_sizes": map[string]interface{}{
+					"read":  20480,
+					"write": 40960,
+				},
+			},
+			"indices": map[string]interface{}{
+				"disable": true,
+			},
 		}
 		err = Update(settings)
-		So(err, ShouldNotBeNil)
+		So(err, ShouldBeNil)
+
+		expConf.Security.Dashboard.Username = "root1"
+		expConf.Security.Dashboard.Password = "cookiecats"
+		expConf.Security.Dashboard.TokenExpiry = &JSONDuration{1 * time.Hour}
+		expConf.WebSocketConnections.RequestQueueSize = 22
+		expConf.WebSocketConnections.Timeouts.Write = &JSONDuration{40 * time.Second}
+		expConf.WebSocketConnections.Timeouts.Read = &JSONDuration{120 * time.Second}
+		expConf.WebSocketConnections.Timeouts.Request = &JSONDuration{60 * time.Second}
+		expConf.WebSocketConnections.Timeouts.Response = &JSONDuration{240 * time.Second}
+		expConf.WebSocketConnections.BufferSizes.Read = 20480
+		expConf.WebSocketConnections.BufferSizes.Write = 40960
+		expConf.Indices.Disable = true
+
+		So(reflect.DeepEqual(expConf, Config()), ShouldBeTrue)
+		expConf.Indices = nil
+		So(reflect.DeepEqual(expConf, Config()), ShouldBeFalse)
 	})
 
 	Convey("deep copy returns identical conf", t, func() {
@@ -145,5 +139,8 @@ func TestConfig(t *testing.T) {
 		So(err, ShouldBeNil)
 		_conf, _ := Config().DeepCopy()
 		So(reflect.DeepEqual(Config(), _conf), ShouldBeTrue)
+
+		_conf.Indices = nil
+		So(reflect.DeepEqual(Config(), _conf), ShouldBeFalse)
 	})
 }

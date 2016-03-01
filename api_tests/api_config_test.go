@@ -44,7 +44,7 @@ func TestConfigsApi(t *testing.T) {
 	Convey("successfully updates configs", t, func() {
 		newUser := "cookiecats"
 		f := frisby.Create("update configs").SetHeader("Authentication", authStr()).
-			Put(ConfigsPath()).SetJson(map[string]string{"security.dashboard.username": newUser}).Send()
+			Put(ConfigsPath()).SetJson(map[string]interface{}{"security": map[string]interface{}{"dashboard": map[string]interface{}{"username": newUser}}}).Send()
 
 		conf := &Conf{}
 		f.ExpectStatus(http.StatusOK).
@@ -70,7 +70,7 @@ func TestConfigsApi(t *testing.T) {
 		FatalIfErr(err)
 
 		f = frisby.Create("revert configs").SetHeader("Authentication", str).
-			Put(ConfigsPath()).SetJson(map[string]string{"security.dashboard.username": oldUser}).Send()
+			Put(ConfigsPath()).SetJson(map[string]interface{}{"security": map[string]interface{}{"dashboard": map[string]interface{}{"username": oldUser}}}).Send()
 		f.ExpectStatus(http.StatusOK)
 	})
 
