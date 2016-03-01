@@ -21,11 +21,11 @@ func InitializeIndexClient() error {
 		SetURL(url),
 		setLogger(ESLogger),
 	)
-	if err != nil && !Config().Indices.Disable {
+	if err != nil {
 		return err
 	}
 	_, _, err = client.Ping(url).Do()
-	if err != nil && !Config().Indices.Disable {
+	if err != nil {
 		return err
 	}
 	IndexClient = client

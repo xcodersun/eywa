@@ -154,3 +154,7 @@ if [[ ${#serverpid} -gt 0 ]]; then
 
   echo "Test server is shutdown..."
 fi
+
+if [[ $fail -ne 1 ]]; then
+  exit 1
+fi
