@@ -3,35 +3,23 @@ package configs
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
-	"fmt"
-	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/imdario/mergo"
+	// "errors"
+	// "fmt"
 	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/spf13/viper"
 	"github.com/vivowares/eywa/Godeps/_workspace/src/gopkg.in/yaml.v2"
 	. "github.com/vivowares/eywa/utils"
 	"io"
-	"strings"
+	// "strings"
 	"sync/atomic"
 	"text/template"
 	"unsafe"
 )
 
+import "github.com/kr/pretty"
+
 var cfgPtr unsafe.Pointer
 var filename string
 var params map[string]string
-
-var DynamicSettings = []string{
-	"security.dashboard.username",
-	"security.dashboard.password",
-	"security.dashboard.token_expiry",
-	"websocket_connections.request_queue_size",
-	"websocket_connections.timeouts.write",
-	"websocket_connections.timeouts.read",
-	"websocket_connections.timeouts.request",
-	"websocket_connections.timeouts.response",
-	"websocket_connections.buffer_sizes.read",
-	"websocket_connections.buffer_sizes.write",
-}
 
 func Config() *Conf {
 	return (*Conf)(cfgPtr)
@@ -148,39 +136,39 @@ func ReadConfig(buf io.Reader) (*Conf, error) {
 }
 
 func Update(settings map[string]interface{}) error {
-	notAllowed := []string{}
-	for k, _ := range settings {
-		if !StringSliceContains(DynamicSettings, k) {
-			notAllowed = append(notAllowed, k)
-		}
-	}
-	if len(notAllowed) > 0 {
-		if len(notAllowed) == 1 {
-			return errors.New(fmt.Sprintf("setting: %s is not dynamic", notAllowed[0]))
-		} else {
-			return errors.New(fmt.Sprintf("settings: %s are not dynamic", strings.Join(notAllowed, ",")))
-		}
-	}
+	// notAllowed := []string{}
+	// for k, _ := range settings {
+	// 	if !StringSliceContains(DynamicSettings, k) {
+	// 		notAllowed = append(notAllowed, k)
+	// 	}
+	// }
+	// if len(notAllowed) > 0 {
+	// 	if len(notAllowed) == 1 {
+	// 		return errors.New(fmt.Sprintf("setting: %s is not dynamic", notAllowed[0]))
+	// 	} else {
+	// 		return errors.New(fmt.Sprintf("settings: %s are not dynamic", strings.Join(notAllowed, ",")))
+	// 	}
+	// }
 
-	_cfg, err := Config().DeepCopy()
-	if err != nil {
-		return err
-	}
+	// _cfg, err := Config().DeepCopy()
+	// if err != nil {
+	// 	return err
+	// }
 
-	p, err := yaml.Marshal(settings)
-	if err != nil {
-		return err
-	}
-	cfg, err := ReadConfig(bytes.NewBuffer(p))
-	if err != nil {
-		return err
-	}
-	err = mergo.MergeWithOverwrite(_cfg, *cfg)
-	if err != nil {
-		return err
-	}
+	// p, err := yaml.Marshal(settings)
+	// if err != nil {
+	// 	return err
+	// }
+	// cfg, err := ReadConfig(bytes.NewBuffer(p))
+	// if err != nil {
+	// 	return err
+	// }
+	// err = mergo.MergeWithOverwrite(_cfg, *cfg)
+	// if err != nil {
+	// 	return err
+	// }
 
-	SetConfig(_cfg)
+	// SetConfig(_cfg)
 	return nil
 }
 
@@ -188,6 +176,7 @@ func InitializeConfig(f string, p map[string]string) error {
 	filename = f
 	params = p
 
+	// get default config
 	buf := bytes.NewBuffer([]byte{})
 	_, err := buf.WriteString(DefaultConfigs)
 	if err != nil {
@@ -198,6 +187,7 @@ func InitializeConfig(f string, p map[string]string) error {
 		return err
 	}
 
+	// get custom config
 	t, err := template.ParseFiles(filename)
 	if err != nil {
 		return err
@@ -208,27 +198,36 @@ func InitializeConfig(f string, p map[string]string) error {
 	if err != nil {
 		return err
 	}
-	cfg, err := ReadConfig(buf)
+
+	s := map[interface{}]interface{}{}
+	err = yaml.Unmarshal(buf.Bytes(), &s)
+	if err != nil {
+		return err
+	}
+	strMap, err := ToStringMap(s)
 	if err != nil {
 		return err
 	}
 
-	err = mergo.MergeWithOverwrite(_cfg, *cfg)
+	pretty.Println(strMap)
+	err = ForceAssign(_cfg, strMap, map[string]AssignReader{"jsonduration": JSONDurationAssignReader})
 	if err != nil {
 		return err
 	}
+
+	pretty.Println(_cfg)
 
 	SetConfig(_cfg)
 	return nil
 }
 
 type Conf struct {
-	Service              *ServiceConf      `json:"service"`
-	Security             *SecurityConf     `json:"security"`
-	WebSocketConnections *WsConnectionConf `json:"websocket_connections"`
-	Indices              *IndexConf        `json:"indices"`
-	Database             *DbConf           `json:"database"`
-	Logging              *LogsConf         `json:"logging"`
+	Service              *ServiceConf      `json:"service" assign:"service;;-"`
+	Security             *SecurityConf     `json:"security" assign:"security;;"`
+	WebSocketConnections *WsConnectionConf `json:"websocket_connections" assign:"websocket_connections;;"`
+	Indices              *IndexConf        `json:"indices" assign:"indices;;-"`
+	Database             *DbConf           `json:"database" assign:"database;;-"`
+	Logging              *LogsConf         `json:"logging" assign:"logging;;-"`
 }
 
 func (cfg *Conf) DeepCopy() (*Conf, error) {
@@ -247,81 +246,81 @@ func (cfg *Conf) DeepCopy() (*Conf, error) {
 }
 
 type DbConf struct {
-	DbType string `json:"db_type"`
-	DbFile string `json:"db_file"`
+	DbType string `json:"db_type" assign:"db_type;;-"`
+	DbFile string `json:"db_file" assign:"db_file;;-"`
 }
 
 type IndexConf struct {
-	Disable          bool          `json:"disable"`
-	Host             string        `json:"host"`
-	Port             int           `json:"port"`
-	NumberOfShards   int           `json:"number_of_shards"`
-	NumberOfReplicas int           `json:"number_of_replicas"`
-	TTLEnabled       bool          `json:"ttl_enabled"`
-	TTL              *JSONDuration `json:"ttl"`
+	Disable          bool          `json:"disable" assign:"disable;;-"`
+	Host             string        `json:"host" assign:"host;;-"`
+	Port             int           `json:"port" assign:"port;;-"`
+	NumberOfShards   int           `json:"number_of_shards" assign:"number_of_shards;;-"`
+	NumberOfReplicas int           `json:"number_of_replicas" assign:"number_of_replicas;;-"`
+	TTLEnabled       bool          `json:"ttl_enabled" assign:"ttl_enabled;;-"`
+	TTL              *JSONDuration `json:"ttl" assign:"ttl;jsonduration;-"`
 }
 
 type ServiceConf struct {
-	Host       string `json:"host"`
-	ApiPort    int    `json:"api_port"`
-	DevicePort int    `json:"device_port"`
-	PidFile    string `json:"pid_file"`
+	Host       string `json:"host" assign:"host;;-"`
+	ApiPort    int    `json:"api_port" assign:"api_port;;-"`
+	DevicePort int    `json:"device_port" assign:"device_port;;-"`
+	PidFile    string `json:"pid_file" assign:"pid_file;;-"`
 }
 
 type WsConnectionConf struct {
-	Registry         string                      `json:"registry"`
-	NShards          int                         `json:"nshards"`
-	InitShardSize    int                         `json:"init_shard_size"`
-	RequestQueueSize int                         `json:"request_queue_size"`
-	Timeouts         *WsConnectionTimeoutConf    `json:"timeouts"`
-	BufferSizes      *WsConnectionBufferSizeConf `json:"buffer_sizes"`
+	Registry         string                      `json:"registry" assign:"registry;;-"`
+	NShards          int                         `json:"nshards" assign:"nshards;;-"`
+	InitShardSize    int                         `json:"init_shard_size" assign:"init_shard_size;;-"`
+	RequestQueueSize int                         `json:"request_queue_size" assign:"request_queue_size;;"`
+	Timeouts         *WsConnectionTimeoutConf    `json:"timeouts" assign:"timeouts;;"`
+	BufferSizes      *WsConnectionBufferSizeConf `json:"buffer_sizes" assign:"buffer_sizes;;"`
 }
 
 type WsConnectionTimeoutConf struct {
-	Write    *JSONDuration `json:"write"`
-	Read     *JSONDuration `json:"read"`
-	Request  *JSONDuration `json:"request"`
-	Response *JSONDuration `json:"response"`
+	Write    *JSONDuration `json:"write" assign:"write;jsonduration;"`
+	Read     *JSONDuration `json:"read" assign:"read;jsonduration;"`
+	Request  *JSONDuration `json:"request" assign:"request;jsonduration;"`
+	Response *JSONDuration `json:"response" assign:"response;jsonduration;"`
 }
 
 type WsConnectionBufferSizeConf struct {
-	Write int `json:"write"`
-	Read  int `json:"read"`
+	Write int `json:"write" assign:"write;;"`
+	Read  int `json:"read" assign:"read;;"`
 }
 
 type LogsConf struct {
-	Eywa     *LogConf `json:"eywa"`
-	Indices  *LogConf `json:"indices"`
-	Database *LogConf `json:"database"`
+	Eywa     *LogConf `json:"eywa" assign:"eywa;;-"`
+	Indices  *LogConf `json:"indices" assign:"indices;;-"`
+	Database *LogConf `json:"database" assign:"database;;-"`
 }
 
 type LogConf struct {
-	Filename   string `json:"filename"`
-	MaxSize    int    `json:"maxsize"`
-	MaxAge     int    `json:"maxage"`
-	MaxBackups int    `json:"maxbackups"`
-	Level      string `json:"level"`
-	BufferSize int    `json:"buffer_size"`
+	Filename   string `json:"filename" assign:"filename;;-"`
+	MaxSize    int    `json:"maxsize" assign:"maxsize;;-"`
+	MaxAge     int    `json:"maxage" assign:"maxage;;-"`
+	MaxBackups int    `json:"maxbackups" assign:"maxbackups;;-"`
+	Level      string `json:"level" assign:"level;;-"`
+	BufferSize int    `json:"buffer_size" assign:"buffer_size;;-"`
 }
 
 type SecurityConf struct {
-	Dashboard *DashboardSecurityConf `json:"dashboard"`
-	SSL       *SSLConf               `json:"ssl"`
+	Dashboard *DashboardSecurityConf `json:"dashboard" assign:"dashboard;;"`
+	SSL       *SSLConf               `json:"ssl" assign:"ssl;;-"`
 }
 
 type DashboardSecurityConf struct {
-	Username    string        `json:"username"`
-	Password    string        `json:"password"`
-	TokenExpiry *JSONDuration `json:"token_expiry"`
-	AES         *AESConf      `json:"aes"`
+	Username    string        `json:"username" assign:"username;;"`
+	Password    string        `json:"password" assign:"password;;"`
+	TokenExpiry *JSONDuration `json:"token_expiry" assign:"token_expiry;jsonduration;"`
+	AES         *AESConf      `json:"aes" assign:"aes;;-"`
 }
 
 type AESConf struct {
-	KEY string `json:"key"`
-	IV  string `json:"iv"`
+	KEY string `json:"key" assign:"key;;-"`
+	IV  string `json:"iv" assign:"iv;;-"`
 }
 
 type SSLConf struct {
-	CertFile string `json:"cert_file"`
-	KeyFile  string `json:"cert_key"`
+	CertFile string `json:"cert_file" assign:"cert_file;;-"`
+	KeyFile  string `json:"cert_key" assign:"cert_key;;-"`
 }

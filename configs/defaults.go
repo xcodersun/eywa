@@ -19,14 +19,14 @@ security:
     key_file:
 websocket_connections:
   registry: memory
-  nshards: 4
-  init_shard_size: 128
+  nshards: 8
+  init_shard_size: 1024
   request_queue_size: 8
   timeouts:
-    write: 2s
+    write: 4s
     read: 300s
-    request: 2s
-    response: 8s
+    request: 4s
+    response: 16s
   buffer_sizes:
     read: 1024
     write: 1024
