@@ -275,14 +275,14 @@ type LogConf struct {
 
 type SecurityConf struct {
 	Dashboard *DashboardSecurityConf `json:"dashboard" assign:"dashboard;;"`
-	SSL       *SSLConf               `json:"ssl" assign:"ssl;;-"`
+	SSL       *SSLConf               `json:"-" assign:"ssl;;-"`
 }
 
 type DashboardSecurityConf struct {
 	Username    string        `json:"username" assign:"username;;"`
-	Password    string        `json:"password" assign:"password;;"`
+	Password    string        `json:"-" assign:"password;;"`
 	TokenExpiry *JSONDuration `json:"token_expiry" assign:"token_expiry;jsonduration;"`
-	AES         *AESConf      `json:"aes" assign:"aes;;-"`
+	AES         *AESConf      `json:"-" assign:"aes;;-"`
 }
 
 type AESConf struct {

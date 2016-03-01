@@ -7,7 +7,6 @@ import (
 	"github.com/vivowares/eywa/configs"
 	"github.com/vivowares/eywa/connections"
 	. "github.com/vivowares/eywa/models"
-	"github.com/vivowares/eywa/presenters"
 	. "github.com/vivowares/eywa/utils"
 	"net/http"
 	"strconv"
@@ -43,7 +42,7 @@ func ConnectionStatus(c web.C, w http.ResponseWriter, r *http.Request) {
 }
 
 func GetConfig(c web.C, w http.ResponseWriter, r *http.Request) {
-	Render.JSON(w, http.StatusOK, presenters.NewConf(configs.Config()))
+	Render.JSON(w, http.StatusOK, configs.Config())
 }
 
 func UpdateConfig(c web.C, w http.ResponseWriter, r *http.Request) {
@@ -58,6 +57,6 @@ func UpdateConfig(c web.C, w http.ResponseWriter, r *http.Request) {
 	if err = configs.Update(settings); err != nil {
 		Render.JSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
 	} else {
-		Render.JSON(w, http.StatusOK, presenters.NewConf(configs.Config()))
+		Render.JSON(w, http.StatusOK, configs.Config())
 	}
 }
