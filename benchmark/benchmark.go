@@ -20,7 +20,7 @@ import (
 	"time"
 )
 
-// ulimit -n 1048576; go run tasks/benchmark.go  -host=<host> -ports=8080:8081 -user=root -passwd=waterISwide -fields=temperature:float -c=20000 -p=5 -m=5 -r=300s -w=10s -i=20000 -I=3 > bench.log 2>&1 &
+// ./benchmark -host=159.203.209.3 -ports=8080:8081 -user=root -passwd=waterISwide -fields=temperature:float -c=1 -p=1 -m=1 -r=250s -w=10s -i=100 -I=10 -s=5s
 
 type Dialer struct {
 	counter uint64
@@ -100,12 +100,12 @@ func main() {
 	if response.StatusCode != 200 {
 		log.Fatalln("Unable to authenticate to Eywa. Please check the user/passwd pair.")
 	}
-	var loggedIn map[string]string
+	var loggedIn map[string]interface{}
 	err := json.Unmarshal(bodyBytes, &loggedIn)
 	if err != nil {
 		log.Fatalln("Unable to get auth response")
 	}
-	auth := loggedIn["auth_token"]
+	auth := loggedIn["auth_token"].(string)
 	if len(auth) > 0 {
 		log.Println("Successfully logged in.")
 	} else {
