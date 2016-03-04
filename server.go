@@ -38,10 +38,16 @@ func main() {
 
 	switch args[1] {
 	case "serve":
+		FatalIfErr(models.InitializeDB())
+		FatalIfErr(models.InitializeIndexClient())
+		FatalIfErr(connections.InitializeWSCM())
+		handlers.InitWsUpgrader()
 		serve()
 	case "migrate":
+		FatalIfErr(models.InitializeDB())
 		migrate()
 	case "setup_es":
+		FatalIfErr(models.InitializeIndexClient())
 		setupES()
 	}
 }
@@ -71,8 +77,4 @@ func initialize() {
 	InitialLogger()
 	p, _ := json.Marshal(configs.Config())
 	Logger.Debug(string(p))
-	FatalIfErr(models.InitializeDB())
-	FatalIfErr(models.InitializeIndexClient())
-	FatalIfErr(connections.InitializeWSCM())
-	handlers.InitWsUpgrader()
 }
