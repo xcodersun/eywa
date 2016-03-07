@@ -31,7 +31,7 @@ func GetDashboardPath(base64Id string) string {
 	return fmt.Sprintf("%s/%s/%s", ApiServer, "dashboards", base64Id)
 }
 
-func TestApiDashboards(t *testing.T) {
+func TestAdminDashboards(t *testing.T) {
 
 	InitializeDB()
 	DB.LogMode(true)

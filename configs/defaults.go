@@ -17,6 +17,7 @@ security:
   ssl:
     cert_file:
     key_file:
+  api_key: dRiftingcLouds
 websocket_connections:
   registry: memory
   nshards: 8

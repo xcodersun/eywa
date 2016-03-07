@@ -86,6 +86,7 @@ indices:
 					"password":     "cookiecats",
 					"token_expiry": "1h",
 				},
+				"api_key": "new_key",
 			},
 			"websocket_connections": map[string]interface{}{
 				"request_queue_size": 22,
@@ -110,6 +111,7 @@ indices:
 		expConf.Security.Dashboard.Username = "root1"
 		expConf.Security.Dashboard.Password = "cookiecats"
 		expConf.Security.Dashboard.TokenExpiry = &JSONDuration{1 * time.Hour}
+		expConf.Security.ApiKey = "new_key"
 		expConf.WebSocketConnections.RequestQueueSize = 22
 		expConf.WebSocketConnections.Timeouts.Write = &JSONDuration{40 * time.Second}
 		expConf.WebSocketConnections.Timeouts.Read = &JSONDuration{120 * time.Second}

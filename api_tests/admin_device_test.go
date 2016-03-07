@@ -7,7 +7,6 @@ import (
 	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/gorilla/websocket"
 	. "github.com/vivowares/eywa/Godeps/_workspace/src/github.com/smartystreets/goconvey/convey"
 	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/verdverm/frisby"
-	. "github.com/vivowares/eywa/configs"
 	. "github.com/vivowares/eywa/connections"
 	. "github.com/vivowares/eywa/models"
 	"log"
@@ -20,15 +19,15 @@ import (
 	"time"
 )
 
-func ApiSendToDevicePath(chId, deviceId string) string {
-	return fmt.Sprintf("%s/api/v1/channels/%s/devices/%s/send", ApiServer, chId, deviceId)
+func AdminSendToDevicePath(chId, deviceId string) string {
+	return fmt.Sprintf("%s/channels/%s/devices/%s/send", ApiServer, chId, deviceId)
 }
 
-func ApiRequestToDevicePath(chId, deviceId string) string {
-	return fmt.Sprintf("%s/api/v1/channels/%s/devices/%s/request", ApiServer, chId, deviceId)
+func AdminRequestToDevicePath(chId, deviceId string) string {
+	return fmt.Sprintf("%s/channels/%s/devices/%s/request", ApiServer, chId, deviceId)
 }
 
-func TestApiToDevice(t *testing.T) {
+func TestAdminToDevice(t *testing.T) {
 
 	InitializeDB()
 	DB.LogMode(true)
@@ -56,8 +55,8 @@ func TestApiToDevice(t *testing.T) {
 			wg.Done()
 		}()
 
-		f := frisby.Create("send message to device").Post(ApiSendToDevicePath(chId, deviceId)).
-			SetHeader("Api-Key", Config().Security.ApiKey).SetJson(map[string]string{"test": message}).Send()
+		f := frisby.Create("send message to device").Post(AdminSendToDevicePath(chId, deviceId)).
+			SetHeader("Authentication", authStr()).SetJson(map[string]string{"test": message}).Send()
 		f.ExpectStatus(http.StatusOK)
 
 		So(rcvErr, ShouldBeNil)
@@ -96,8 +95,8 @@ func TestApiToDevice(t *testing.T) {
 			cli.WriteMessage(websocket.BinaryMessage, p)
 		}()
 
-		f := frisby.Create("send message to device").Post(ApiRequestToDevicePath(chId, deviceId)).
-			SetHeader("Api-Key", Config().Security.ApiKey).SetJson(map[string]string{"test": reqMsg}).Send()
+		f := frisby.Create("send message to device").Post(AdminRequestToDevicePath(chId, deviceId)).
+			SetHeader("Authentication", authStr()).SetJson(map[string]string{"test": reqMsg}).Send()
 		f.ExpectStatus(http.StatusOK).
 			AfterContent(func(F *frisby.Frisby, content []byte, err error) {
 			So(string(content), ShouldEqual, respMsg)

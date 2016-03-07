@@ -68,7 +68,7 @@ func GetChannelPath(base64Id string) string {
 	return fmt.Sprintf("%s/%s/%s", ApiServer, "channels", base64Id)
 }
 
-func TestApiChannels(t *testing.T) {
+func TestAdminChannels(t *testing.T) {
 
 	InitializeDB()
 	DB.LogMode(true)

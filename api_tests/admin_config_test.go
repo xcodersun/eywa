@@ -19,7 +19,7 @@ func ConfigsPath() string {
 	return fmt.Sprintf("%s/%s", ApiServer, "configs")
 }
 
-func TestConfigsApi(t *testing.T) {
+func TestAdminConfigs(t *testing.T) {
 
 	frisby.Global.SetHeader("Content-Type", "application/json").
 		SetHeader("Accept", "application/json")
@@ -37,6 +37,7 @@ func TestConfigsApi(t *testing.T) {
 		expConf.Security.SSL = nil
 		expConf.Security.Dashboard.AES = nil
 		expConf.Security.Dashboard.Password = ""
+		expConf.Security.ApiKey = ""
 
 		So(reflect.DeepEqual(expConf, conf), ShouldBeTrue)
 	})
@@ -57,6 +58,7 @@ func TestConfigsApi(t *testing.T) {
 		expConf.Security.Dashboard.AES = nil
 		expConf.Security.Dashboard.Password = ""
 		expConf.Security.Dashboard.Username = newUser
+		expConf.Security.ApiKey = ""
 
 		So(reflect.DeepEqual(expConf, conf), ShouldBeTrue)
 

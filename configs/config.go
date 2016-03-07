@@ -53,6 +53,7 @@ func ReadConfig(buf io.Reader) (*Conf, error) {
 			CertFile: v.GetString("security.ssl.cert_file"),
 			KeyFile:  v.GetString("security.ssl.key_file"),
 		},
+		ApiKey: v.GetString("security.api_key"),
 	}
 
 	dbConfig := &DbConf{
@@ -276,6 +277,7 @@ type LogConf struct {
 type SecurityConf struct {
 	Dashboard *DashboardSecurityConf `json:"dashboard" assign:"dashboard;;"`
 	SSL       *SSLConf               `json:"-" assign:"ssl;;-"`
+	ApiKey    string                 `json:"-" assign:"api_key;;"`
 }
 
 type DashboardSecurityConf struct {

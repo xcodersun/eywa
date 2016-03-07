@@ -40,14 +40,16 @@ func HttpRouter() http.Handler {
 		AllowCredentials: true,
 	})
 	httpRouter.Use(c.Handler)
+
+	//Admin Routes
+	//Public Routes
 	httpRouter.Get("/", handlers.Greeting)
-
 	httpRouter.Get("/heartbeat", handlers.HeartBeatHttp)
+	httpRouter.Get("/login", handlers.Login)
 
+	//Protected Routes
 	httpRouter.Get("/configs", handlers.GetConfig)
 	httpRouter.Put("/configs", handlers.UpdateConfig)
-
-	httpRouter.Get("/login", handlers.Login)
 
 	httpRouter.Get("/channels", handlers.ListChannels)
 	httpRouter.Post("/channels", handlers.CreateChannel)
@@ -67,11 +69,18 @@ func HttpRouter() http.Handler {
 	httpRouter.Get("/channels/:id/series", handlers.QuerySeries)
 	httpRouter.Get("/channels/:id/raw", handlers.QueryRaw)
 
-	httpRouter.Get("/ws/connections/_count", handlers.ConnectionCounts)
-	httpRouter.Get("/ws/channels/:channel_id/devices/:device_id/_status", handlers.ConnectionStatus)
+	httpRouter.Get("/ws/connections/count", handlers.ConnectionCounts)
+	httpRouter.Get("/ws/channels/:channel_id/devices/:device_id/status", handlers.ConnectionStatus)
 
 	httpRouter.Post("/channels/:channel_id/devices/:device_id/send", handlers.SendToDevice)
 	httpRouter.Post("/channels/:channel_id/devices/:device_id/request", handlers.RequestToDevice)
+
+	//API routes
+	httpRouter.Get("/api/v1/channels/:id/value", handlers.QueryValue)
+	httpRouter.Get("/api/v1/channels/:id/series", handlers.QuerySeries)
+	httpRouter.Get("/api/v1/ws/channels/:channel_id/devices/:device_id/status", handlers.ConnectionStatus)
+	httpRouter.Post("/api/v1/channels/:channel_id/devices/:device_id/send", handlers.SendToDevice)
+	httpRouter.Post("/api/v1/channels/:channel_id/devices/:device_id/request", handlers.RequestToDevice)
 
 	httpRouter.Compile()
 

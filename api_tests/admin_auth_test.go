@@ -19,7 +19,7 @@ func UserLoginPath() string {
 	return fmt.Sprintf("%s/%s", ApiServer, "login")
 }
 
-func TestAuthLogin(t *testing.T) {
+func TestAdminAuthLogin(t *testing.T) {
 
 	frisby.Global.SetHeader("Content-Type", "application/json").
 		SetHeader("Accept", "application/json")
