@@ -60,7 +60,7 @@ func CreateWsConnection(chId, deviceId string, ch *Channel) *websocket.Conn {
 }
 
 func ConnectionCountPath() string {
-	return fmt.Sprintf("%s/%s", ApiServer, "ws/connections/count")
+	return fmt.Sprintf("%s/%s", ApiServer, "admin/ws/connections/count")
 }
 
 func CheckConnectionCount() int64 {

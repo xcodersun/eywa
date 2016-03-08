@@ -24,11 +24,11 @@ type DashboardResp struct {
 }
 
 func ListDashboardPath() string {
-	return fmt.Sprintf("%s/%s", ApiServer, "dashboards")
+	return fmt.Sprintf("%s/%s", ApiServer, "admin/dashboards")
 }
 
 func GetDashboardPath(base64Id string) string {
-	return fmt.Sprintf("%s/%s/%s", ApiServer, "dashboards", base64Id)
+	return fmt.Sprintf("%s/%s/%s", ApiServer, "admin/dashboards", base64Id)
 }
 
 func TestAdminDashboards(t *testing.T) {

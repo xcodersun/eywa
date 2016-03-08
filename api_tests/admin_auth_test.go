@@ -16,7 +16,7 @@ import (
 )
 
 func UserLoginPath() string {
-	return fmt.Sprintf("%s/%s", ApiServer, "login")
+	return fmt.Sprintf("%s/%s", ApiServer, "admin/login")
 }
 
 func TestAdminAuthLogin(t *testing.T) {

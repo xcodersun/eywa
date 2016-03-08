@@ -21,11 +21,11 @@ import (
 )
 
 func ApiSendToDevicePath(chId, deviceId string) string {
-	return fmt.Sprintf("%s/api/v1/channels/%s/devices/%s/send", ApiServer, chId, deviceId)
+	return fmt.Sprintf("%s/api/ws/channels/%s/devices/%s/send", ApiServer, chId, deviceId)
 }
 
 func ApiRequestToDevicePath(chId, deviceId string) string {
-	return fmt.Sprintf("%s/api/v1/channels/%s/devices/%s/request", ApiServer, chId, deviceId)
+	return fmt.Sprintf("%s/api/ws/channels/%s/devices/%s/request", ApiServer, chId, deviceId)
 }
 
 func TestApiToDevice(t *testing.T) {

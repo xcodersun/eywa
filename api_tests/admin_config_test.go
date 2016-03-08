@@ -16,7 +16,7 @@ import (
 )
 
 func ConfigsPath() string {
-	return fmt.Sprintf("%s/%s", ApiServer, "configs")
+	return fmt.Sprintf("%s/%s", ApiServer, "admin/configs")
 }
 
 func TestAdminConfigs(t *testing.T) {

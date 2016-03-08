@@ -61,11 +61,11 @@ func authStr() string {
 }
 
 func ListChannelPath() string {
-	return fmt.Sprintf("%s/%s", ApiServer, "channels")
+	return fmt.Sprintf("%s/%s", ApiServer, "admin/channels")
 }
 
 func GetChannelPath(base64Id string) string {
-	return fmt.Sprintf("%s/%s/%s", ApiServer, "channels", base64Id)
+	return fmt.Sprintf("%s/%s/%s", ApiServer, "admin/channels", base64Id)
 }
 
 func TestAdminChannels(t *testing.T) {

@@ -30,59 +30,79 @@ func HttpRouter() http.Handler {
 	httpRouter.Use(middleware.RealIP)
 	httpRouter.Use(middleware.RequestID)
 	httpRouter.Use(middlewares.AccessLogging)
-	httpRouter.Use(middlewares.Authenticator)
 	httpRouter.Use(middleware.Recoverer)
 	httpRouter.Use(middleware.AutomaticOptions)
+
+	httpRouter.Get("/heartbeat", handlers.HeartBeatHttp)
+	httpRouter.Get("/greeting", handlers.Greeting)
+
+	httpRouter.Handle("/admin/*", AdminRouter())
+	httpRouter.Handle("/api/*", ApiRouter())
+
+	fs := http.FileServer(http.Dir("static"))
+	httpRouter.Handle("/*", fs)
+
+	httpRouter.Compile()
+
+	return httpRouter
+
+}
+
+func AdminRouter() http.Handler {
+	admin := web.New()
+	admin.Use(middleware.SubRouter)
+	admin.Use(middlewares.AdminAuthenticator)
 	c := cors.New(cors.Options{
 		AllowedOrigins:   []string{"*"},
 		AllowedHeaders:   []string{"*"},
 		AllowedMethods:   []string{"GET", "POST", "DELETE", "PUT"},
 		AllowCredentials: true,
 	})
-	httpRouter.Use(c.Handler)
+	admin.Use(c.Handler)
 
-	//Admin Routes
-	//Public Routes
-	httpRouter.Get("/", handlers.Greeting)
-	httpRouter.Get("/heartbeat", handlers.HeartBeatHttp)
-	httpRouter.Get("/login", handlers.Login)
+	admin.Get("/login", handlers.Login)
 
-	//Protected Routes
-	httpRouter.Get("/configs", handlers.GetConfig)
-	httpRouter.Put("/configs", handlers.UpdateConfig)
+	admin.Get("/configs", handlers.GetConfig)
+	admin.Put("/configs", handlers.UpdateConfig)
 
-	httpRouter.Get("/channels", handlers.ListChannels)
-	httpRouter.Post("/channels", handlers.CreateChannel)
-	httpRouter.Get("/channels/:id", handlers.GetChannel)
-	httpRouter.Get("/channels/:id/tag_stats", handlers.GetChannelTagStats)
-	httpRouter.Get("/channels/:id/index_stats", handlers.GetChannelIndexStats)
-	httpRouter.Delete("/channels/:id", handlers.DeleteChannel)
-	httpRouter.Put("/channels/:id", handlers.UpdateChannel)
+	admin.Get("/channels", handlers.ListChannels)
+	admin.Post("/channels", handlers.CreateChannel)
+	admin.Get("/channels/:id", handlers.GetChannel)
+	admin.Delete("/channels/:id", handlers.DeleteChannel)
+	admin.Put("/channels/:id", handlers.UpdateChannel)
 
-	httpRouter.Get("/dashboards", handlers.ListDashboards)
-	httpRouter.Post("/dashboards", handlers.CreateDashboard)
-	httpRouter.Get("/dashboards/:id", handlers.GetDashboard)
-	httpRouter.Delete("/dashboards/:id", handlers.DeleteDashboard)
-	httpRouter.Put("/dashboards/:id", handlers.UpdateDashboard)
+	admin.Get("/dashboards", handlers.ListDashboards)
+	admin.Post("/dashboards", handlers.CreateDashboard)
+	admin.Get("/dashboards/:id", handlers.GetDashboard)
+	admin.Delete("/dashboards/:id", handlers.DeleteDashboard)
+	admin.Put("/dashboards/:id", handlers.UpdateDashboard)
 
-	httpRouter.Get("/channels/:id/value", handlers.QueryValue)
-	httpRouter.Get("/channels/:id/series", handlers.QuerySeries)
-	httpRouter.Get("/channels/:id/raw", handlers.QueryRaw)
+	admin.Get("/channels/:id/value", handlers.QueryValue)
+	admin.Get("/channels/:id/series", handlers.QuerySeries)
+	admin.Get("/channels/:id/raw", handlers.QueryRaw)
+	admin.Get("/channels/:id/tag_stats", handlers.GetChannelTagStats)
+	admin.Get("/channels/:id/index_stats", handlers.GetChannelIndexStats)
 
-	httpRouter.Get("/ws/connections/count", handlers.ConnectionCounts)
-	httpRouter.Get("/ws/channels/:channel_id/devices/:device_id/status", handlers.ConnectionStatus)
+	admin.Get("/ws/connections/count", handlers.ConnectionCounts)
+	admin.Get("/ws/channels/:channel_id/devices/:device_id/status", handlers.ConnectionStatus)
 
-	httpRouter.Post("/channels/:channel_id/devices/:device_id/send", handlers.SendToDevice)
-	httpRouter.Post("/channels/:channel_id/devices/:device_id/request", handlers.RequestToDevice)
+	admin.Post("/ws/channels/:channel_id/devices/:device_id/send", handlers.SendToDevice)
+	admin.Post("/ws/channels/:channel_id/devices/:device_id/request", handlers.RequestToDevice)
 
-	//API routes
-	httpRouter.Get("/api/v1/channels/:id/value", handlers.QueryValue)
-	httpRouter.Get("/api/v1/channels/:id/series", handlers.QuerySeries)
-	httpRouter.Get("/api/v1/ws/channels/:channel_id/devices/:device_id/status", handlers.ConnectionStatus)
-	httpRouter.Post("/api/v1/channels/:channel_id/devices/:device_id/send", handlers.SendToDevice)
-	httpRouter.Post("/api/v1/channels/:channel_id/devices/:device_id/request", handlers.RequestToDevice)
+	return admin
+}
 
-	httpRouter.Compile()
+func ApiRouter() http.Handler {
+	api := web.New()
+	api.Use(middleware.SubRouter)
+	api.Use(middlewares.ApiAuthenticator)
 
-	return httpRouter
+	api.Get("/channels/:id/value", handlers.QueryValue)
+	api.Get("/channels/:id/series", handlers.QuerySeries)
+
+	api.Get("/ws/channels/:channel_id/devices/:device_id/status", handlers.ConnectionStatus)
+	api.Post("/ws/channels/:channel_id/devices/:device_id/send", handlers.SendToDevice)
+	api.Post("/ws/channels/:channel_id/devices/:device_id/request", handlers.RequestToDevice)
+
+	return api
 }
