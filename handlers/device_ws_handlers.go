@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"encoding/base64"
 	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/gorilla/websocket"
 	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/zenazn/goji/web"
 	. "github.com/vivowares/eywa/configs"
@@ -11,7 +10,6 @@ import (
 	. "github.com/vivowares/eywa/utils"
 	"io/ioutil"
 	"net/http"
-	"strconv"
 )
 
 var upgrader *websocket.Upgrader
@@ -67,16 +65,7 @@ func WsHandler(c web.C, w http.ResponseWriter, r *http.Request) {
 }
 
 func findCachedChannel(c web.C, idName string) (*Channel, bool) {
-	asBytes, err := base64.URLEncoding.DecodeString(c.URLParams[idName])
-	if err != nil {
-		return nil, false
-	}
-
-	id, err := strconv.Atoi(string(asBytes))
-	if err != nil {
-		return nil, false
-	}
-
+	id := DecodeHashId(c.URLParams[idName])
 	ch, found := FetchCachedChannelById(id)
 	return ch, found
 }

@@ -1,17 +1,18 @@
 package models
 
 import (
-	"encoding/base64"
 	"errors"
 	"fmt"
+	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/speps/go-hashids"
 	"github.com/vivowares/eywa/Godeps/_workspace/src/gopkg.in/olivere/elastic.v3"
 	. "github.com/vivowares/eywa/utils"
-	"strconv"
 	"strings"
 	"time"
 )
 
 var SupportedDataTypes = []string{"float", "int", "boolean", "string"}
+var Salt = "Cc4D5xBlbCBqYTuimuNPGsio7YoMo8d8"
+var HashLen = 16
 
 type Channel struct {
 	Id              int         `sql:"type:integer primary key autoincrement" json:"-"`
@@ -150,8 +151,12 @@ func (c *Channel) FindById(id int) bool {
 	return !DB.NewRecord(c)
 }
 
-func (c *Channel) Base64Id() string {
-	return base64.URLEncoding.EncodeToString([]byte(strconv.Itoa(c.Id)))
+func (c *Channel) HashId() (string, error) {
+	hd := hashids.NewData()
+	hd.Salt = Salt
+	hd.MinLength = HashLen
+	h := hashids.NewWithData(hd)
+	return h.Encode([]int{c.Id})
 }
 
 func (c *Channel) IndexStats() (*elastic.IndicesStatsResponse, error) {
@@ -205,4 +210,12 @@ func FetchCachedChannelIndexStatsById(id int) (*elastic.IndicesStatsResponse, bo
 	} else {
 		return nil, false
 	}
+}
+
+func DecodeHashId(hash string) int {
+	hd := hashids.NewData()
+	hd.Salt = Salt
+	hd.MinLength = HashLen
+	h := hashids.NewWithData(hd)
+	return h.Decode(hash)[0]
 }

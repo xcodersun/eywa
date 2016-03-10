@@ -34,3 +34,4 @@
 |github.com/zenazn/goji|https://github.com/zenazn/goji/blob/master/LICENSE|
 |gopkg.in/natefinch/lumberjack.v2|https://github.com/natefinch/lumberjack/blob/v2.0/LICENSE|
 |gopkg.in/yaml.v2|https://github.com/go-yaml/yaml/blob/v2/LICENSE|
+|github.com/speps/go-hashids|https://github.com/speps/go-hashids/blob/master/LICENSE|

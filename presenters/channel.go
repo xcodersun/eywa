@@ -16,16 +16,18 @@ type ChannelDetail struct {
 }
 
 func NewChannelBrief(c *Channel) *ChannelBrief {
+	hashId, _ := c.HashId()
 	return &ChannelBrief{
-		ID:          c.Base64Id(),
+		ID:          hashId,
 		Name:        c.Name,
 		Description: c.Description,
 	}
 }
 
 func NewChannelDetail(c *Channel) *ChannelDetail {
+	hashId, _ := c.HashId()
 	return &ChannelDetail{
-		ID:      c.Base64Id(),
+		ID:      hashId,
 		Channel: c,
 	}
 }

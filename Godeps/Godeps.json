@@ -109,6 +109,10 @@
 			"Rev": "0d12bf811670bf6a1a63828dfbd003eded177fce"
 		},
 		{
+			"ImportPath": "github.com/speps/go-hashids",
+			"Rev": "3bd0a9294bb4972b68fdbde49dd81864932fc8a2"
+		},
+		{
 			"ImportPath": "github.com/spf13/cast",
 			"Rev": "ee815aaf958c707ad07547cd62150d973710f747"
 		},

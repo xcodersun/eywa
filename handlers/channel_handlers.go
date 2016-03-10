@@ -1,14 +1,12 @@
 package handlers
 
 import (
-	"encoding/base64"
 	"encoding/json"
 	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/zenazn/goji/web"
 	. "github.com/vivowares/eywa/models"
 	. "github.com/vivowares/eywa/presenters"
 	. "github.com/vivowares/eywa/utils"
 	"net/http"
-	"strconv"
 )
 
 func CreateChannel(c web.C, w http.ResponseWriter, r *http.Request) {
@@ -125,16 +123,7 @@ func DeleteChannel(c web.C, w http.ResponseWriter, r *http.Request) {
 }
 
 func findChannel(c web.C) (*Channel, bool) {
-	asBytes, err := base64.URLEncoding.DecodeString(c.URLParams["id"])
-	if err != nil {
-		return nil, false
-	}
-
-	id, err := strconv.Atoi(string(asBytes))
-	if err != nil {
-		return nil, false
-	}
-
+	id := DecodeHashId(c.URLParams["id"])
 	ch := &Channel{}
 	found := ch.FindById(id)
 

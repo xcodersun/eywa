@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"encoding/base64"
 	"encoding/json"
 	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/zenazn/goji/web"
 	"github.com/vivowares/eywa/configs"
@@ -9,7 +8,6 @@ import (
 	. "github.com/vivowares/eywa/models"
 	. "github.com/vivowares/eywa/utils"
 	"net/http"
-	"strconv"
 )
 
 func ConnectionCounts(c web.C, w http.ResponseWriter, r *http.Request) {
@@ -21,16 +19,7 @@ func ConnectionStatus(c web.C, w http.ResponseWriter, r *http.Request) {
 	devId := c.URLParams["device_id"]
 	history := r.URL.Query().Get("history")
 
-	asBytes, err := base64.URLEncoding.DecodeString(chId)
-	if err != nil {
-		Render.JSON(w, http.StatusNotFound, map[string]string{"error": "channel not found"})
-	}
-
-	id, err := strconv.Atoi(string(asBytes))
-	if err != nil {
-		Render.JSON(w, http.StatusNotFound, map[string]string{"error": "channel not found"})
-	}
-
+	id := DecodeHashId(chId)
 	ch := &Channel{}
 	found := ch.FindById(id)
 	if !found {
