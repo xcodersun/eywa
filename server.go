@@ -40,7 +40,7 @@ func main() {
 	case "serve":
 		FatalIfErr(models.InitializeDB())
 		FatalIfErr(models.InitializeIndexClient())
-		FatalIfErr(connections.InitializeWSCM())
+		FatalIfErr(connections.InitializeCM())
 		handlers.InitWsUpgrader()
 		serve()
 	case "migrate":

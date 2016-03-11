@@ -3,14 +3,14 @@ package handlers
 import (
 	"encoding/json"
 	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/zenazn/goji/web"
-	. "github.com/vivowares/eywa/models"
+	"github.com/vivowares/eywa/models"
 	. "github.com/vivowares/eywa/presenters"
 	. "github.com/vivowares/eywa/utils"
 	"net/http"
 )
 
 func CreateChannel(c web.C, w http.ResponseWriter, r *http.Request) {
-	ch := &Channel{}
+	ch := &models.Channel{}
 	decoder := json.NewDecoder(r.Body)
 	err := decoder.Decode(ch)
 	if err != nil {
@@ -52,8 +52,8 @@ func UpdateChannel(c web.C, w http.ResponseWriter, r *http.Request) {
 }
 
 func ListChannels(c web.C, w http.ResponseWriter, r *http.Request) {
-	chs := []*Channel{}
-	DB.Find(&chs)
+	chs := []*models.Channel{}
+	models.DB.Find(&chs)
 
 	cs := []*ChannelBrief{}
 	for _, ch := range chs {
@@ -80,7 +80,7 @@ func GetChannelTagStats(c web.C, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	q := &StatsQuery{Channel: ch}
+	q := &models.StatsQuery{Channel: ch}
 	err := q.Parse(QueryToMap(r.URL.Query()))
 	if err != nil {
 		Render.JSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
@@ -100,7 +100,7 @@ func GetChannelIndexStats(c web.C, w http.ResponseWriter, r *http.Request) {
 		Render.JSON(w, http.StatusNotFound, map[string]string{"error": "channel not found"})
 		return
 	}
-	stats, found := FetchCachedChannelIndexStatsById(ch.Id)
+	stats, found := models.FetchCachedChannelIndexStatsById(ch.Id)
 	if !found {
 		Render.JSON(w, http.StatusNotFound, map[string]string{"error": "channel stats not found"})
 	} else {
@@ -122,9 +122,9 @@ func DeleteChannel(c web.C, w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func findChannel(c web.C) (*Channel, bool) {
-	id := DecodeHashId(c.URLParams["id"])
-	ch := &Channel{}
+func findChannel(c web.C) (*models.Channel, bool) {
+	id := models.DecodeHashId(c.URLParams["id"])
+	ch := &models.Channel{}
 	found := ch.FindById(id)
 
 	return ch, found

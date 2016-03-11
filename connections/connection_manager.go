@@ -13,117 +13,27 @@ import (
 	"time"
 )
 
-var defaultWSCM *WebSocketConnectionManager
+var closedCMErr = errors.New("connection manager is closed")
+var emptyChanErr = errors.New("registering http connection with empty channel")
 
-var noWscmErr = errors.New("connection manager is not initialized")
-var closedWscmErr = errors.New("connection manager is closed")
-
-func NewHttpConnection(id string, h MessageHandler, meta map[string]interface{}) (*HttpConnection, error) {
-	conn := &HttpConnection{
-		identifier: id,
-		h:          h,
-		metadata:   meta,
-	}
-
-	return conn, nil
-}
-
-func NewWebSocketConnection(id string, ws wsConn, h MessageHandler, meta map[string]interface{}) (*WebSocketConnection, error) {
-	if defaultWSCM != nil {
-		return defaultWSCM.newConnection(id, ws, h, meta)
-	}
-
-	return nil, noWscmErr
-}
-
-func WebSocketCount() int {
-	count := 0
-
-	if defaultWSCM != nil {
-		count = defaultWSCM.count()
-	}
-
-	return count
-}
-
-func FindWeSocketConnection(id string) (*WebSocketConnection, bool) {
-	if defaultWSCM != nil {
-		return defaultWSCM.findConnection(id)
-	}
-
-	return nil, false
-}
-
-func InitializeWSCM() error {
-	wscm, err := newWebSocketConnectionManager()
-	defaultWSCM = wscm
-	return err
-}
-
-func CloseWSCM() error {
-	if defaultWSCM != nil {
-		return defaultWSCM.close()
-	}
-
-	return noWscmErr
-}
-
-func newWebSocketConnectionManager() (*WebSocketConnectionManager, error) {
-	wscm := &WebSocketConnectionManager{closed: &AtomBool{}}
-	switch Config().WebSocketConnections.Registry {
-	case "memory":
-		wscm.Registry = &InMemoryRegistry{}
-	default:
-		wscm.Registry = &InMemoryRegistry{}
-	}
-	if err := wscm.Registry.Ping(); err != nil {
-		return nil, err
-	}
-
-	wscm.shards = make([]*shard, Config().WebSocketConnections.NShards)
-	for i := 0; i < Config().WebSocketConnections.NShards; i++ {
-		wscm.shards[i] = &shard{
-			wscm:    wscm,
-			wsconns: make(map[string]*WebSocketConnection, Config().WebSocketConnections.InitShardSize),
-		}
-	}
-
-	return wscm, nil
-}
-
-type WebSocketConnectionManager struct {
+type ConnectionManager struct {
 	closed   *AtomBool
 	shards   []*shard
 	Registry Registry
 }
 
-func (wscm *WebSocketConnectionManager) close() error {
-	wscm.closed.Set(true)
-
-	var wg sync.WaitGroup
-	wg.Add(len(wscm.shards))
-	for _, sh := range wscm.shards {
-		go func(s *shard) {
-			s.Close()
-			wg.Done()
-		}(sh)
-	}
-	wg.Wait()
-	return wscm.Registry.Close()
-}
-
-func (wscm *WebSocketConnectionManager) newConnection(id string, ws wsConn, h MessageHandler, meta map[string]interface{}) (*WebSocketConnection, error) {
-	if wscm.closed.Get() {
+func (cm *ConnectionManager) NewWebsocketConnection(id string, ws wsConn, h MessageHandler, meta map[string]interface{}) (*WebsocketConnection, error) {
+	if cm.closed.Get() {
 		ws.Close()
-		return nil, closedWscmErr
+		return nil, closedCMErr
 	}
 
 	hasher := murmur3.New32()
 	hasher.Write([]byte(id))
-	shard := wscm.shards[hasher.Sum32()%uint32(len(wscm.shards))]
+	shard := cm.shards[hasher.Sum32()%uint32(len(cm.shards))]
 
 	t := time.Now()
-	conn := &WebSocketConnection{
+	conn := &WebsocketConnection{
 		shard:        shard,
 		ws:           ws,
 		identifier:   id,
@@ -132,7 +42,7 @@ func (wscm *WebSocketConnectionManager) newConnection(id string, ws wsConn, h Me
 		h:            h,
 		metadata:     meta,
 
-		wch: make(chan *MessageReq, Config().WebSocketConnections.RequestQueueSize),
+		wch: make(chan *MessageReq, Config().Connections.Websocket.RequestQueueSize),
 		msgChans: &syncRespChanMap{
 			m: make(map[string]chan *MessageResp),
 		},
@@ -142,11 +52,11 @@ func (wscm *WebSocketConnectionManager) newConnection(id string, ws wsConn, h Me
 
 	ws.SetPingHandler(func(payload string) error {
 		conn.lastPingedAt = time.Now()
-		conn.shard.updateRegistry(conn)
-		Logger.Debug(fmt.Sprintf("connection: %s pinged", id))
+		// conn.shard.updateRegistry(conn)
+		Logger.Debug(fmt.Sprintf("websocket connection: %s pinged", id))
 
 		//extend the read deadline after each ping
-		err := ws.SetReadDeadline(time.Now().Add(Config().WebSocketConnections.Timeouts.Read.Duration))
+		err := ws.SetReadDeadline(time.Now().Add(Config().Connections.Websocket.Timeouts.Read.Duration))
 		if err != nil {
 			return err
 		}
@@ -154,12 +64,12 @@ func (wscm *WebSocketConnectionManager) newConnection(id string, ws wsConn, h Me
 		return ws.WriteControl(
 			websocket.PongMessage,
 			[]byte(strconv.FormatInt(time.Now().UnixNano()/int64(time.Millisecond), 10)),
-			time.Now().Add(Config().WebSocketConnections.Timeouts.Write.Duration))
+			time.Now().Add(Config().Connections.Websocket.Timeouts.Write.Duration))
 	})
 
 	if err := shard.register(conn); err != nil {
-		conn.Close()
-		conn.Wait()
+		ws.WriteControl(websocket.CloseMessage, []byte{}, time.Now().Add(Config().Connections.Websocket.Timeouts.Write.Duration))
+		ws.Close()
 		return nil, err
 	}
 
@@ -168,17 +78,66 @@ func (wscm *WebSocketConnectionManager) newConnection(id string, ws wsConn, h Me
 	return conn, nil
 }
 
-func (wscm *WebSocketConnectionManager) findConnection(id string) (*WebSocketConnection, bool) {
+func (cm *ConnectionManager) NewHttpConnection(id string, ch chan []byte, h MessageHandler, meta map[string]interface{}) (*HttpConnection, error) {
+	if ch == nil {
+		return nil, emptyChanErr
+	}
+
+	if cm.closed.Get() {
+		close(ch)
+		return nil, closedCMErr
+	}
+
 	hasher := murmur3.New32()
 	hasher.Write([]byte(id))
-	shard := wscm.shards[hasher.Sum32()%uint32(len(wscm.shards))]
+	shard := cm.shards[hasher.Sum32()%uint32(len(cm.shards))]
+
+	t := time.Now()
+	conn := &HttpConnection{
+		identifier: id,
+		h:          h,
+		ch:         ch,
+		metadata:   meta,
+		createdAt:  t,
+		shard:      shard,
+	}
+
+	if err := shard.register(conn); err != nil {
+		close(ch)
+		return nil, err
+	}
+
+	conn.Start()
+
+	return conn, nil
+}
+
+func (cm *ConnectionManager) FindConnection(id string) (Connection, bool) {
+	hasher := murmur3.New32()
+	hasher.Write([]byte(id))
+	shard := cm.shards[hasher.Sum32()%uint32(len(cm.shards))]
 	return shard.findConnection(id)
 }
 
-func (wscm *WebSocketConnectionManager) count() int {
+func (cm *ConnectionManager) Count() int {
 	sum := 0
-	for _, sh := range wscm.shards {
-		sum += sh.Count()
+	for _, sh := range cm.shards {
+		sum += sh.count()
 	}
 	return sum
+}
+
+func (cm *ConnectionManager) Close() error {
+	cm.closed.Set(true)
+
+	var wg sync.WaitGroup
+	wg.Add(len(cm.shards))
+	for _, sh := range cm.shards {
+		go func(s *shard) {
+			s.Close()
+			wg.Done()
+		}(sh)
+	}
+	wg.Wait()
+	return cm.Registry.Close()
 }

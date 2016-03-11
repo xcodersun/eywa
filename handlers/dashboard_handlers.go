@@ -4,7 +4,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/zenazn/goji/web"
-	. "github.com/vivowares/eywa/models"
+	"github.com/vivowares/eywa/models"
 	. "github.com/vivowares/eywa/presenters"
 	. "github.com/vivowares/eywa/utils"
 	"net/http"
@@ -12,7 +12,7 @@ import (
 )
 
 func CreateDashboard(c web.C, w http.ResponseWriter, r *http.Request) {
-	dashboard := &Dashboard{}
+	dashboard := &models.Dashboard{}
 	decoder := json.NewDecoder(r.Body)
 	err := decoder.Decode(dashboard)
 	if err != nil {
@@ -41,7 +41,7 @@ func UpdateDashboard(c web.C, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dashboard := &Dashboard{}
+	dashboard := &models.Dashboard{}
 	found := dashboard.FindById(id)
 	if !found {
 		w.WriteHeader(http.StatusNotFound)
@@ -65,8 +65,8 @@ func UpdateDashboard(c web.C, w http.ResponseWriter, r *http.Request) {
 }
 
 func ListDashboards(c web.C, w http.ResponseWriter, r *http.Request) {
-	ds := []*Dashboard{}
-	DB.Find(&ds)
+	ds := []*models.Dashboard{}
+	models.DB.Find(&ds)
 
 	db := []*DashboardBrief{}
 	for _, d := range ds {
@@ -89,7 +89,7 @@ func GetDashboard(c web.C, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dashboard := &Dashboard{}
+	dashboard := &models.Dashboard{}
 	found := dashboard.FindById(id)
 	if !found {
 		w.WriteHeader(http.StatusNotFound)
@@ -111,7 +111,7 @@ func DeleteDashboard(c web.C, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dashboard := &Dashboard{Id: id}
+	dashboard := &models.Dashboard{Id: id}
 	err = dashboard.Delete()
 	if err != nil {
 		Render.JSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})

@@ -11,20 +11,22 @@ import (
 func TestConnectionManager(t *testing.T) {
 
 	SetConfig(&Conf{
-		WebSocketConnections: &WsConnectionConf{
-			Registry:         "memory",
-			NShards:          4,
-			InitShardSize:    8,
-			RequestQueueSize: 8,
-			Timeouts: &WsConnectionTimeoutConf{
-				Write:    &JSONDuration{2 * time.Second},
-				Read:     &JSONDuration{300 * time.Second},
-				Request:  &JSONDuration{1 * time.Second},
-				Response: &JSONDuration{2 * time.Second},
-			},
-			BufferSizes: &WsConnectionBufferSizeConf{
-				Write: 1024,
-				Read:  1024,
+		Connections: &ConnectionsConf{
+			Registry:      "memory",
+			NShards:       4,
+			InitShardSize: 8,
+			Websocket: &WsConnectionConf{
+				RequestQueueSize: 8,
+				Timeouts: &WsConnectionTimeoutConf{
+					Write:    &JSONDuration{2 * time.Second},
+					Read:     &JSONDuration{300 * time.Second},
+					Request:  &JSONDuration{1 * time.Second},
+					Response: &JSONDuration{2 * time.Second},
+				},
+				BufferSizes: &WsConnectionBufferSizeConf{
+					Write: 1024,
+					Read:  1024,
+				},
 			},
 		},
 	})
@@ -33,10 +35,9 @@ func TestConnectionManager(t *testing.T) {
 	meta := make(map[string]interface{})
 
 	Convey("creates/registers/finds new connections.", t, func() {
-		wscm, _ := newWebSocketConnectionManager()
-		defer wscm.close()
-		conn, _ := wscm.newConnection("test", &fakeWsConn{}, h, meta) // this connection should be started and registered
-		So(wscm.count(), ShouldEqual, 1)
+		cm, _ := NewConnectionManager()
+		conn, _ := cm.NewWebsocketConnection("test ws", &fakeWsConn{}, h, meta) // this connection should be started and registered
+		So(cm.Count(), ShouldEqual, 1)
 
 		// the fake ReadMessage() always return empty string, which will still keep updating the
 		// pingedAt timestamp
@@ -45,18 +46,42 @@ func TestConnectionManager(t *testing.T) {
 		t2 := conn.LastPingedAt()
 		So(t1.Equal(t2), ShouldBeFalse)
 
-		_, found := wscm.findConnection("test")
+		_, found := cm.FindConnection("test ws")
 		So(found, ShouldBeTrue)
+
+		ch := make(chan []byte, 1)
+		_, err := cm.NewHttpConnection("test http", ch, func(Connection, *Message, error) {}, nil)
+		So(err, ShouldBeNil)
+
+		httpConn, found := cm.FindConnection("test http")
+		So(found, ShouldBeTrue)
+		So(cm.Count(), ShouldEqual, 2)
+
+		cm.Close()
+		So(cm.Count(), ShouldEqual, 0)
+
+		_, ok := <-ch
+		So(ok, ShouldBeFalse)
+		So(httpConn.Closed(), ShouldBeTrue)
+		So(conn.Closed(), ShouldBeTrue)
 	})
 
 	Convey("disallows creating/registering new connections on closed CM.", t, func() {
-		wscm, _ := newWebSocketConnectionManager()
-		wscm.close()
+		cm, _ := NewConnectionManager()
+		cm.Close()
 
 		ws := &fakeWsConn{}
-		_, err := wscm.newConnection("test", ws, h, meta)
+		_, err := cm.NewWebsocketConnection("test ws", ws, h, meta)
 		So(ws.closed, ShouldBeTrue)
 		So(err, ShouldNotBeNil)
-		So(wscm.count(), ShouldEqual, 0)
+		So(cm.Count(), ShouldEqual, 0)
+
+		ch := make(chan []byte, 1)
+		_, err = cm.NewHttpConnection("test http", ch, func(Connection, *Message, error) {}, nil)
+		So(err, ShouldNotBeNil)
+		So(err, ShouldEqual, closedCMErr)
+		So(cm.Count(), ShouldEqual, 0)
+		_, ok := <-ch
+		So(ok, ShouldBeFalse)
 	})
 }

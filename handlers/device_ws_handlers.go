@@ -6,9 +6,8 @@ import (
 	. "github.com/vivowares/eywa/configs"
 	"github.com/vivowares/eywa/connections"
 	. "github.com/vivowares/eywa/message_handlers"
-	. "github.com/vivowares/eywa/models"
+	"github.com/vivowares/eywa/models"
 	. "github.com/vivowares/eywa/utils"
-	"io/ioutil"
 	"net/http"
 )
 
@@ -16,8 +15,8 @@ var upgrader *websocket.Upgrader
 
 func InitWsUpgrader() {
 	upgrader = &websocket.Upgrader{
-		ReadBufferSize:  Config().WebSocketConnections.BufferSizes.Read,
-		WriteBufferSize: Config().WebSocketConnections.BufferSizes.Write,
+		ReadBufferSize:  Config().Connections.Websocket.BufferSizes.Read,
+		WriteBufferSize: Config().Connections.Websocket.BufferSizes.Write,
 	}
 }
 
@@ -54,7 +53,7 @@ func WsHandler(c web.C, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = connections.NewWebSocketConnection(deviceId, ws, h, map[string]interface{}{
+	_, err = connections.NewWebsocketConnection(deviceId, ws, h, map[string]interface{}{
 		"channel":  ch,
 		"metadata": QueryToMap(r.URL.Query()),
 	})
@@ -64,50 +63,8 @@ func WsHandler(c web.C, w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func findCachedChannel(c web.C, idName string) (*Channel, bool) {
-	id := DecodeHashId(c.URLParams[idName])
-	ch, found := FetchCachedChannelById(id)
+func findCachedChannel(c web.C, idName string) (*models.Channel, bool) {
+	id := models.DecodeHashId(c.URLParams[idName])
+	ch, found := models.FetchCachedChannelById(id)
 	return ch, found
-}
-
-func SendToDevice(c web.C, w http.ResponseWriter, r *http.Request) {
-	deviceId := c.URLParams["device_id"]
-	conn, found := connections.FindWeSocketConnection(deviceId)
-	if !found {
-		Render.JSON(w, http.StatusNotFound, map[string]string{"error": "device is not online"})
-		return
-	}
-
-	bodyBytes, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		Render.JSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
-		return
-	}
-
-	err = conn.Send(bodyBytes)
-	if err != nil {
-		Render.JSON(w, 422, map[string]string{"error": err.Error()})
-	}
-}
-
-func RequestToDevice(c web.C, w http.ResponseWriter, r *http.Request) {
-	deviceId := c.URLParams["device_id"]
-	conn, found := connections.FindWeSocketConnection(deviceId)
-	if !found {
-		Render.JSON(w, http.StatusNotFound, map[string]string{"error": "device is not online"})
-		return
-	}
-
-	bodyBytes, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		Render.JSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
-		return
-	}
-
-	msg, err := conn.Request(bodyBytes)
-	if err != nil {
-		Render.JSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
-		return
-	}
-	w.Write(msg)
 }

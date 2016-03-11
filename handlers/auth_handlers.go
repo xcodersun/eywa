@@ -3,7 +3,7 @@ package handlers
 import (
 	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/zenazn/goji/web"
 	. "github.com/vivowares/eywa/configs"
-	. "github.com/vivowares/eywa/models"
+	"github.com/vivowares/eywa/models"
 	. "github.com/vivowares/eywa/utils"
 	"net/http"
 )
@@ -12,7 +12,7 @@ func Login(c web.C, w http.ResponseWriter, r *http.Request) {
 	u, p, ok := r.BasicAuth()
 	if ok {
 		if validateUserPassword(u, p) {
-			auth, err := NewAuthToken(u, p)
+			auth, err := models.NewAuthToken(u, p)
 			if err != nil {
 				Render.JSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
 			} else {

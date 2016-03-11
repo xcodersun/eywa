@@ -15,19 +15,23 @@ security:
     cert_file:
     key_file:
   api_key: dRiftingcLouds
-websocket_connections:
+connections:
   registry: memory
   nshards: 4
   init_shard_size: 128
-  request_queue_size: 8
-  timeouts:
-    write: 2s
-    read: 300s
-    request: 2s
-    response: 8s
-  buffer_sizes:
-    read: 1024
-    write: 1024
+  http:
+    timeouts:
+      long_polling: 600s
+  websocket:
+    request_queue_size: 8
+    timeouts:
+      write: 2s
+      read: 300s
+      request: 2s
+      response: 8s
+    buffer_sizes:
+      read: 1024
+      write: 1024
 indices:
   disable: false
   host: localhost

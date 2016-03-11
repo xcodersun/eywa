@@ -2,7 +2,7 @@ package handlers
 
 import (
 	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/zenazn/goji/web"
-	. "github.com/vivowares/eywa/models"
+	"github.com/vivowares/eywa/models"
 	. "github.com/vivowares/eywa/utils"
 	"net/http"
 	"os"
@@ -15,7 +15,7 @@ func QueryValue(c web.C, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	q := &ValueQuery{Channel: ch}
+	q := &models.ValueQuery{Channel: ch}
 	err := q.Parse(QueryToMap(r.URL.Query()))
 	if err != nil {
 		Render.JSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
@@ -36,7 +36,7 @@ func QuerySeries(c web.C, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	q := &SeriesQuery{Channel: ch}
+	q := &models.SeriesQuery{Channel: ch}
 	err := q.Parse(QueryToMap(r.URL.Query()))
 	if err != nil {
 		Render.JSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
@@ -57,7 +57,7 @@ func QueryRaw(c web.C, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	q := &RawQuery{Channel: ch}
+	q := &models.RawQuery{Channel: ch}
 	err := q.Parse(QueryToMap(r.URL.Query()))
 	if err != nil {
 		Render.JSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})

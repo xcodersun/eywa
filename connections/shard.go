@@ -5,8 +5,8 @@ import (
 )
 
 type shard struct {
-	wscm    *WebSocketConnectionManager
-	wsconns map[string]*WebSocketConnection
+	cm    *ConnectionManager
+	conns map[string]Connection
 	sync.Mutex
 }
 
@@ -14,18 +14,18 @@ func (sh *shard) Close() {
 	sh.Lock()
 
 	var wg sync.WaitGroup
-	wsconns := make([]*WebSocketConnection, len(sh.wsconns))
+	conns := make([]Connection, len(sh.conns))
 	i := 0
-	for _, conn := range sh.wsconns {
-		wsconns[i] = conn
+	for _, conn := range sh.conns {
+		conns[i] = conn
 		i += 1
 	}
-	wg.Add(len(wsconns))
+	wg.Add(len(conns))
 
 	sh.Unlock()
 
-	for _, conn := range wsconns {
-		go func(c *WebSocketConnection) {
+	for _, conn := range conns {
+		go func(c Connection) {
 			c.Close()
 			c.Wait()
 			wg.Done()
@@ -35,45 +35,45 @@ func (sh *shard) Close() {
 	wg.Wait()
 }
 
-func (sh *shard) register(c *WebSocketConnection) error {
+func (sh *shard) register(c Connection) error {
 	sh.Lock()
 	defer sh.Unlock()
 
-	if sh.wscm.closed.Get() {
-		return closedWscmErr
+	if sh.cm.closed.Get() {
+		return closedCMErr
 	}
 
-	if err := sh.wscm.Registry.Register(c); err != nil {
+	if err := sh.cm.Registry.Register(c); err != nil {
 		return err
 	}
 
-	sh.wsconns[c.identifier] = c
+	sh.conns[c.Identifier()] = c
 	return nil
 }
 
-func (sh *shard) updateRegistry(c *WebSocketConnection) error {
-	return sh.wscm.Registry.UpdateRegistry(c)
-}
-
-func (sh *shard) unregister(c *WebSocketConnection) error {
+func (sh *shard) unregister(c Connection) error {
 	sh.Lock()
 	defer sh.Unlock()
 
-	delete(sh.wsconns, c.identifier)
-	return sh.wscm.Registry.Unregister(c)
+	delete(sh.conns, c.Identifier())
+	return sh.cm.Registry.Unregister(c)
 }
 
-func (sh *shard) findConnection(id string) (*WebSocketConnection, bool) {
+// func (sh *shard) updateRegistry(c Connection) error {
+// 	return sh.cm.Registry.UpdateRegistry(c)
+// }
+
+func (sh *shard) findConnection(id string) (Connection, bool) {
 	sh.Lock()
 	defer sh.Unlock()
 
-	conn, found := sh.wsconns[id]
+	conn, found := sh.conns[id]
 	return conn, found
 }
 
-func (sh *shard) Count() int {
+func (sh *shard) count() int {
 	sh.Lock()
 	defer sh.Unlock()
 
-	return len(sh.wsconns)
+	return len(sh.conns)
 }

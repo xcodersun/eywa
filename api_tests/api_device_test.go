@@ -4,9 +4,12 @@ package api_tests
 
 import (
 	"fmt"
+	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/bitly/go-simplejson"
 	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/gorilla/websocket"
+	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/satori/go.uuid"
 	. "github.com/vivowares/eywa/Godeps/_workspace/src/github.com/smartystreets/goconvey/convey"
 	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/verdverm/frisby"
+	"github.com/vivowares/eywa/Godeps/_workspace/src/gopkg.in/olivere/elastic.v3"
 	. "github.com/vivowares/eywa/configs"
 	. "github.com/vivowares/eywa/connections"
 	. "github.com/vivowares/eywa/models"
@@ -109,6 +112,60 @@ func TestApiToDevice(t *testing.T) {
 		So(sendMsgType, ShouldEqual, TypeRequestMessage)
 
 		cli.Close()
+	})
+
+	Convey("successfully uploads the structed data and indexed into ES via http, also long polling for downloading data", t, func() {
+		reqBody := Channel{
+			Name:         "test http polling",
+			Description:  "desc",
+			Tags:         []string{"tag1", "tag2"},
+			Fields:       map[string]string{"field1": "int"},
+			AccessTokens: []string{"token1"},
+		}
+		f := frisby.Create("create channel").Post(ListChannelPath()).
+			SetHeader("Content-Type", "application/json").
+			SetHeader("Accept", "application/json").
+			SetHeader("Authentication", authStr()).
+			SetJson(reqBody).Send()
+
+		var chId string
+		f.ExpectStatus(http.StatusCreated).
+			AfterJson(func(F *frisby.Frisby, js *simplejson.Json, err error) {
+			chId = js.MustMap()["id"].(string)
+		})
+
+		deviceId := uuid.NewV4().String()
+		tag1 := uuid.NewV4().String()
+		data := map[string]interface{}{
+			"tag1":   tag1,
+			"tag2":   "monday",
+			"field1": 100,
+		}
+
+		var response string
+		go func() {
+			f = frisby.Create("http long polling").Get(HttpPollingPath(chId, deviceId)).
+				SetHeader("AccessToken", "token1").SetJson(data).Send()
+			f.ExpectStatus(http.StatusOK).AfterContent(func(F *frisby.Frisby, content []byte, err error) {
+				response = string(content)
+			})
+		}()
+		time.Sleep(1 * time.Second)
+		f = frisby.Create("send message to device").Post(ApiSendToDevicePath(chId, deviceId)).
+			SetHeader("Api-Key", Config().Security.ApiKey).SetJson(map[string]string{"test": "message"}).Send()
+		f.ExpectStatus(http.StatusOK)
+
+		IndexClient.Refresh().Do()
+		time.Sleep(3 * time.Second)
+		So(response, ShouldEqual, `{"test":"message"}`)
+
+		searchRes, err := IndexClient.Search().Index("_all").Type("messages").Query(elastic.NewTermQuery("tag1", tag1)).Do()
+		So(err, ShouldBeNil)
+		So(searchRes.TotalHits(), ShouldEqual, 1)
+
+		searchRes, err = IndexClient.Search().Index("_all").Type("activities").Query(elastic.NewTermQuery("device_id", deviceId)).Do()
+		So(err, ShouldBeNil)
+		So(searchRes.TotalHits(), ShouldEqual, 2)
 	})
 
 	frisby.Global.PrintReport()

@@ -71,20 +71,27 @@ func ReadConfig(buf io.Reader) (*Conf, error) {
 		TTL:              &JSONDuration{v.GetDuration("indices.ttl")},
 	}
 
-	wsConnConfig := &WsConnectionConf{
-		Registry:         v.GetString("websocket_connections.registry"),
-		NShards:          v.GetInt("websocket_connections.nshards"),
-		InitShardSize:    v.GetInt("websocket_connections.init_shard_size"),
-		RequestQueueSize: v.GetInt("websocket_connections.request_queue_size"),
-		Timeouts: &WsConnectionTimeoutConf{
-			Write:    &JSONDuration{v.GetDuration("websocket_connections.timeouts.write")},
-			Read:     &JSONDuration{v.GetDuration("websocket_connections.timeouts.read")},
-			Request:  &JSONDuration{v.GetDuration("websocket_connections.timeouts.request")},
-			Response: &JSONDuration{v.GetDuration("websocket_connections.timeouts.response")},
+	connConfig := &ConnectionsConf{
+		Registry:      v.GetString("connections.registry"),
+		NShards:       v.GetInt("connections.nshards"),
+		InitShardSize: v.GetInt("connections.init_shard_size"),
+		Http: &HttpConnectionConf{
+			Timeouts: &HttpConnectionTimeoutConf{
+				LongPolling: &JSONDuration{v.GetDuration("connections.http.timeouts.long_polling")},
+			},
 		},
-		BufferSizes: &WsConnectionBufferSizeConf{
-			Write: v.GetInt("websocket_connections.buffer_sizes.write"),
-			Read:  v.GetInt("websocket_connections.buffer_sizes.read"),
+		Websocket: &WsConnectionConf{
+			RequestQueueSize: v.GetInt("connections.websocket.request_queue_size"),
+			Timeouts: &WsConnectionTimeoutConf{
+				Write:    &JSONDuration{v.GetDuration("connections.websocket.timeouts.write")},
+				Read:     &JSONDuration{v.GetDuration("connections.websocket.timeouts.read")},
+				Request:  &JSONDuration{v.GetDuration("connections.websocket.timeouts.request")},
+				Response: &JSONDuration{v.GetDuration("connections.websocket.timeouts.response")},
+			},
+			BufferSizes: &WsConnectionBufferSizeConf{
+				Write: v.GetInt("connections.websocket.buffer_sizes.write"),
+				Read:  v.GetInt("connections.websocket.buffer_sizes.read"),
+			},
 		},
 	}
 
@@ -116,11 +123,11 @@ func ReadConfig(buf io.Reader) (*Conf, error) {
 	}
 
 	cfg := &Conf{
-		Service:              serviceConfig,
-		Security:             securityConfig,
-		WebSocketConnections: wsConnConfig,
-		Indices:              indexConfig,
-		Database:             dbConfig,
+		Service:     serviceConfig,
+		Security:    securityConfig,
+		Connections: connConfig,
+		Indices:     indexConfig,
+		Database:    dbConfig,
 		Logging: &LogsConf{
 			Eywa:     logEywa,
 			Indices:  logIndices,
@@ -193,12 +200,12 @@ func InitializeConfig(f string, p map[string]string) error {
 }
 
 type Conf struct {
-	Service              *ServiceConf      `json:"service" assign:"service;;-"`
-	Security             *SecurityConf     `json:"security" assign:"security;;"`
-	WebSocketConnections *WsConnectionConf `json:"websocket_connections" assign:"websocket_connections;;"`
-	Indices              *IndexConf        `json:"indices" assign:"indices;;"`
-	Database             *DbConf           `json:"database" assign:"database;;-"`
-	Logging              *LogsConf         `json:"logging" assign:"logging;;-"`
+	Service     *ServiceConf     `json:"service" assign:"service;;-"`
+	Security    *SecurityConf    `json:"security" assign:"security;;"`
+	Connections *ConnectionsConf `json:"connections" assign:"connections;;"`
+	Indices     *IndexConf       `json:"indices" assign:"indices;;"`
+	Database    *DbConf          `json:"database" assign:"database;;-"`
+	Logging     *LogsConf        `json:"logging" assign:"logging;;-"`
 }
 
 func (cfg *Conf) DeepCopy() (*Conf, error) {
@@ -238,10 +245,23 @@ type ServiceConf struct {
 	PidFile    string `json:"pid_file" assign:"pid_file;;-"`
 }
 
+type ConnectionsConf struct {
+	Registry      string              `json:"registry" assign:"registry;;-"`
+	NShards       int                 `json:"nshards" assign:"nshards;;-"`
+	InitShardSize int                 `json:"init_shard_size" assign:"init_shard_size;;-"`
+	Http          *HttpConnectionConf `json:"http" assign:"http;;"`
+	Websocket     *WsConnectionConf   `json:"websocket" assign:"websocket;;"`
+}
+
+type HttpConnectionConf struct {
+	Timeouts *HttpConnectionTimeoutConf `json:"timeouts" assign:"timeouts;;"`
+}
+
+type HttpConnectionTimeoutConf struct {
+	LongPolling *JSONDuration `json:"long_polling" assign:"long_polling;jsonduration;"`
+}
+
 type WsConnectionConf struct {
-	Registry         string                      `json:"registry" assign:"registry;;-"`
-	NShards          int                         `json:"nshards" assign:"nshards;;-"`
-	InitShardSize    int                         `json:"init_shard_size" assign:"init_shard_size;;-"`
 	RequestQueueSize int                         `json:"request_queue_size" assign:"request_queue_size;;"`
 	Timeouts         *WsConnectionTimeoutConf    `json:"timeouts" assign:"timeouts;;"`
 	BufferSizes      *WsConnectionBufferSizeConf `json:"buffer_sizes" assign:"buffer_sizes;;"`

@@ -30,9 +30,10 @@ security:
   dashboard:
     aes:
       key: aes_key
-websocket_connections:
-  timeouts:
-    write: 5s
+connections:
+  websocket:
+    timeouts:
+      write: 5s
 indices:
   disable: true
   ttl_enabled:
@@ -57,11 +58,10 @@ indices:
 		expConf.Service.DevicePort = 9091
 		expConf.Security.SSL.CertFile = "test_cert_file"
 		expConf.Security.Dashboard.AES.KEY = "aes_key"
-		expConf.WebSocketConnections.Timeouts.Write = &JSONDuration{5 * time.Second}
+		expConf.Connections.Websocket.Timeouts.Write = &JSONDuration{5 * time.Second}
 		expConf.Indices.Disable = true
 
 		So(reflect.DeepEqual(expConf, Config()), ShouldBeTrue)
-
 	})
 
 	Convey("update default configs", t, func() {
@@ -88,17 +88,19 @@ indices:
 				},
 				"api_key": "new_key",
 			},
-			"websocket_connections": map[string]interface{}{
-				"request_queue_size": 22,
-				"timeouts": map[string]interface{}{
-					"write":    "40s",
-					"read":     "120s",
-					"request":  "60s",
-					"response": "240s",
-				},
-				"buffer_sizes": map[string]interface{}{
-					"read":  20480,
-					"write": 40960,
+			"connections": map[string]interface{}{
+				"websocket": map[string]interface{}{
+					"request_queue_size": 22,
+					"timeouts": map[string]interface{}{
+						"write":    "40s",
+						"read":     "120s",
+						"request":  "60s",
+						"response": "240s",
+					},
+					"buffer_sizes": map[string]interface{}{
+						"read":  20480,
+						"write": 40960,
+					},
 				},
 			},
 			"indices": map[string]interface{}{
@@ -112,13 +114,13 @@ indices:
 		expConf.Security.Dashboard.Password = "cookiecats"
 		expConf.Security.Dashboard.TokenExpiry = &JSONDuration{1 * time.Hour}
 		expConf.Security.ApiKey = "new_key"
-		expConf.WebSocketConnections.RequestQueueSize = 22
-		expConf.WebSocketConnections.Timeouts.Write = &JSONDuration{40 * time.Second}
-		expConf.WebSocketConnections.Timeouts.Read = &JSONDuration{120 * time.Second}
-		expConf.WebSocketConnections.Timeouts.Request = &JSONDuration{60 * time.Second}
-		expConf.WebSocketConnections.Timeouts.Response = &JSONDuration{240 * time.Second}
-		expConf.WebSocketConnections.BufferSizes.Read = 20480
-		expConf.WebSocketConnections.BufferSizes.Write = 40960
+		expConf.Connections.Websocket.RequestQueueSize = 22
+		expConf.Connections.Websocket.Timeouts.Write = &JSONDuration{40 * time.Second}
+		expConf.Connections.Websocket.Timeouts.Read = &JSONDuration{120 * time.Second}
+		expConf.Connections.Websocket.Timeouts.Request = &JSONDuration{60 * time.Second}
+		expConf.Connections.Websocket.Timeouts.Response = &JSONDuration{240 * time.Second}
+		expConf.Connections.Websocket.BufferSizes.Read = 20480
+		expConf.Connections.Websocket.BufferSizes.Write = 40960
 		expConf.Indices.Disable = true
 
 		So(reflect.DeepEqual(expConf, Config()), ShouldBeTrue)

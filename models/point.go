@@ -43,6 +43,9 @@ func (p *Point) MarshalJSON() ([]byte, error) {
 		j["message_type"] = "request"
 	case TypeDisconnectMessage:
 		j["message_type"] = "disconnect"
+		if !p.conn.ClosedAt().IsZero() {
+			j["duration"] = NanoToMilli(p.conn.ClosedAt().Sub(p.conn.CreatedAt()).Nanoseconds())
+		}
 	case TypeConnectMessage:
 		j["message_type"] = "connect"
 	}
@@ -54,6 +57,8 @@ func (p *Point) MarshalJSON() ([]byte, error) {
 	for k, v := range p.Fields {
 		j[k] = v
 	}
+
+	j["connection_type"] = p.conn.ConnectionType()
 
 	return json.Marshal(j)
 }

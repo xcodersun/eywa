@@ -21,11 +21,15 @@ func HttpUploadPath(channelId, deviceId string) string {
 	return fmt.Sprintf("%s/channels/%s/devices/%s/upload", DeviceServer, channelId, deviceId)
 }
 
+func HttpPollingPath(channelId, deviceId string) string {
+	return fmt.Sprintf("%s/channels/%s/devices/%s/poll", DeviceServer, channelId, deviceId)
+}
+
 func GetRawIndexPath(channelId string) string {
 	return fmt.Sprintf("%s/channels/%s/raw", ApiServer, channelId)
 }
 
-func TestHttpUpload(t *testing.T) {
+func TestHttpConnection(t *testing.T) {
 
 	InitializeDB()
 	DB.LogMode(true)

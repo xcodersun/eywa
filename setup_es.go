@@ -93,9 +93,9 @@ var messages = `
   }
 }
 `
-var activites = `
+var activities = `
 {
-  "activites": {
+  "activities": {
     "_all": { "enabled": false },
     "_size" : {"enabled" : false},
     "dynamic_templates": [
@@ -188,7 +188,7 @@ func setupES() {
 
 	mappings := map[string]interface{}{}
 	FatalIfErr(json.Unmarshal([]byte(messages), &mappings))
-	FatalIfErr(json.Unmarshal([]byte(activites), &mappings))
+	FatalIfErr(json.Unmarshal([]byte(activities), &mappings))
 
 	if Config().Indices.TTLEnabled {
 		m := mappings["messages"].(map[string]interface{})
@@ -196,7 +196,7 @@ func setupES() {
 			"enabled": true,
 			"default": fmt.Sprintf("%.0fs", Config().Indices.TTL.Seconds()),
 		}
-		m = mappings["activites"].(map[string]interface{})
+		m = mappings["activities"].(map[string]interface{})
 		m["_ttl"] = map[string]interface{}{
 			"enabled": true,
 			"default": fmt.Sprintf("%.0fs", Config().Indices.TTL.Seconds()),

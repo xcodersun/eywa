@@ -5,13 +5,13 @@ import (
 	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/zenazn/goji/web"
 	"github.com/vivowares/eywa/configs"
 	"github.com/vivowares/eywa/connections"
-	. "github.com/vivowares/eywa/models"
+	"github.com/vivowares/eywa/models"
 	. "github.com/vivowares/eywa/utils"
 	"net/http"
 )
 
 func ConnectionCounts(c web.C, w http.ResponseWriter, r *http.Request) {
-	Render.JSON(w, http.StatusOK, map[string]int{"count": connections.WebSocketCount()})
+	Render.JSON(w, http.StatusOK, map[string]int{"count": connections.Count()})
 }
 
 func ConnectionStatus(c web.C, w http.ResponseWriter, r *http.Request) {
@@ -19,14 +19,14 @@ func ConnectionStatus(c web.C, w http.ResponseWriter, r *http.Request) {
 	devId := c.URLParams["device_id"]
 	history := r.URL.Query().Get("history")
 
-	id := DecodeHashId(chId)
-	ch := &Channel{}
+	id := models.DecodeHashId(chId)
+	ch := &models.Channel{}
 	found := ch.FindById(id)
 	if !found {
 		Render.JSON(w, http.StatusNotFound, map[string]string{"error": "channel not found"})
 	}
 
-	status := FindWebSocketConnectionStatus(ch, devId, history == "true")
+	status := models.FindConnectionStatus(ch, devId, history == "true")
 	Render.JSON(w, http.StatusOK, status)
 }
 
