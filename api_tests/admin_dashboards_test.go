@@ -17,7 +17,7 @@ import (
 )
 
 type DashboardResp struct {
-	Id          string `json:"id"`
+	Id          int    `json:"id"`
 	Name        string `json:"name"`
 	Description string `json:"description"`
 	Definition  string `json:"definition"`
@@ -27,8 +27,8 @@ func ListDashboardPath() string {
 	return fmt.Sprintf("%s/%s", ApiServer, "admin/dashboards")
 }
 
-func GetDashboardPath(base64Id string) string {
-	return fmt.Sprintf("%s/%s/%s", ApiServer, "admin/dashboards", base64Id)
+func GetDashboardPath(id int) string {
+	return fmt.Sprintf("%s/%s/%d", ApiServer, "admin/dashboards", id)
 }
 
 func TestAdminDashboards(t *testing.T) {
@@ -63,12 +63,13 @@ func TestAdminDashboards(t *testing.T) {
 
 		f = frisby.Create("list dashboards").Get(ListDashboardPath()).Send()
 
-		var chId string
+		var chId int
 		f.ExpectStatus(http.StatusOK).
 			AfterJson(func(F *frisby.Frisby, js *simplejson.Json, err error) {
 			So(len(js.MustArray()), ShouldEqual, 1)
 			ch := js.MustArray()[0].(map[string]interface{})
-			chId, _ = ch["id"].(string)
+			_chId, _ := ch["id"].(json.Number).Int64()
+			chId = int(_chId)
 		})
 
 		expResp := &DashboardResp{

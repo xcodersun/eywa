@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"encoding/base64"
 	"encoding/json"
 	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/zenazn/goji/web"
 	"github.com/vivowares/eywa/models"
@@ -29,13 +28,7 @@ func CreateDashboard(c web.C, w http.ResponseWriter, r *http.Request) {
 }
 
 func UpdateDashboard(c web.C, w http.ResponseWriter, r *http.Request) {
-	asBytes, err := base64.URLEncoding.DecodeString(c.URLParams["id"])
-	if err != nil {
-		w.WriteHeader(http.StatusNotFound)
-		return
-	}
-
-	id, err := strconv.Atoi(string(asBytes))
+	id, err := strconv.Atoi(c.URLParams["id"])
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		return
@@ -77,13 +70,7 @@ func ListDashboards(c web.C, w http.ResponseWriter, r *http.Request) {
 }
 
 func GetDashboard(c web.C, w http.ResponseWriter, r *http.Request) {
-	asBytes, err := base64.URLEncoding.DecodeString(c.URLParams["id"])
-	if err != nil {
-		w.WriteHeader(http.StatusNotFound)
-		return
-	}
-
-	id, err := strconv.Atoi(string(asBytes))
+	id, err := strconv.Atoi(c.URLParams["id"])
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		return
@@ -94,18 +81,12 @@ func GetDashboard(c web.C, w http.ResponseWriter, r *http.Request) {
 	if !found {
 		w.WriteHeader(http.StatusNotFound)
 	} else {
-		Render.JSON(w, http.StatusOK, NewDashboardDetail(dashboard))
+		Render.JSON(w, http.StatusOK, dashboard)
 	}
 }
 
 func DeleteDashboard(c web.C, w http.ResponseWriter, r *http.Request) {
-	asBytes, err := base64.URLEncoding.DecodeString(c.URLParams["id"])
-	if err != nil {
-		w.WriteHeader(http.StatusNotFound)
-		return
-	}
-
-	id, err := strconv.Atoi(string(asBytes))
+	id, err := strconv.Atoi(c.URLParams["id"])
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		return

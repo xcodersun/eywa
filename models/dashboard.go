@@ -5,7 +5,7 @@ import (
 )
 
 type Dashboard struct {
-	Id          int    `sql:"type:integer" json:"-"`
+	Id          int    `sql:"type:integer" json:"id"`
 	Name        string `sql:"type:varchar(255)" json:"name"`
 	Description string `sql:"type:text" json:"description"`
 	Definition  string `sql:"type:text" json:"definition"`

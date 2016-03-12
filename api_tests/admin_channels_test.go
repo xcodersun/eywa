@@ -64,8 +64,8 @@ func ListChannelPath() string {
 	return fmt.Sprintf("%s/%s", ApiServer, "admin/channels")
 }
 
-func GetChannelPath(base64Id string) string {
-	return fmt.Sprintf("%s/%s/%s", ApiServer, "admin/channels", base64Id)
+func GetChannelPath(hashId string) string {
+	return fmt.Sprintf("%s/%s/%s", ApiServer, "admin/channels", hashId)
 }
 
 func TestAdminChannels(t *testing.T) {
