@@ -16,6 +16,8 @@ import (
 var closedCMErr = errors.New("connection manager is closed")
 var emptyChanErr = errors.New("registering http connection with empty channel")
 
+var HttpCloseChan = make(chan struct{})
+
 type ConnectionManager struct {
 	closed   *AtomBool
 	shards   []*shard

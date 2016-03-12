@@ -69,6 +69,10 @@ func serve() {
 		Logger.Info("Eywa received signal, gracefully stopping...")
 	})
 
+	graceful.PreHook(func() {
+		close(connections.HttpCloseChan)
+	})
+
 	graceful.PostHook(func() {
 		connections.CloseCM()
 		Logger.Info("Waiting for websockets to drain...")

@@ -126,6 +126,8 @@ func HttpLongPollingHandler(c web.C, w http.ResponseWriter, r *http.Request) {
 	}
 
 	select {
+	case <-HttpCloseChan:
+		w.WriteHeader(http.StatusNoContent)
 	case <-time.After(Config().Connections.Http.Timeouts.LongPolling.Duration):
 		w.WriteHeader(http.StatusNoContent)
 	case p, ok := <-pollCh:
