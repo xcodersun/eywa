@@ -38,6 +38,8 @@ func TestAdminConfigs(t *testing.T) {
 		expConf.Security.Dashboard.AES = nil
 		expConf.Security.Dashboard.Password = ""
 		expConf.Security.ApiKey = ""
+		expConf.Service.PidFile = ""
+		expConf.Service.Assets = ""
 
 		So(reflect.DeepEqual(expConf, conf), ShouldBeTrue)
 	})
@@ -59,6 +61,8 @@ func TestAdminConfigs(t *testing.T) {
 		expConf.Security.Dashboard.Password = ""
 		expConf.Security.Dashboard.Username = newUser
 		expConf.Security.ApiKey = ""
+		expConf.Service.PidFile = ""
+		expConf.Service.Assets = ""
 
 		So(reflect.DeepEqual(expConf, conf), ShouldBeTrue)
 

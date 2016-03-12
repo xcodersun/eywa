@@ -3,6 +3,7 @@ service:
   api_port: 9090
   device_port: 9091
   pid_file: {{ .eywa_home }}/tmp/pids/eywa_test.pid
+  assets: {{ .eywa_home }}/assets
 security:
   dashboard:
     username: root

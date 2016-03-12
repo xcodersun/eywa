@@ -3,6 +3,7 @@ service:
   api_port: 8080
   device_port: 8081
   pid_file: {{ .eywa_home }}/tmp/pids/eywa_development.pid
+  assets: {{ .eywa_home }}/assets
 security:
   dashboard:
     username: root

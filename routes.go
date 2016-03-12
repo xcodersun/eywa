@@ -4,6 +4,7 @@ import (
 	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/rs/cors"
 	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/zenazn/goji/web"
 	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/zenazn/goji/web/middleware"
+	. "github.com/vivowares/eywa/configs"
 	"github.com/vivowares/eywa/handlers"
 	"github.com/vivowares/eywa/middlewares"
 	"net/http"
@@ -41,7 +42,7 @@ func HttpRouter() http.Handler {
 	httpRouter.Handle("/admin/*", AdminRouter())
 	httpRouter.Handle("/api/*", ApiRouter())
 
-	fs := http.FileServer(http.Dir("static"))
+	fs := http.FileServer(http.Dir(Config().Service.Assets))
 	httpRouter.Handle("/*", fs)
 
 	httpRouter.Compile()

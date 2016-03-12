@@ -37,6 +37,7 @@ func ReadConfig(buf io.Reader) (*Conf, error) {
 		ApiPort:    v.GetInt("service.api_port"),
 		DevicePort: v.GetInt("service.device_port"),
 		PidFile:    v.GetString("service.pid_file"),
+		Assets:     v.GetString("service.assets"),
 	}
 
 	securityConfig := &SecurityConf{
@@ -242,7 +243,8 @@ type ServiceConf struct {
 	Host       string `json:"host" assign:"host;;-"`
 	ApiPort    int    `json:"api_port" assign:"api_port;;-"`
 	DevicePort int    `json:"device_port" assign:"device_port;;-"`
-	PidFile    string `json:"pid_file" assign:"pid_file;;-"`
+	PidFile    string `json:"-" assign:"pid_file;;-"`
+	Assets     string `json:"-" assign:"assets;;-"`
 }
 
 type ConnectionsConf struct {
