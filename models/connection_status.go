@@ -63,7 +63,8 @@ func FindConnectionStatus(ch *Channel, devId string, withHistory bool) *Connecti
 				err = json.Unmarshal(*hit.Source, &t)
 				if err == nil {
 					var d *int64
-					if _d, ok := t["duration"].(int64); ok {
+					if _f, ok := t["duration"].(float64); ok {
+						_d := int64(_f)
 						d = &_d
 					}
 					s.Histories = append(s.Histories, &ConnectionHistory{
