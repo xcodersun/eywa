@@ -17,7 +17,7 @@ func DeviceRouter() http.Handler {
 	DeviceRouter.Use(middleware.Recoverer)
 	DeviceRouter.Use(middleware.AutomaticOptions)
 	DeviceRouter.Get("/heartbeat", handlers.HeartBeatWs)
-	DeviceRouter.Get("/ws/channels/:channel_id/devices/:device_id", handlers.WsHandler)
+	DeviceRouter.Get("/channels/:channel_id/devices/:device_id/ws", handlers.WsHandler)
 	DeviceRouter.Post("/channels/:channel_id/devices/:device_id/upload", handlers.HttpPushHandler)
 	DeviceRouter.Post("/channels/:channel_id/devices/:device_id/push", handlers.HttpPushHandler)
 	DeviceRouter.Get("/channels/:channel_id/devices/:device_id/poll", handlers.HttpLongPollingHandler)
@@ -85,11 +85,11 @@ func AdminRouter() http.Handler {
 	admin.Get("/channels/:id/tag_stats", handlers.GetChannelTagStats)
 	admin.Get("/channels/:id/index_stats", handlers.GetChannelIndexStats)
 
-	admin.Get("/ws/connections/count", handlers.ConnectionCounts)
-	admin.Get("/ws/channels/:channel_id/devices/:device_id/status", handlers.ConnectionStatus)
+	admin.Get("/connections/count", handlers.ConnectionCounts)
+	admin.Get("/channels/:channel_id/devices/:device_id/status", handlers.ConnectionStatus)
 
-	admin.Post("/ws/channels/:channel_id/devices/:device_id/send", handlers.SendToDevice)
-	admin.Post("/ws/channels/:channel_id/devices/:device_id/request", handlers.RequestToDevice)
+	admin.Post("/channels/:channel_id/devices/:device_id/send", handlers.SendToDevice)
+	admin.Post("/channels/:channel_id/devices/:device_id/request", handlers.RequestToDevice)
 
 	return admin
 }
@@ -102,9 +102,9 @@ func ApiRouter() http.Handler {
 	api.Get("/channels/:id/value", handlers.QueryValue)
 	api.Get("/channels/:id/series", handlers.QuerySeries)
 
-	api.Get("/ws/channels/:channel_id/devices/:device_id/status", handlers.ConnectionStatus)
-	api.Post("/ws/channels/:channel_id/devices/:device_id/send", handlers.SendToDevice)
-	api.Post("/ws/channels/:channel_id/devices/:device_id/request", handlers.RequestToDevice)
+	api.Get("/channels/:channel_id/devices/:device_id/status", handlers.ConnectionStatus)
+	api.Post("/channels/:channel_id/devices/:device_id/send", handlers.SendToDevice)
+	api.Post("/channels/:channel_id/devices/:device_id/request", handlers.RequestToDevice)
 
 	return api
 }

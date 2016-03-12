@@ -50,7 +50,7 @@ func CreateWsConnection(chId, deviceId string, ch *Channel) *websocket.Conn {
 		Scheme: "ws",
 		Host: fmt.Sprintf("%s:%d",
 			Config().Service.Host, Config().Service.DevicePort),
-		Path: fmt.Sprintf("/ws/channels/%s/devices/%s", chId, deviceId),
+		Path: fmt.Sprintf("/channels/%s/devices/%s/ws", chId, deviceId),
 	}
 	h := map[string][]string{"AccessToken": ch.AccessTokens}
 
@@ -60,7 +60,7 @@ func CreateWsConnection(chId, deviceId string, ch *Channel) *websocket.Conn {
 }
 
 func ConnectionCountPath() string {
-	return fmt.Sprintf("%s/%s", ApiServer, "admin/ws/connections/count")
+	return fmt.Sprintf("%s/%s", ApiServer, "admin/connections/count")
 }
 
 func CheckConnectionCount() int64 {

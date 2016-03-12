@@ -20,11 +20,11 @@ import (
 )
 
 func AdminSendToDevicePath(chId, deviceId string) string {
-	return fmt.Sprintf("%s/admin/ws/channels/%s/devices/%s/send", ApiServer, chId, deviceId)
+	return fmt.Sprintf("%s/admin/channels/%s/devices/%s/send", ApiServer, chId, deviceId)
 }
 
 func AdminRequestToDevicePath(chId, deviceId string) string {
-	return fmt.Sprintf("%s/admin/ws/channels/%s/devices/%s/request", ApiServer, chId, deviceId)
+	return fmt.Sprintf("%s/admin/channels/%s/devices/%s/request", ApiServer, chId, deviceId)
 }
 
 func TestAdminToDevice(t *testing.T) {
