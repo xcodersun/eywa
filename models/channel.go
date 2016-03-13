@@ -11,6 +11,7 @@ import (
 )
 
 var SupportedDataTypes = []string{"float", "int", "boolean", "string"}
+var InternalTags = []string{"_ip"}
 var Salt = "Cc4D5xBlbCBqYTuimuNPGsio7YoMo8d8"
 var HashLen = 16
 

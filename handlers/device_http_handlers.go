@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -40,9 +41,11 @@ func HttpPushHandler(c web.C, w http.ResponseWriter, r *http.Request) {
 	}
 	h := md.Chain(nil)
 
+	meta := QueryToMap(r.URL.Query())
+	meta["_ip"] = strings.Split(r.RemoteAddr, ":")[0]
 	httpConn, err := NewHttpConnection(deviceId, nil, h, map[string]interface{}{
 		"channel":  ch,
-		"metadata": QueryToMap(r.URL.Query()),
+		"metadata": meta,
 	})
 
 	if err != nil {
@@ -97,9 +100,11 @@ func HttpLongPollingHandler(c web.C, w http.ResponseWriter, r *http.Request) {
 	h := md.Chain(nil)
 
 	pollCh := make(chan []byte, 1)
+	meta := QueryToMap(r.URL.Query())
+	meta["_ip"] = strings.Split(r.RemoteAddr, ":")[0]
 	httpConn, err := NewHttpConnection(deviceId, pollCh, h, map[string]interface{}{
 		"channel":  ch,
-		"metadata": QueryToMap(r.URL.Query()),
+		"metadata": meta,
 	})
 
 	if err != nil {

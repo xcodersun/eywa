@@ -194,7 +194,7 @@ func (p *Point) parseUrl() error {
 
 func (p *Point) Metadata(meta map[string]string) {
 	for k, v := range meta {
-		if StringSliceContains(p.ch.Tags, k) {
+		if StringSliceContains(InternalTags, k) || StringSliceContains(p.ch.Tags, k) {
 			if _, found := p.Tags[k]; !found {
 				p.Tags[k] = v
 			}

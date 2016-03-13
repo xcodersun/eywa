@@ -9,6 +9,7 @@ import (
 	"github.com/vivowares/eywa/models"
 	. "github.com/vivowares/eywa/utils"
 	"net/http"
+	"strings"
 )
 
 var upgrader *websocket.Upgrader
@@ -53,9 +54,11 @@ func WsHandler(c web.C, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	meta := QueryToMap(r.URL.Query())
+	meta["_ip"] = strings.Split(r.RemoteAddr, ":")[0]
 	_, err = connections.NewWebsocketConnection(deviceId, ws, h, map[string]interface{}{
 		"channel":  ch,
-		"metadata": QueryToMap(r.URL.Query()),
+		"metadata": meta,
 	})
 
 	if err != nil {
