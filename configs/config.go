@@ -160,17 +160,22 @@ func InitializeConfig(f string, p map[string]string) error {
 
 	// get default config
 	buf := bytes.NewBuffer([]byte{})
-	_, err := buf.WriteString(DefaultConfigs)
+	t, err := template.New("defaults").Parse(DefaultConfigs)
 	if err != nil {
 		return err
 	}
+	err = t.Execute(buf, params)
+	if err != nil {
+		return err
+	}
+
 	_cfg, err := ReadConfig(buf)
 	if err != nil {
 		return err
 	}
 
 	// get custom config
-	t, err := template.ParseFiles(filename)
+	t, err = template.ParseFiles(filename)
 	if err != nil {
 		return err
 	}

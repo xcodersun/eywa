@@ -9,6 +9,7 @@ import (
 	"os"
 	"reflect"
 	"testing"
+	"text/template"
 	"time"
 )
 
@@ -45,12 +46,18 @@ indices:
 			log.Fatalln(err.Error())
 		}
 		f := tmpfile.Name()
-		p := map[string]string{}
+		p := map[string]string{"eywa_home": "path/to/eywa"}
 
 		err = InitializeConfig(f, p)
 		So(err, ShouldBeNil)
 
-		expConf, err := ReadConfig(bytes.NewBuffer([]byte(DefaultConfigs)))
+		buf := bytes.NewBuffer([]byte{})
+		t, err := template.New("defaults").Parse(DefaultConfigs)
+		So(err, ShouldBeNil)
+		err = t.Execute(buf, p)
+		So(err, ShouldBeNil)
+
+		expConf, err := ReadConfig(buf)
 		if err != nil {
 			log.Fatalln(err.Error())
 		}
@@ -72,7 +79,7 @@ indices:
 		defer os.Remove(tmpfile.Name())
 
 		f := tmpfile.Name()
-		p := map[string]string{}
+		p := map[string]string{"eywa_home": "path/to/eywa"}
 
 		err = InitializeConfig(f, p)
 
@@ -136,7 +143,7 @@ indices:
 		defer os.Remove(tmpfile.Name())
 
 		f := tmpfile.Name()
-		p := map[string]string{}
+		p := map[string]string{"eywa_home": "path/to/eywa"}
 
 		err = InitializeConfig(f, p)
 
