@@ -7,7 +7,7 @@ SupportedTasks = ['list-channels', 'create-channel', 'update-channel', 'delete-c
 
 def parse_opts(args)
   options = {}
-  OptionParser.new do |opts|
+  opt = OptionParser.new do |opts|
     opts.banner = "Usage: eywa_tools.rb [options]"
 
     opts.on("-?", "--help", "Prints this help") do
@@ -45,7 +45,9 @@ def parse_opts(args)
       options[:use_ssl] = true
     end
 
-  end.parse!(args)
+  end
+
+  opt.parse!(args) rescue puts opt
 
   RequiredOpts.each do |arg|
     if options[arg].nil? || options[arg].length == 0
