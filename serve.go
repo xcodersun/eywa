@@ -8,6 +8,7 @@ import (
 	. "github.com/vivowares/eywa/loggers"
 	"github.com/vivowares/eywa/models"
 	"io/ioutil"
+	"log"
 	"os"
 	"strconv"
 	"time"
@@ -18,12 +19,12 @@ func serve() {
 	key := configs.Config().Security.SSL.KeyFile
 	if len(cert) > 0 {
 		if _, err := os.Stat(cert); os.IsNotExist(err) {
-			panic(fmt.Sprintf("cert file doesn't exist at: %s\n", cert))
+			log.Fatalln(fmt.Sprintf("cert file doesn't exist at: %s\n", cert))
 		}
 	}
 	if len(key) > 0 {
 		if _, err := os.Stat(key); os.IsNotExist(err) {
-			panic(fmt.Sprintf("key file doesn't exist at: %s\n", key))
+			log.Fatalln(fmt.Sprintf("key file doesn't exist at: %s\n", key))
 		}
 	}
 

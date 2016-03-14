@@ -321,5 +321,5 @@ type AESConf struct {
 
 type SSLConf struct {
 	CertFile string `json:"cert_file" assign:"cert_file;;-"`
-	KeyFile  string `json:"cert_key" assign:"cert_key;;-"`
+	KeyFile  string `json:"key_file" assign:"key_file;;-"`
 }
