@@ -221,17 +221,19 @@ def create_channel(opt)
 
       response = http.request request
       code = response.code
-      resp = JSON.parse(response.body)
+      resp = response.body
     end
   rescue => e
     puts e.message
   end
 
   if code.to_i != 201
+    puts resp
     puts 'Failed to create channel.'
     exit 1
   end
 
+  resp = JSON.parse(resp)
   puts "Channel created with id: #{resp['id']}"
   opt[:channel_id] = resp['id']
   show_channel(opt)
