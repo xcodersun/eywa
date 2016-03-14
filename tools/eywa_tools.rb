@@ -49,7 +49,7 @@ def parse_opts(args)
 
   RequiredOpts.each do |arg|
     if options[arg].nil? || options[arg].length == 0
-      puts "Not enough options. required options are: #{required_opts}."
+      puts "Not enough options. required options are: #{RequiredOpts}."
       exit 1
     end
   end
