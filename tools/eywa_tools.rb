@@ -1,6 +1,7 @@
 require 'optparse'
 require 'net/http'
 require 'json'
+require 'openssl'
 
 RequiredOpts = [:task, :host, :port, :username, :password]
 SupportedTasks = ['list-channels', 'create-channel', 'update-channel', 'delete-channel', 'show-channel']
@@ -70,9 +71,10 @@ def login(opt)
   code = nil
   uri = URI("http#{opt[:use_ssl] ? 's': ""}://#{opt[:host]}:#{opt[:port]}/admin/login")
   begin
-    Net::HTTP.start(uri.host, uri.port, :use_ssl => uri.scheme == 'https') do |http|
+    Net::HTTP.start(uri.host, uri.port, :use_ssl => uri.scheme == 'https', :verify_mode => OpenSSL::SSL::VERIFY_NONE) do |http|
       request = Net::HTTP::Get.new uri
       request.basic_auth opt[:username], opt[:password]
+
 
       response = http.request request
       code = response.code
@@ -94,7 +96,7 @@ def list_channels(opt)
   code = nil
   uri = URI("http#{opt[:use_ssl] ? 's': ""}://#{opt[:host]}:#{opt[:port]}/admin/channels")
   begin
-    Net::HTTP.start(uri.host, uri.port, :use_ssl => uri.scheme == 'https') do |http|
+    Net::HTTP.start(uri.host, uri.port, :use_ssl => uri.scheme == 'https', :verify_mode => OpenSSL::SSL::VERIFY_NONE) do |http|
       request = Net::HTTP::Get.new uri
       request.add_field('Authentication', opt[:auth_token])
 
@@ -129,7 +131,7 @@ def show_channel(opt)
   code = nil
   uri = URI("http#{opt[:use_ssl] ? 's': ""}://#{opt[:host]}:#{opt[:port]}/admin/channels/#{channel_id}")
   begin
-    Net::HTTP.start(uri.host, uri.port, :use_ssl => uri.scheme == 'https') do |http|
+    Net::HTTP.start(uri.host, uri.port, :use_ssl => uri.scheme == 'https', :verify_mode => OpenSSL::SSL::VERIFY_NONE) do |http|
       request = Net::HTTP::Get.new uri
       request.add_field('Authentication', opt[:auth_token])
 
@@ -166,7 +168,7 @@ def delete_channel(opt)
   code = nil
   uri = URI("http#{opt[:use_ssl] ? 's': ""}://#{opt[:host]}:#{opt[:port]}/admin/channels/#{channel_id}")
   begin
-    Net::HTTP.start(uri.host, uri.port, :use_ssl => uri.scheme == 'https') do |http|
+    Net::HTTP.start(uri.host, uri.port, :use_ssl => uri.scheme == 'https', :verify_mode => OpenSSL::SSL::VERIFY_NONE) do |http|
       request = Net::HTTP::Delete.new uri
       request.add_field('Authentication', opt[:auth_token])
 
@@ -216,7 +218,7 @@ def create_channel(opt)
   resp = nil
   uri = URI("http#{opt[:use_ssl] ? 's': ""}://#{opt[:host]}:#{opt[:port]}/admin/channels")
   begin
-    Net::HTTP.start(uri.host, uri.port, :use_ssl => uri.scheme == 'https') do |http|
+    Net::HTTP.start(uri.host, uri.port, :use_ssl => uri.scheme == 'https', :verify_mode => OpenSSL::SSL::VERIFY_NONE) do |http|
       request = Net::HTTP::Post.new uri
       request.add_field('Authentication', opt[:auth_token])
       request.body = params.to_json
@@ -294,7 +296,7 @@ def update_channel(opt)
   code = nil
   uri = URI("http#{opt[:use_ssl] ? 's': ""}://#{opt[:host]}:#{opt[:port]}/admin/channels/#{channel_id}")
   begin
-    Net::HTTP.start(uri.host, uri.port, :use_ssl => uri.scheme == 'https') do |http|
+    Net::HTTP.start(uri.host, uri.port, :use_ssl => uri.scheme == 'https', :verify_mode => OpenSSL::SSL::VERIFY_NONE) do |http|
       request = Net::HTTP::Put.new uri
       request.add_field('Authentication', opt[:auth_token])
       request.body = params.to_json
