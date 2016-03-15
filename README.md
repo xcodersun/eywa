@@ -23,6 +23,7 @@ Here is a growing list of features we want to support:
 
 - [x] Connection Manager
 - [x] Device Control
+- [x] Command Line Tools
 - [ ] Admin Panel
 - [x] Basic Authentication
 - [x] SSL protection
