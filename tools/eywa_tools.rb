@@ -4,12 +4,20 @@ require 'json'
 require 'openssl'
 
 RequiredOpts = [:task, :host, :port, :username, :password]
-SupportedTasks = ['list-channels', 'create-channel', 'update-channel', 'delete-channel', 'show-channel']
+SupportedTasks = [
+  'list-channels', 'create-channel', 'update-channel',
+  'delete-channel', 'show-channel', 'connection-count',
+  'connection-status', 'show-settings'
+]
 
 def parse_opts(args)
   options = {}
   opt = OptionParser.new do |opts|
-    opts.banner = "Usage: eywa_tools.rb [options]"
+    opts.banner = <<-USG
+Supported Tasks:
+  #{SupportedTasks.each_slice(3).map{|slice| slice.join(', ')}.join("\n  ")}
+Usage: eywa_tools.rb [options]
+    USG
 
     opts.on("-?", "--help", "Prints this help") do
       puts opts
@@ -318,6 +326,96 @@ def update_channel(opt)
   show_channel(opt)
 end
 
+def connection_count(opt)
+  code = nil
+  uri = URI("http#{opt[:use_ssl] ? 's': ""}://#{opt[:host]}:#{opt[:port]}/admin/connections/count")
+  begin
+    Net::HTTP.start(uri.host, uri.port, :use_ssl => uri.scheme == 'https', :verify_mode => OpenSSL::SSL::VERIFY_NONE) do |http|
+      request = Net::HTTP::Get.new uri
+      request.add_field('Authentication', opt[:auth_token])
+
+      response = http.request request
+      code = response.code
+      puts response.body
+    end
+  rescue => e
+    puts e.message
+  end
+
+  if code.to_i != 200
+    puts 'Failed to get connection count.'
+    exit 1
+  end
+end
+
+def connection_status(opt)
+  print "Input channel id to continue: "
+  channel_id = gets.chomp
+  if channel_id.length == 0
+    puts 'Empty channel id, quitting...'
+    exit 1
+  end
+
+  print "Input device id to continue: "
+  device_id = gets.chomp
+  if device_id.length == 0
+    puts 'Empty device id, quitting...'
+    exit 1
+  end
+
+  print "With connection history?(yes/no): "
+  with_history = gets.chomp
+  if with_history != 'yes'
+    puts 'Skipping connection history...'
+    with_history = false
+  else
+    with_history = true
+  end
+
+  code = nil
+  uri = URI("http#{opt[:use_ssl] ? 's': ""}://#{opt[:host]}:#{opt[:port]}/admin/channels/#{channel_id}/devices/#{device_id}/status")
+  uri.query = URI.encode_www_form({history: with_history})
+  begin
+    Net::HTTP.start(uri.host, uri.port, :use_ssl => uri.scheme == 'https', :verify_mode => OpenSSL::SSL::VERIFY_NONE) do |http|
+      request = Net::HTTP::Get.new uri
+      request.add_field('Authentication', opt[:auth_token])
+
+      response = http.request request
+      code = response.code
+      puts JSON.pretty_generate(JSON.parse(response.body))
+    end
+  rescue => e
+    puts e.message
+  end
+
+  if code.to_i != 200
+    puts 'Failed to get connection status.'
+    exit 1
+  end
+end
+
+def show_settings(opt)
+  code = nil
+  uri = URI("http#{opt[:use_ssl] ? 's': ""}://#{opt[:host]}:#{opt[:port]}/admin/configs")
+  begin
+    Net::HTTP.start(uri.host, uri.port, :use_ssl => uri.scheme == 'https', :verify_mode => OpenSSL::SSL::VERIFY_NONE) do |http|
+      request = Net::HTTP::Get.new uri
+      request.add_field('Authentication', opt[:auth_token])
+
+      response = http.request request
+      code = response.code
+      puts JSON.pretty_generate(JSON.parse(response.body))
+    end
+  rescue => e
+    puts e.message
+  end
+
+  if code.to_i != 200
+    puts 'Failed to get Eywa settings.'
+    exit 1
+  end
+end
+
 Signal.trap("INT") {
   puts "\nTask aborted."
   exit 1
@@ -337,6 +435,12 @@ when 'create-channel'
   create_channel(options)
 when 'update-channel'
   update_channel(options)
+when 'connection-count'
+  connection_count(options)
+when 'connection-status'
+  connection_status(options)
+when 'show-settings'
+  show_settings(options)
 else
   puts "Unsupported task: [#{options[:task]}]."
   exit 1
