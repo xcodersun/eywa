@@ -127,7 +127,7 @@ def show_channel(opt)
   if opt[:channel_id].nil? || opt[:channel_id].length == 0
     list_channels(opt)
     print "Input channel id to continue: "
-    channel_id = gets.chomp
+    channel_id = gets.chomp.strip
     if channel_id.length == 0
       puts 'Empty channel id, quitting...'
       exit 1
@@ -159,7 +159,7 @@ end
 
 def delete_channel(opt)
   print "Are you sure you want to delete a channel?(yes/no): "
-  yes_or_no = gets.chomp
+  yes_or_no = gets.chomp.strip
   if yes_or_no != 'yes'
     puts 'Nothing is deleted.'
     exit 0
@@ -167,7 +167,7 @@ def delete_channel(opt)
 
   list_channels(opt)
   print "Input channel id to continue: "
-  channel_id = gets.chomp
+  channel_id = gets.chomp.strip
   if channel_id.length == 0
     puts 'Empty channel id, quitting...'
     exit 1
@@ -199,22 +199,22 @@ end
 def create_channel(opt)
   params = {}
   print "Name (required): "
-  params[:name] = gets.chomp
+  params[:name] = gets.chomp.strip
 
   print "Description (required): "
-  params[:description] = gets.chomp
+  params[:description] = gets.chomp.strip
 
   print "Tags (optional, separate tags with [,]): "
-  params[:tags] = gets.chomp.split(',')
+  params[:tags] = gets.chomp.strip.split(',')
 
   print "Fields (required, example: temperature:float,brightness:int): "
-  params[:fields] = gets.chomp.split(',').inject({}) do |map, field|
+  params[:fields] = gets.chomp.strip.split(',').inject({}) do |map, field|
     map[field.split(":").first] = field.split(":").last
     map
   end
 
   print "AccessToken (required, separate access tokens with [,]): "
-  params[:access_tokens] = gets.chomp.split(',')
+  params[:access_tokens] = gets.chomp.strip.split(',')
 
   puts "Please review your channel:"
   puts JSON.pretty_generate(params)
@@ -253,7 +253,7 @@ end
 
 def update_channel(opt)
   print "Are you sure you want to update a channel?(yes/no): "
-  yes_or_no = gets.chomp
+  yes_or_no = gets.chomp.strip
   if yes_or_no != 'yes'
     puts 'Nothing is updated.'
     exit 0
@@ -261,7 +261,7 @@ def update_channel(opt)
 
   list_channels(opt)
   print "Input channel id to continue: "
-  channel_id = gets.chomp
+  channel_id = gets.chomp.strip
   if channel_id.length == 0
     puts 'Empty channel id, quitting...'
     exit 1
@@ -273,26 +273,26 @@ def update_channel(opt)
 
   params = {}
   print "Name (press enter to skip): "
-  params[:name] = gets.chomp
+  params[:name] = gets.chomp.strip
   params.delete(:name) if params[:name].nil? || params[:name].length == 0
 
   print "Description (press enter to skip): "
-  params[:description] = gets.chomp
+  params[:description] = gets.chomp.strip
   params.delete(:description) if params[:description].nil? || params[:description].length == 0
 
   print "Tags (optional, separate tags with [,]. press enter to skip): "
-  params[:tags] = gets.chomp.split(',')
+  params[:tags] = gets.chomp.strip.split(',')
   params.delete(:tags) if params[:tags].nil? || params[:tags].length == 0
 
   print "Fields (required, example: temperature:float,brightness:int. press enter to skip): "
-  params[:fields] = gets.chomp.split(',').inject({}) do |map, field|
+  params[:fields] = gets.chomp.strip.split(',').inject({}) do |map, field|
     map[field.split(":").first] = field.split(":").last
     map
   end
   params.delete(:fields) if params[:fields].nil? || params[:fields].length == 0
 
   print "AccessToken (required, separate access tokens with [,], press enter to skip): "
-  params[:access_tokens] = gets.chomp.split(',')
+  params[:access_tokens] = gets.chomp.strip.split(',')
   params.delete(:access_tokens) if params[:access_tokens].nil? || params[:access_tokens].length == 0
 
   puts "Please review changes to your channel:"
@@ -350,21 +350,21 @@ end
 
 def connection_status(opt)
   print "Input channel id to continue: "
-  channel_id = gets.chomp
+  channel_id = gets.chomp.strip
   if channel_id.length == 0
     puts 'Empty channel id, quitting...'
     exit 1
   end
 
   print "Input device id to continue: "
-  device_id = gets.chomp
+  device_id = gets.chomp.strip
   if device_id.length == 0
     puts 'Empty device id, quitting...'
     exit 1
   end
 
   print "With connection history?(yes/no): "
-  with_history = gets.chomp
+  with_history = gets.chomp.strip
   if with_history != 'yes'
     puts 'Skipping connection history...'
     with_history = false
