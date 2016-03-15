@@ -37,6 +37,8 @@ Here is a growing list of features we want to support:
 - [ ] Custom Web hooks
 - [ ] Custom Monitors
 - [ ] M2M (machine to machine) communication
+- [x] HTTP Long-Polling
+- [x] Websocket
 - [ ] MQTT integration
 - [x] Dockerized image
 
