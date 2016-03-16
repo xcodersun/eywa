@@ -116,20 +116,56 @@ func (c *WebsocketConnection) MessageHandler() MessageHandler { return c.h }
 func (c *WebsocketConnection) Metadata() map[string]interface{} { return c.metadata }
 
 func (c *WebsocketConnection) Send(msg []byte) error {
-	_, err := c.sendMessage(TypeSendMessage, msg)
-	return err
+	return c.sendAsyncMessage(TypeSendMessage, msg)
 }
 
 func (c *WebsocketConnection) Response(msg []byte) error {
-	_, err := c.sendMessage(TypeResponseMessage, msg)
-	return err
+	return c.sendAsyncMessage(TypeResponseMessage, msg)
 }
 
-func (c *WebsocketConnection) Request(msg []byte) ([]byte, error) {
-	return c.sendMessage(TypeRequestMessage, msg)
+func (c *WebsocketConnection) Request(msg []byte, timeout time.Duration) ([]byte, error) {
+	return c.sendSyncMessage(TypeRequestMessage, msg, timeout)
 }
 
-func (c *WebsocketConnection) sendMessage(messageType int, payload []byte) (respMsg []byte, err error) {
+func (c *WebsocketConnection) sendAsyncMessage(messageType int, payload []byte) (err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			err = wsClosedConnErr
+		}
+	}()
+
+	msgId := strconv.FormatInt(time.Now().UnixNano(), 16)
+	msg := &Message{
+		MessageType: messageType,
+		MessageId:   msgId,
+		Payload:     payload,
+	}
+
+	respCh := make(chan *MessageResp, 1)
+
+	timeout := Config().Connections.Websocket.Timeouts.Request.Duration
+	select {
+	case <-time.After(timeout):
+		err = errors.New(fmt.Sprintf("request timed out for %s", timeout))
+		return
+	case c.wch <- &MessageReq{
+		msg:    msg,
+		respCh: respCh,
+	}:
+	}
+
+	timeout = Config().Connections.Websocket.Timeouts.Request.Duration
+	select {
+	case <-time.After(timeout):
+		err = errors.New(fmt.Sprintf("request timed out for %s", timeout))
+		return
+	case resp := <-respCh:
+		err = resp.err
+		return
+	}
+}
+
+func (c *WebsocketConnection) sendSyncMessage(messageType int, payload []byte, timeout time.Duration) (respMsg []byte, err error) {
 	respMsg = []byte{}
 
 	defer func() {
@@ -147,27 +183,22 @@ func (c *WebsocketConnection) sendMessage(messageType int, payload []byte) (resp
 
 	respCh := make(chan *MessageResp, 1)
 
-	timeout := Config().Connections.Websocket.Timeouts.Request
+	reqTimeout := Config().Connections.Websocket.Timeouts.Request.Duration
 	select {
-	case <-time.After(timeout.Duration):
-		err = errors.New(fmt.Sprintf("request timed out for %s", timeout))
+	case <-time.After(reqTimeout):
+		err = errors.New(fmt.Sprintf("request timed out for %s", reqTimeout))
 		return
 	case c.wch <- &MessageReq{
 		msg:    msg,
 		respCh: respCh,
 	}:
-	}
-
-	if messageType == TypeRequestMessage {
 		defer func() {
 			c.msgChans.delete(msgId)
 		}()
-
-		timeout = Config().Connections.Websocket.Timeouts.Response
 	}
 
 	select {
-	case <-time.After(timeout.Duration):
+	case <-time.After(timeout):
 		err = errors.New(fmt.Sprintf("response timed out for %s", timeout))
 		return
 	case resp := <-respCh:

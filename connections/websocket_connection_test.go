@@ -40,6 +40,7 @@ type fakeWsConn struct {
 	readMessageErr   error
 	randomErr        bool
 	message          []byte
+	syncSleepTime    time.Duration
 	sync.Mutex
 }
 
@@ -75,6 +76,7 @@ func (f *fakeWsConn) ReadMessage() (int, []byte, error) {
 	f.Unlock()
 	if strings.HasSuffix(m, "sync") {
 		msg, _ := Unmarshal(f.message)
+		time.Sleep(f.syncSleepTime)
 		return websocket.BinaryMessage, []byte(fmt.Sprintf("%d|%s|sync response", TypeResponseMessage, msg.MessageId)), nil
 	}
 
@@ -131,11 +133,25 @@ func TestConnections(t *testing.T) {
 
 		err := conn.Response([]byte("resp"))
 		So(err, ShouldNotBeNil)
-		So(err.Error(), ShouldContainSubstring, "response timed out")
+		So(err.Error(), ShouldContainSubstring, "request timed out for 1s")
 
 		err = conn.Send([]byte("async"))
 		So(err, ShouldNotBeNil)
-		So(err.Error(), ShouldContainSubstring, "request timed out")
+		So(err.Error(), ShouldContainSubstring, "request timed out for 1s")
+
+		_, err = conn.Request([]byte("sync"), 3*time.Second)
+		So(err, ShouldNotBeNil)
+		So(err.Error(), ShouldContainSubstring, "request timed out for 1s")
+
+		InitializeCM()
+		defer CloseCM()
+		conn, _ = NewWebsocketConnection("test", &fakeWsConn{syncSleepTime: 5 * time.Second}, h, meta)
+		So(Count(), ShouldEqual, 1)
+
+		_, err = conn.Request([]byte("sync"), 3*time.Second)
+		So(err, ShouldNotBeNil)
+		So(err.Error(), ShouldContainSubstring, "response timed out for 3s")
+		So(conn.msgChans.len(), ShouldEqual, 0)
 	})
 
 	Convey("errors out closed connection", t, func() {
@@ -190,7 +206,7 @@ func TestConnections(t *testing.T) {
 		conn, _ := NewWebsocketConnection("test", &fakeWsConn{}, h, meta)
 		So(Count(), ShouldEqual, 1)
 
-		msg, err := conn.Request([]byte("sync"))
+		msg, err := conn.Request([]byte("sync"), Config().Connections.Websocket.Timeouts.Response.Duration)
 		So(err, ShouldBeNil)
 		So(string(msg), ShouldContainSubstring, "sync response")
 		So(conn.msgChans.len(), ShouldEqual, 0)

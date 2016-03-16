@@ -61,7 +61,7 @@ func TestRaceConditions(t *testing.T) {
 					err = conn.Response(msg)
 				case 2:
 					msg = []byte("sync" + strconv.Itoa(index))
-					_, err = conn.Request(msg)
+					_, err = conn.Request(msg, Config().Connections.Websocket.Timeouts.Response.Duration)
 				}
 				errs[index] = err
 				wg.Done()
@@ -104,7 +104,7 @@ func TestRaceConditions(t *testing.T) {
 					err = conn.Response(msg)
 				case 2:
 					msg = []byte("sync" + strconv.Itoa(index))
-					_, err = conn.Request(msg)
+					_, err = conn.Request(msg, Config().Connections.Websocket.Timeouts.Response.Duration)
 				}
 				errs[index] = err
 			}(i)
@@ -168,7 +168,7 @@ func TestRaceConditions(t *testing.T) {
 				case 1:
 					conn.Response([]byte("resp" + strconv.Itoa(iter)))
 				case 2:
-					conn.Request([]byte("sync" + strconv.Itoa(iter)))
+					conn.Request([]byte("sync"+strconv.Itoa(iter)), Config().Connections.Websocket.Timeouts.Response.Duration)
 				}
 				wg.Done()
 			}(i)
