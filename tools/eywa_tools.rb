@@ -118,13 +118,17 @@ Usage: eywa_tools.rb [options]
   RequiredOpts.each do |arg|
     if options[arg].nil? || options[arg].length == 0
       puts "Not enough options. required options are: #{RequiredOpts}."
+      puts
+      puts opt
       exit 1
     end
   end
 
   unless SupportedTasks.include?(options[:task])
     puts "Unsupported task: #{options[:task]}."
-    puts "Supported tasks are: \n  #{SupportedTasks.each_slice(3).map{|slice| slice.join(', ')}.join("\n  ")}."
+
+    puts
+    puts opt
     exit 1
   end
 
