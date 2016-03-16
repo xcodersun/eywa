@@ -26,47 +26,47 @@ Usage: eywa_tools.rb [options]
       exit
     end
 
-    opts.on("-t task", "--task TASK",
+    opts.on("-t task", "--task",
             "Specify the task") do |task|
       options[:task] = task
     end
 
-    opts.on("-h host", "--host HOST",
+    opts.on("-h host", "--host",
             "Host name of Eywa") do |host|
       options[:host] = host
     end
 
-    opts.on("-p port", "--port PORT",
+    opts.on("-p port", "--port",
             "Port number of Eywa") do |port|
       options[:port] = port
     end
 
-    opts.on("-u username", "--username USERNAME",
+    opts.on("-u username", "--username",
             "Admin username") do |username|
       options[:username] = username
     end
 
-    opts.on("-w password", "--password PASSWORD",
+    opts.on("-w password", "--password",
             "Admin password") do |password|
       options[:password] = password
     end
 
-    opts.on("-c channel_id", "--channel-id CHANNEL_ID",
+    opts.on("-c channel_id", "--channel-id",
             "Channel ID") do |channel_id|
       options[:channel_id] = channel_id
     end
 
-    opts.on("-d device_id", "--device-id DEVICE_ID",
+    opts.on("-d device_id", "--device-id",
             "Device ID") do |device_id|
       options[:device_id] = device_id
     end
 
-    opts.on("-m message", "--message MESSAGE",
+    opts.on("-m message", "--message",
             "Message sent to device") do |message|
       options[:message] = message
     end
 
-    opts.on("-o timeout", "--timeout TIME_OUT",
+    opts.on("-o timeout", "--timeout",
             "Timeout for request message") do |timeout|
       options[:timeout] = timeout
     end
