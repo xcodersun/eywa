@@ -117,7 +117,7 @@ func TimedIndices(ch *Channel, tStart, tEnd time.Time) string {
 	return strings.Join(indices, ",")
 }
 
-func GlobIndexName(ch *Channel) string {
+func GlobalIndexName(ch *Channel) string {
 	return fmt.Sprintf("channels.%d.*", ch.Id)
 }
 
@@ -194,7 +194,7 @@ func (q *ValueQuery) QueryES() (interface{}, error) {
 		return map[string]interface{}{"value": statsResp.Value}, nil
 	} else {
 		resp, err := IndexClient.Search().
-			Index(GlobIndexName(q.Channel)).
+			Index(GlobalIndexName(q.Channel)).
 			Type(IndexTypeMessages).
 			FetchSource(false).
 			Field(q.Field).

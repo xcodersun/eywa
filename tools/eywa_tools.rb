@@ -249,9 +249,12 @@ def delete_channel(opt)
   end
 
   channel_id = get_option(opt, :channel_id, false, Proc.new{|opt, _| list_channels(opt)})
+  print "Do you want to delete all the indices belong to this channel?(yes/no): "
+  with_indices = gets.chomp.strip == 'yes' ? true : false
 
   code = nil
   uri = URI("http#{opt[:use_ssl] ? 's': ""}://#{opt[:host]}:#{opt[:port]}/admin/channels/#{channel_id}")
+  uri.query = URI.encode_www_form({with_indices: with_indices})
   begin
     Net::HTTP.start(uri.host, uri.port, :use_ssl => uri.scheme == 'https', :verify_mode => OpenSSL::SSL::VERIFY_NONE) do |http|
       request = Net::HTTP::Delete.new uri

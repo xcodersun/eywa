@@ -161,7 +161,7 @@ func (c *Channel) HashId() (string, error) {
 }
 
 func (c *Channel) IndexStats() (*elastic.IndicesStatsResponse, error) {
-	return IndexClient.IndexStats().Index(GlobIndexName(c)).Do()
+	return IndexClient.IndexStats().Index(GlobalIndexName(c)).Do()
 }
 
 func (c *Channel) Indices() []string {
@@ -173,6 +173,11 @@ func (c *Channel) Indices() []string {
 		}
 	}
 	return indices
+}
+
+func (c *Channel) DeleteIndices() error {
+	_, err := IndexClient.DeleteIndex().Index([]string{GlobalIndexName(c)}).Do()
+	return err
 }
 
 func FetchCachedChannelById(id int) (*Channel, bool) {

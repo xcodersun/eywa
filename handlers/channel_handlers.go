@@ -117,7 +117,14 @@ func DeleteChannel(c web.C, w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			Render.JSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
 		} else {
-			w.WriteHeader(http.StatusOK)
+			if r.URL.Query().Get("with_indices") == "true" {
+				err = ch.DeleteIndices()
+			}
+			if err != nil {
+				Render.JSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
+			} else {
+				w.WriteHeader(http.StatusOK)
+			}
 		}
 	}
 }
