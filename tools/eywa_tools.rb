@@ -7,7 +7,9 @@ RequiredOpts = [:task, :host, :port, :username, :password]
 SupportedTasks = [
   'list-channels', 'create-channel', 'update-channel',
   'delete-channel', 'show-channel', 'connection-count',
-  'connection-status', 'show-settings'
+  'connection-status', 'show-settings', 'update-settings',
+  'send-to-connection', 'request-to-connection', 'query-value',
+  'query-series', 'query-raw'
 ]
 
 def parse_opts(args)
@@ -49,6 +51,26 @@ Usage: eywa_tools.rb [options]
       options[:password] = password
     end
 
+    opts.on("-c channel_id", "--channel-id CHANNEL_ID",
+            "Channel ID") do |channel_id|
+      options[:channel_id] = channel_id
+    end
+
+    opts.on("-d device_id", "--device-id DEVICE_ID",
+            "Device ID") do |device_id|
+      options[:device_id] = device_id
+    end
+
+    opts.on("-m message", "--message MESSAGE",
+            "Message sent to device") do |message|
+      options[:message] = message
+    end
+
+    opts.on("-o timeout", "--timeout TIME_OUT",
+            "Timeout for request message") do |timeout|
+      options[:timeout] = timeout
+    end
+
     opts.on("-s", "--use-ssl",
             "Use SSL") do
       options[:use_ssl] = true
@@ -67,13 +89,66 @@ Usage: eywa_tools.rb [options]
 
   unless SupportedTasks.include?(options[:task])
     puts "Unsupported task: #{options[:task]}."
-    puts "Supported tasks are: #{SupportedTasks.join(',')}."
+    puts "Supported tasks are: \n  #{SupportedTasks.each_slice(3).map{|slice| slice.join(', ')}.join("\n  ")}."
     exit 1
   end
 
   options
 end
 
+def get_channel_id(opt)
+  channel_id = nil
+  if opt[:channel_id].nil? || opt[:channel_id].length == 0
+    list_channels(opt)
+    print "Input channel id to continue: "
+    channel_id = gets.chomp.strip
+    if channel_id.length == 0
+      puts 'Empty channel id, quitting...'
+      exit 1
+    end
+    opt[:channel_id] = channel_id
+  else
+    channel_id = opt[:channel_id]
+  end
+
+  channel_id
+end
+
+def get_device_id(opt)
+  device_id = nil
+  if opt[:device_id].nil? || opt[:device_id].length == 0
+    print "Input device id to continue: "
+    device_id = gets.chomp.strip
+    if device_id.length == 0
+      puts 'Empty device id, quitting...'
+      exit 1
+    end
+    opt[:device_id] = device_id
+  else
+    device_id = opt[:device_id]
+  end
+
+  device_id
+end
+
+def get_message(opt)
+  message = nil
+  if opt[:message].nil? || opt[:message].length == 0
+    print "Input message to continue: "
+    message = gets.chomp.strip
+    if message.length == 0
+      puts 'Empty message, quitting...'
+      exit 1
+    end
+    opt[:message] = message
+  else
+    message = opt[:message]
+  end
+
+  message
+end
+
+######################### Tasks #########################
 def login(opt)
   auth = nil
   code = nil
@@ -96,7 +171,7 @@ def login(opt)
     puts "Login failed. returned error code: #{code}. please check your username and password."
     exit 1
   end
-  puts 'Login successful!'
+  # puts 'Login successful!'
   return auth
 end
 
@@ -123,18 +198,7 @@ def list_channels(opt)
 end
 
 def show_channel(opt)
-  channel_id = nil
-  if opt[:channel_id].nil? || opt[:channel_id].length == 0
-    list_channels(opt)
-    print "Input channel id to continue: "
-    channel_id = gets.chomp.strip
-    if channel_id.length == 0
-      puts 'Empty channel id, quitting...'
-      exit 1
-    end
-  else
-    channel_id = opt[:channel_id]
-  end
+  channel_id = get_channel_id(opt)
 
   code = nil
   uri = URI("http#{opt[:use_ssl] ? 's': ""}://#{opt[:host]}:#{opt[:port]}/admin/channels/#{channel_id}")
@@ -165,13 +229,7 @@ def delete_channel(opt)
     exit 0
   end
 
-  list_channels(opt)
-  print "Input channel id to continue: "
-  channel_id = gets.chomp.strip
-  if channel_id.length == 0
-    puts 'Empty channel id, quitting...'
-    exit 1
-  end
+  channel_id = get_channel_id(opt)
 
   code = nil
   uri = URI("http#{opt[:use_ssl] ? 's': ""}://#{opt[:host]}:#{opt[:port]}/admin/channels/#{channel_id}")
@@ -259,16 +317,9 @@ def update_channel(opt)
     exit 0
   end
 
-  list_channels(opt)
-  print "Input channel id to continue: "
-  channel_id = gets.chomp.strip
-  if channel_id.length == 0
-    puts 'Empty channel id, quitting...'
-    exit 1
-  end
+  channel_id = get_channel_id(opt)
 
   puts 'Current channel definition:'
-  opt[:channel_id] = channel_id
   show_channel(opt)
 
   params = {}
@@ -349,19 +400,8 @@ def connection_count(opt)
 end
 
 def connection_status(opt)
-  print "Input channel id to continue: "
-  channel_id = gets.chomp.strip
-  if channel_id.length == 0
-    puts 'Empty channel id, quitting...'
-    exit 1
-  end
-
-  print "Input device id to continue: "
-  device_id = gets.chomp.strip
-  if device_id.length == 0
-    puts 'Empty device id, quitting...'
-    exit 1
-  end
+  channel_id = get_channel_id(opt)
+  device_id = get_device_id(opt)
 
   print "With connection history?(yes/no): "
   with_history = gets.chomp.strip
@@ -416,6 +456,130 @@ def show_settings(opt)
   end
 end
 
+def send_to_connection(opt)
+  channel_id = get_channel_id(opt)
+  device_id = get_device_id(opt)
+  message = get_message(opt)
+
+  code = nil
+  uri = URI("http#{opt[:use_ssl] ? 's': ""}://#{opt[:host]}:#{opt[:port]}/admin/channels/#{channel_id}/devices/#{device_id}/send")
+  begin
+    Net::HTTP.start(uri.host, uri.port, :use_ssl => uri.scheme == 'https', :verify_mode => OpenSSL::SSL::VERIFY_NONE) do |http|
+      request = Net::HTTP::Post.new uri
+      request.add_field('Authentication', opt[:auth_token])
+      request.body = message
+
+      response = http.request request
+      code = response.code
+    end
+  rescue => e
+    puts e.message
+  end
+
+  if code.to_i != 200
+    puts "Failed to send message: [#{message}] to device: [#{device_id}] in channel: [#{channel_id}]."
+    exit 1
+  end
+  puts 'Message sent successfully!'
+end
+
+def request_to_connection(opt)
+  channel_id = get_channel_id(opt)
+  device_id = get_device_id(opt)
+  message = get_message(opt)
+
+  code = nil
+  resp = nil
+  uri = URI("http#{opt[:use_ssl] ? 's': ""}://#{opt[:host]}:#{opt[:port]}/admin/channels/#{channel_id}/devices/#{device_id}/request")
+  uri.query = URI.encode_www_form({timeout: opt[:timeout]}) if !opt[:timeout].nil? && opt[:timeout].length > 0
+  begin
+    Net::HTTP.start(uri.host, uri.port, :use_ssl => uri.scheme == 'https', :verify_mode => OpenSSL::SSL::VERIFY_NONE) do |http|
+      request = Net::HTTP::Post.new uri
+      request.add_field('Authentication', opt[:auth_token])
+      request.body = message
+
+      response = http.request request
+      code = response.code
+      resp = response.body
+    end
+  rescue => e
+    puts e.message
+  end
+
+  if code.to_i != 200
+    puts "Failed to request message: [#{message}] to device: [#{device_id}] in channel: [#{channel_id}]."
+    exit 1
+  end
+
+  puts 'Message request successfully!'
+  puts "Response: \n  #{resp}"
+end
+
+def update_settings(opt)
+  puts 'Please input settings in a flattened fashion, example: connections.websocket.timeouts.read:4s .'
+  puts 'Multiple settings are delimited by comma.'
+  puts '-----------------------------------------'
+  settings = gets.chomp.strip
+  settings = settings.split(',').map(&:strip)
+  updates = settings.inject({}) do |hash, setting|
+    key, value = setting.split(':')
+    nestings = key.split('.')
+    root = hash
+    nestings.each_with_index do |nest, idx|
+      if hash[nest].nil?
+        if idx == nestings.count - 1
+          hash[nest] = value
+        else
+          hash[nest] = {}
+          hash = hash[nest]
+        end
+      else
+        hash = hash[nest]
+      end
+    end
+    root
+  end
+
+  puts '-----------------------------------------'
+  puts 'Please review your changes.'
+  puts JSON.pretty_generate(updates)
+
+  puts
+  puts "Press enter to continue, or Ctrl-C to abort"
+  gets
+
+  code = nil
+  uri = URI("http#{opt[:use_ssl] ? 's': ""}://#{opt[:host]}:#{opt[:port]}/admin/configs")
+  begin
+    Net::HTTP.start(uri.host, uri.port, :use_ssl => uri.scheme == 'https', :verify_mode => OpenSSL::SSL::VERIFY_NONE) do |http|
+      request = Net::HTTP::Put.new uri
+      request.add_field('Authentication', opt[:auth_token])
+      request.body = updates.to_json
+
+      response = http.request request
+      code = response.code
+      puts JSON.pretty_generate(JSON.parse(response.body))
+    end
+  rescue => e
+    puts e.message
+  end
+
+  if code.to_i != 200
+    puts 'Failed to update Eywa settings.'
+    exit 1
+  end
+  puts 'Successfully updated Eywa settings!'
+end
+
+def query_value(opt)
+end
+
+def query_series(opt)
+end
+
+def query_raw(opt)
+end
+
 Signal.trap("INT") {
   puts "\nTask aborted."
   exit 1
@@ -441,6 +605,18 @@ when 'connection-status'
   connection_status(options)
 when 'show-settings'
   show_settings(options)
+when 'update-settings'
+  update_settings(options)
+when 'query-value'
+  query_value(options)
+when 'query-series'
+  query_series(options)
+when 'query-raw'
+  query_raw(options)
+when 'send-to-connection'
+  send_to_connection(options)
+when 'request-to-connection'
+  request_to_connection(options)
 else
   puts "Unsupported task: [#{options[:task]}]."
   exit 1
