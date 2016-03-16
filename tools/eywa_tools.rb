@@ -13,7 +13,7 @@ SupportedTasks = [
 ]
 
 def parse_opts(args)
-  options = {}
+  options = {nop: true}
   opt = OptionParser.new do |opts|
     opts.banner = <<-USG
 Supported Tasks:
@@ -71,9 +71,44 @@ Usage: eywa_tools.rb [options]
       options[:timeout] = timeout
     end
 
+    opts.on("-f field", "--field",
+            "Field in query") do |field|
+      options[:field] = field
+    end
+
+    opts.on("-g tags", "--tags",
+            "Tags in query") do |tags|
+      options[:tags] = tags
+    end
+
+    opts.on("-T time_range", "--time-range",
+            "Time Range in query") do |time_range|
+      options[:time_range] = time_range
+    end
+
+    opts.on("-i time_interval", "--time-interval",
+            "Time Interval in query") do |time_interval|
+      options[:time_interval] = time_interval
+    end
+
+    opts.on("-a aggregation", "--aggregation",
+            "Aggregation in query") do |aggregation|
+      options[:aggregation] = aggregation
+    end
+
     opts.on("-s", "--use-ssl",
             "Use SSL") do
       options[:use_ssl] = true
+    end
+
+    opts.on("-y", "--yes",
+            "Say yes") do
+      options[:yes] = 'yes'
+    end
+
+    opts.on("-N", "--nop-false",
+            "Turn off nop in raw query, defaults turned on") do
+      options[:nop] = false
     end
 
   end
@@ -96,59 +131,34 @@ Usage: eywa_tools.rb [options]
   options
 end
 
-def get_channel_id(opt)
-  channel_id = nil
-  if opt[:channel_id].nil? || opt[:channel_id].length == 0
-    list_channels(opt)
-    print "Input channel id to continue: "
-    channel_id = gets.chomp.strip
-    if channel_id.length == 0
-      puts 'Empty channel id, quitting...'
+def get_option(opt, option_name, skip=false, pre_hook=nil, post_hook=nil)
+  if opt[option_name].nil? || opt[option_name].length == 0
+    pre_hook.call(opt, option_name) if pre_hook
+    print "Input #{option_name.to_s.gsub('_', ' ')} to continue: "
+    option_value = gets.chomp.strip
+    if option_value.length == 0 && !skip
+      puts "Empty #{option_name.to_s.gsub('_', ' ')}, quitting..."
       exit 1
     end
-    opt[:channel_id] = channel_id
-  else
-    channel_id = opt[:channel_id]
+    opt[option_name] = option_value
   end
 
-  channel_id
+  opt[option_name] = post_hook.call(opt, option_name, opt[option_name]) if post_hook
+
+  opt[option_name]
 end
 
-def get_device_id(opt)
-  device_id = nil
-  if opt[:device_id].nil? || opt[:device_id].length == 0
-    print "Input device id to continue: "
-    device_id = gets.chomp.strip
-    if device_id.length == 0
-      puts 'Empty device id, quitting...'
-      exit 1
-    end
-    opt[:device_id] = device_id
-  else
-    device_id = opt[:device_id]
-  end
-
-  device_id
+def print_wiki_query
+  puts 'For detailed query syntax, please refer to https://github.com/vivowares/eywa/wiki/Query-Eywa .'
 end
 
-def get_message(opt)
-  message = nil
-  if opt[:message].nil? || opt[:message].length == 0
-    print "Input message to continue: "
-    message = gets.chomp.strip
-    if message.length == 0
-      puts 'Empty message, quitting...'
-      exit 1
-    end
-    opt[:message] = message
-  else
-    message = opt[:message]
-  end
-
-  message
+def print_response(response)
+  puts 'Response:'
+  puts JSON.pretty_generate(JSON.parse(response))
+rescue => e
+  puts response
 end
 
-######################### Tasks #########################
 def login(opt)
   auth = nil
   code = nil
@@ -161,7 +171,7 @@ def login(opt)
 
       response = http.request request
       code = response.code
-      auth = JSON.parse(response.body)["auth_token"]
+      auth = JSON.parse(response.body)["auth_token"] rescue ""
     end
   rescue => e
     puts e.message
@@ -171,12 +181,15 @@ def login(opt)
     puts "Login failed. returned error code: #{code}. please check your username and password."
     exit 1
   end
-  # puts 'Login successful!'
+
   return auth
 end
 
+######################### Tasks #########################
+
 def list_channels(opt)
   code = nil
+  resp = ""
   uri = URI("http#{opt[:use_ssl] ? 's': ""}://#{opt[:host]}:#{opt[:port]}/admin/channels")
   begin
     Net::HTTP.start(uri.host, uri.port, :use_ssl => uri.scheme == 'https', :verify_mode => OpenSSL::SSL::VERIFY_NONE) do |http|
@@ -185,7 +198,7 @@ def list_channels(opt)
 
       response = http.request request
       code = response.code
-      puts JSON.pretty_generate(JSON.parse(response.body))
+      print_response(response.body)
     end
   rescue => e
     puts e.message
@@ -198,7 +211,7 @@ def list_channels(opt)
 end
 
 def show_channel(opt)
-  channel_id = get_channel_id(opt)
+  channel_id = get_option(opt, :channel_id, false, Proc.new{|opt, _| list_channels(opt)})
 
   code = nil
   uri = URI("http#{opt[:use_ssl] ? 's': ""}://#{opt[:host]}:#{opt[:port]}/admin/channels/#{channel_id}")
@@ -209,7 +222,7 @@ def show_channel(opt)
 
       response = http.request request
       code = response.code
-      puts JSON.pretty_generate(JSON.parse(response.body))
+      print_response(response.body)
     end
   rescue => e
     puts e.message
@@ -222,14 +235,16 @@ def show_channel(opt)
 end
 
 def delete_channel(opt)
-  print "Are you sure you want to delete a channel?(yes/no): "
-  yes_or_no = gets.chomp.strip
-  if yes_or_no != 'yes'
-    puts 'Nothing is deleted.'
-    exit 0
+  if opt[:yes].nil?
+    print "Are you sure you want to delete a channel?(yes/no): "
+    yes_or_no = gets.chomp.strip
+    if yes_or_no != 'yes'
+      puts 'Nothing is deleted.'
+      exit 0
+    end
   end
 
-  channel_id = get_channel_id(opt)
+  channel_id = get_option(opt, :channel_id, false, Proc.new{|opt, _| list_channels(opt)})
 
   code = nil
   uri = URI("http#{opt[:use_ssl] ? 's': ""}://#{opt[:host]}:#{opt[:port]}/admin/channels/#{channel_id}")
@@ -310,14 +325,16 @@ def create_channel(opt)
 end
 
 def update_channel(opt)
-  print "Are you sure you want to update a channel?(yes/no): "
-  yes_or_no = gets.chomp.strip
-  if yes_or_no != 'yes'
-    puts 'Nothing is updated.'
-    exit 0
+  if opt[:yes].nil?
+    print "Are you sure you want to update a channel?(yes/no): "
+    yes_or_no = gets.chomp.strip
+    if yes_or_no != 'yes'
+      puts 'Nothing is updated.'
+      exit 0
+    end
   end
 
-  channel_id = get_channel_id(opt)
+  channel_id = get_option(opt, :channel_id, false, Proc.new{|opt, _| list_channels(opt)})
 
   puts 'Current channel definition:'
   show_channel(opt)
@@ -400,21 +417,25 @@ def connection_count(opt)
 end
 
 def connection_status(opt)
-  channel_id = get_channel_id(opt)
-  device_id = get_device_id(opt)
+  channel_id = get_option(opt, :channel_id, false, Proc.new{|opt, _| list_channels(opt)})
+  device_id = get_option(opt, :device_id)
 
-  print "With connection history?(yes/no): "
-  with_history = gets.chomp.strip
-  if with_history != 'yes'
-    puts 'Skipping connection history...'
-    with_history = false
+  if opt[:yes].nil?
+    print "With connection history?(yes/no): "
+    yes_or_no = gets.chomp.strip
+    if yes_or_no != 'yes'
+      puts 'Skipping connection history...'
+      yes_or_no = false
+    else
+      yes_or_no = true
+    end
   else
-    with_history = true
+    yes_or_no = true
   end
 
   code = nil
   uri = URI("http#{opt[:use_ssl] ? 's': ""}://#{opt[:host]}:#{opt[:port]}/admin/channels/#{channel_id}/devices/#{device_id}/status")
-  uri.query = URI.encode_www_form({history: with_history})
+  uri.query = URI.encode_www_form({history: yes_or_no})
   begin
     Net::HTTP.start(uri.host, uri.port, :use_ssl => uri.scheme == 'https', :verify_mode => OpenSSL::SSL::VERIFY_NONE) do |http|
       request = Net::HTTP::Get.new uri
@@ -422,7 +443,7 @@ def connection_status(opt)
 
       response = http.request request
       code = response.code
-      puts JSON.pretty_generate(JSON.parse(response.body))
+      print_response(response.body)
     end
   rescue => e
     puts e.message
@@ -444,7 +465,7 @@ def show_settings(opt)
 
       response = http.request request
       code = response.code
-      puts JSON.pretty_generate(JSON.parse(response.body))
+      print_response(response.body)
     end
   rescue => e
     puts e.message
@@ -457,9 +478,9 @@ def show_settings(opt)
 end
 
 def send_to_connection(opt)
-  channel_id = get_channel_id(opt)
-  device_id = get_device_id(opt)
-  message = get_message(opt)
+  channel_id = get_option(opt, :channel_id, false, Proc.new{|opt, _| list_channels(opt)})
+  device_id = get_option(opt, :device_id)
+  message = get_option(opt, :message)
 
   code = nil
   uri = URI("http#{opt[:use_ssl] ? 's': ""}://#{opt[:host]}:#{opt[:port]}/admin/channels/#{channel_id}/devices/#{device_id}/send")
@@ -484,9 +505,9 @@ def send_to_connection(opt)
 end
 
 def request_to_connection(opt)
-  channel_id = get_channel_id(opt)
-  device_id = get_device_id(opt)
-  message = get_message(opt)
+  channel_id = get_option(opt, :channel_id, false, Proc.new{|opt, _| list_channels(opt)})
+  device_id = get_option(opt, :device_id)
+  message = get_option(opt, :message)
 
   code = nil
   resp = nil
@@ -558,7 +579,7 @@ def update_settings(opt)
 
       response = http.request request
       code = response.code
-      puts JSON.pretty_generate(JSON.parse(response.body))
+      print_response(response.body)
     end
   rescue => e
     puts e.message
@@ -572,12 +593,138 @@ def update_settings(opt)
 end
 
 def query_value(opt)
+  channel_id = get_option(opt, :channel_id, false, Proc.new{|opt| list_channels(opt)})
+  show_channel(opt)
+  params = {
+    field: get_option(opt, :field),
+    tags: get_option(opt, :tags, true, nil, Proc.new{|_, _, tags|
+      tags.split(',').map(&:strip).join(',')
+    }),
+    summary_type: get_option(opt, :aggregation),
+    time_range: get_option(opt, :time_range)
+  }.delete_if{|_, v| v.length == 0}
+
+  puts "Please review your query:"
+  puts JSON.pretty_generate(params)
+  puts "Press enter to continue, or Ctrl-C to abort"
+  gets
+
+  code = nil
+  resp = nil
+  uri = URI("http#{opt[:use_ssl] ? 's': ""}://#{opt[:host]}:#{opt[:port]}/admin/channels/#{channel_id}/value")
+  uri.query = URI.encode_www_form(params)
+  begin
+    Net::HTTP.start(uri.host, uri.port, :use_ssl => uri.scheme == 'https', :verify_mode => OpenSSL::SSL::VERIFY_NONE) do |http|
+      request = Net::HTTP::Get.new uri
+      request.add_field('Authentication', opt[:auth_token])
+
+      response = http.request request
+      code = response.code
+      print_response(response.body)
+    end
+  rescue => e
+    puts e.message
+  end
+
+  if code.to_i != 200
+    puts resp
+    puts 'Failed to query value.'
+    print_wiki_query
+    exit 1
+  end
+
+  puts 'Successfully queried value!'
 end
 
 def query_series(opt)
+  channel_id = get_option(opt, :channel_id, false, Proc.new{|opt| list_channels(opt)})
+  show_channel(opt)
+  params = {
+    field: get_option(opt, :field),
+    tags: get_option(opt, :tags, true, nil, Proc.new{|_, _, tags|
+      tags.split(',').map(&:strip).join(',')
+    }),
+    summary_type: get_option(opt, :aggregation),
+    time_range: get_option(opt, :time_range),
+    time_interval: get_option(opt, :time_interval, false)
+  }.delete_if{|_, v| v.length == 0}
+
+  puts "Please review your query:"
+  puts JSON.pretty_generate(params)
+  puts "Press enter to continue, or Ctrl-C to abort"
+  gets
+
+  code = nil
+  resp = nil
+  uri = URI("http#{opt[:use_ssl] ? 's': ""}://#{opt[:host]}:#{opt[:port]}/admin/channels/#{channel_id}/series")
+  uri.query = URI.encode_www_form(params)
+  begin
+    Net::HTTP.start(uri.host, uri.port, :use_ssl => uri.scheme == 'https', :verify_mode => OpenSSL::SSL::VERIFY_NONE) do |http|
+      request = Net::HTTP::Get.new uri
+      request.add_field('Authentication', opt[:auth_token])
+
+      response = http.request request
+      code = response.code
+      print_response(response.body)
+    end
+  rescue => e
+    puts e.message
+  end
+
+  if code.to_i != 200
+    puts resp
+    puts 'Failed to query series.'
+    print_wiki_query
+    exit 1
+  end
+
+  puts 'Successfully queried series!'
 end
 
 def query_raw(opt)
+  channel_id = get_option(opt, :channel_id, false, Proc.new{|opt| list_channels(opt)})
+  show_channel(opt)
+  params = {
+    tags: get_option(opt, :tags, true, nil, Proc.new{|_, _, tags|
+      tags.split(',').map(&:strip).join(',')
+    }),
+    time_range: get_option(opt, :time_range),
+  }.delete_if{|_, v| v.length == 0}.merge(nop: opt[:nop])
+
+  puts "Please review your query:"
+  puts JSON.pretty_generate(params)
+  puts "Press enter to continue, or Ctrl-C to abort"
+  gets
+
+  code = nil
+  resp = nil
+  uri = URI("http#{opt[:use_ssl] ? 's': ""}://#{opt[:host]}:#{opt[:port]}/admin/channels/#{channel_id}/raw")
+  uri.query = URI.encode_www_form(params)
+  begin
+    Net::HTTP.start(uri.host, uri.port, :use_ssl => uri.scheme == 'https', :verify_mode => OpenSSL::SSL::VERIFY_NONE) do |http|
+      request = Net::HTTP::Get.new uri
+      request.add_field('Authentication', opt[:auth_token])
+
+      response = http.request request
+      code = response.code
+      print_response(response.body)
+    end
+  rescue => e
+    puts e.message
+  end
+
+  if code.to_i != 200
+    puts resp
+    puts 'Failed to query series.'
+    print_wiki_query
+    exit 1
+  end
+
+  if opt[:nop]
+    puts "Successfully queried raw in nop=true mode! To turn if off, please use '-N' option."
+  else
+    puts 'Successfully queried raw!'
+  end
 end
 
 Signal.trap("INT") {
