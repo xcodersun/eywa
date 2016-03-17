@@ -709,6 +709,7 @@ def query_raw(opt)
   uri.query = URI.encode_www_form(params)
   begin
     Net::HTTP.start(uri.host, uri.port, :use_ssl => uri.scheme == 'https', :verify_mode => OpenSSL::SSL::VERIFY_NONE) do |http|
+      http.read_timeout = 3600
       request = Net::HTTP::Get.new uri
       request.add_field('Authentication', opt[:auth_token])
 
