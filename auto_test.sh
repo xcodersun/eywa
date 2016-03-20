@@ -70,7 +70,7 @@ if [[ $utilFail -eq 1 ]]; then
   verbose=1
 fi
 
-if [[ $iters -eq 0 && $utilFail -eq 0 ]]; then
+if [[ $iters -eq 0 && $utilFail -eq 1 ]]; then
   echo "WARN: Test will run infinitely. Are you sure? [Y/N]:"
   read c
   if [ "$c" != "Y" ]; then
