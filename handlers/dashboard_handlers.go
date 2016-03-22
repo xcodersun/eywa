@@ -58,11 +58,10 @@ func UpdateDashboard(c web.C, w http.ResponseWriter, r *http.Request) {
 }
 
 func ListDashboards(c web.C, w http.ResponseWriter, r *http.Request) {
-	ds := []*models.Dashboard{}
-	models.DB.Find(&ds)
+	dashs := models.Dashboards()
 
 	db := []*DashboardBrief{}
-	for _, d := range ds {
+	for _, d := range dashs {
 		db = append(db, NewDashboardBrief(d))
 	}
 

@@ -14,7 +14,6 @@ import (
 )
 
 var closedCMErr = errors.New("connection manager is closed")
-var emptyChanErr = errors.New("registering http connection with empty channel")
 
 var HttpCloseChan = make(chan struct{})
 
@@ -82,7 +81,12 @@ func (cm *ConnectionManager) NewWebsocketConnection(id string, ws wsConn, h Mess
 
 func (cm *ConnectionManager) NewHttpConnection(id string, ch chan []byte, h MessageHandler, meta map[string]interface{}) (*HttpConnection, error) {
 	if ch == nil {
-		return nil, emptyChanErr
+		return &HttpConnection{
+			identifier: id,
+			h:          h,
+			metadata:   meta,
+			createdAt:  time.Now(),
+		}, nil
 	}
 
 	if cm.closed.Get() {
@@ -129,7 +133,7 @@ func (cm *ConnectionManager) Count() int {
 	return sum
 }
 
-func (cm *ConnectionManager) Close() error {
+func (cm *ConnectionManager) close() error {
 	cm.closed.Set(true)
 
 	var wg sync.WaitGroup

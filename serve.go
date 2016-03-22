@@ -11,7 +11,6 @@ import (
 	"log"
 	"os"
 	"strconv"
-	"time"
 )
 
 func serve() {
@@ -75,9 +74,8 @@ func serve() {
 	})
 
 	graceful.PostHook(func() {
-		connections.CloseCM()
 		Logger.Info("Waiting for websockets to drain...")
-		time.Sleep(3 * time.Second)
+		connections.CloseCMs()
 		Logger.Info("Connection Manager closed.")
 	})
 	graceful.PostHook(func() { models.CloseDB() })

@@ -6,7 +6,7 @@ require 'openssl'
 RequiredOpts = [:task, :host, :port, :username, :password]
 SupportedTasks = [
   'list-channels', 'create-channel', 'update-channel',
-  'delete-channel', 'show-channel', 'connection-count',
+  'delete-channel', 'show-channel', 'connection-counts',
   'connection-status', 'show-settings', 'update-settings',
   'send-to-connection', 'request-to-connection', 'query-value',
   'query-series', 'query-raw'
@@ -401,9 +401,9 @@ def update_channel(opt)
   show_channel(opt)
 end
 
-def connection_count(opt)
+def connection_counts(opt)
   code = nil
-  uri = URI("http#{opt[:use_ssl] ? 's': ""}://#{opt[:host]}:#{opt[:port]}/admin/connections/count")
+  uri = URI("http#{opt[:use_ssl] ? 's': ""}://#{opt[:host]}:#{opt[:port]}/admin/connections/counts")
   begin
     Net::HTTP.start(uri.host, uri.port, :use_ssl => uri.scheme == 'https', :verify_mode => OpenSSL::SSL::VERIFY_NONE) do |http|
       request = Net::HTTP::Get.new uri
@@ -418,7 +418,7 @@ def connection_count(opt)
   end
 
   if code.to_i != 200
-    puts 'Failed to get connection count.'
+    puts 'Failed to get connection counts.'
     exit 1
   end
 end
@@ -756,8 +756,8 @@ when 'create-channel'
   create_channel(options)
 when 'update-channel'
   update_channel(options)
-when 'connection-count'
-  connection_count(options)
+when 'connection-counts'
+  connection_counts(options)
 when 'connection-status'
   connection_status(options)
 when 'show-settings'

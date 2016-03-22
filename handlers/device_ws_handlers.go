@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/gorilla/websocket"
 	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/zenazn/goji/web"
 	. "github.com/vivowares/eywa/configs"
@@ -56,7 +57,15 @@ func WsHandler(c web.C, w http.ResponseWriter, r *http.Request) {
 
 	meta := QueryToMap(r.URL.Query())
 	meta["_ip"] = strings.Split(r.RemoteAddr, ":")[0]
-	_, err = connections.NewWebsocketConnection(deviceId, ws, h, map[string]interface{}{
+
+	cm, found := connections.FindConnectionManager(c.URLParams["channel_id"])
+	if !found {
+		Render.JSON(w, http.StatusInternalServerError, map[string]string{
+			"error": fmt.Sprintf("connection manager is not initialized for channel: %s", c.URLParams["channel_id"]),
+		})
+	}
+
+	_, err = cm.NewWebsocketConnection(deviceId, ws, h, map[string]interface{}{
 		"channel":  ch,
 		"metadata": meta,
 	})

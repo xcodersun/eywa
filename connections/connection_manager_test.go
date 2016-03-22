@@ -35,7 +35,7 @@ func TestConnectionManager(t *testing.T) {
 	meta := make(map[string]interface{})
 
 	Convey("creates/registers/finds new connections.", t, func() {
-		cm, _ := NewConnectionManager()
+		cm, _ := NewConnectionManager("default")
 		conn, _ := cm.NewWebsocketConnection("test ws", &fakeWsConn{}, h, meta) // this connection should be started and registered
 		So(cm.Count(), ShouldEqual, 1)
 
@@ -57,7 +57,7 @@ func TestConnectionManager(t *testing.T) {
 		So(found, ShouldBeTrue)
 		So(cm.Count(), ShouldEqual, 2)
 
-		cm.Close()
+		CloseConnectionManager("default")
 		So(cm.Count(), ShouldEqual, 0)
 
 		_, ok := <-ch
@@ -67,8 +67,8 @@ func TestConnectionManager(t *testing.T) {
 	})
 
 	Convey("disallows creating/registering new connections on closed CM.", t, func() {
-		cm, _ := NewConnectionManager()
-		cm.Close()
+		cm, _ := NewConnectionManager("default")
+		CloseConnectionManager("default")
 
 		ws := &fakeWsConn{}
 		_, err := cm.NewWebsocketConnection("test ws", ws, h, meta)

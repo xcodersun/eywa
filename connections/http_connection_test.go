@@ -32,8 +32,8 @@ func TestHttpConnection(t *testing.T) {
 	})
 
 	Convey("sends message and closes an registered http connection", t, func() {
-		cm, _ := NewConnectionManager()
-		defer cm.Close()
+		cm, _ := NewConnectionManager("default")
+		defer CloseConnectionManager("default")
 
 		ch := make(chan []byte, 1)
 		_, err := cm.NewHttpConnection("test", ch, func(Connection, *Message, error) {}, nil)

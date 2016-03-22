@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/zenazn/goji/web"
 	. "github.com/vivowares/eywa/configs"
 	"github.com/vivowares/eywa/connections"
@@ -11,8 +12,21 @@ import (
 )
 
 func SendToDevice(c web.C, w http.ResponseWriter, r *http.Request) {
+	_, found := findCachedChannel(c, "channel_id")
+	if !found {
+		Render.JSON(w, http.StatusNotFound, map[string]string{"error": "channel is not found"})
+		return
+	}
+
+	cm, found := connections.FindConnectionManager(c.URLParams["channel_id"])
+	if !found {
+		Render.JSON(w, http.StatusInternalServerError, map[string]string{
+			"error": fmt.Sprintf("connection manager is not initialized for channel: %s", c.URLParams["channel_id"]),
+		})
+	}
+
 	deviceId := c.URLParams["device_id"]
-	conn, found := connections.FindConnection(deviceId)
+	conn, found := cm.FindConnection(deviceId)
 	if !found {
 		Render.JSON(w, http.StatusNotFound, map[string]string{"error": "device is not online"})
 		return
@@ -31,6 +45,19 @@ func SendToDevice(c web.C, w http.ResponseWriter, r *http.Request) {
 }
 
 func RequestToDevice(c web.C, w http.ResponseWriter, r *http.Request) {
+	_, found := findCachedChannel(c, "channel_id")
+	if !found {
+		Render.JSON(w, http.StatusNotFound, map[string]string{"error": "channel is not found"})
+		return
+	}
+
+	cm, found := connections.FindConnectionManager(c.URLParams["channel_id"])
+	if !found {
+		Render.JSON(w, http.StatusInternalServerError, map[string]string{
+			"error": fmt.Sprintf("connection manager is not initialized for channel: %s", c.URLParams["channel_id"]),
+		})
+	}
+
 	timeout := Config().Connections.Websocket.Timeouts.Response.Duration
 	var err error
 	timeoutStr := r.URL.Query().Get("timeout")
@@ -43,7 +70,7 @@ func RequestToDevice(c web.C, w http.ResponseWriter, r *http.Request) {
 	}
 
 	deviceId := c.URLParams["device_id"]
-	conn, found := connections.FindConnection(deviceId)
+	conn, found := cm.FindConnection(deviceId)
 	if !found {
 		Render.JSON(w, http.StatusNotFound, map[string]string{"error": "device is not online"})
 		return

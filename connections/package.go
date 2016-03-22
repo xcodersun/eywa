@@ -2,31 +2,50 @@ package connections
 
 import (
 	"errors"
+	"fmt"
 	. "github.com/vivowares/eywa/configs"
 	. "github.com/vivowares/eywa/utils"
-	"time"
+	"sync"
 )
 
-var defaultCM *ConnectionManager
-var noDefaultCMErr = errors.New("default connection manager is not initialized")
+var cmLock sync.RWMutex
+var closed bool
+var connManagers = make(map[string]*ConnectionManager)
 
-func InitializeCM() error {
-	cm, err := NewConnectionManager()
-	if err == nil {
-		defaultCM = cm
+var serverClosedErr = errors.New("server closed")
+
+func InitializeCMs(names []string) error {
+	for _, name := range names {
+		_, err := NewConnectionManager(name)
+		if err != nil {
+			return err
+		}
 	}
-	return err
-}
-
-func CloseCM() error {
-	if defaultCM != nil {
-		return defaultCM.Close()
-	}
-
 	return nil
 }
 
-func NewConnectionManager() (*ConnectionManager, error) {
+func CloseCMs() {
+	names := make([]string, 0)
+	cmLock.Lock()
+	closed = true
+	for name, _ := range connManagers {
+		names = append(names, name)
+	}
+	cmLock.Unlock()
+
+	var wg sync.WaitGroup
+	wg.Add(len(names))
+	for _, name := range names {
+		go func(_name string) {
+			CloseConnectionManager(_name)
+			wg.Done()
+		}(name)
+	}
+
+	wg.Wait()
+}
+
+func NewConnectionManager(name string) (*ConnectionManager, error) {
 	cm := &ConnectionManager{closed: &AtomBool{}}
 	switch Config().Connections.Registry {
 	case "memory":
@@ -46,44 +65,53 @@ func NewConnectionManager() (*ConnectionManager, error) {
 		}
 	}
 
+	cmLock.Lock()
+	defer cmLock.Unlock()
+
+	if closed {
+		return nil, serverClosedErr
+	}
+
+	if _, found := connManagers[name]; found {
+		return nil, errors.New(fmt.Sprintf("connection manager: %s already initialized.", name))
+	}
+
+	connManagers[name] = cm
 	return cm, nil
 }
 
-func Count() int {
-	count := 0
-
-	if defaultCM != nil {
-		count = defaultCM.Count()
+func CloseConnectionManager(name string) error {
+	cmLock.Lock()
+	cm, found := connManagers[name]
+	if !found {
+		cmLock.Unlock()
+		return errors.New(fmt.Sprintf("connection manager: %s is not found", name))
 	}
+	delete(connManagers, name)
+	cmLock.Unlock()
 
-	return count
+	return cm.close()
 }
 
-func FindConnection(id string) (Connection, bool) {
-	if defaultCM != nil {
-		return defaultCM.FindConnection(id)
+func Counts() map[string]int {
+	conns := make(map[string]*ConnectionManager)
+	cmLock.RLock()
+	for name, cm := range connManagers {
+		conns[name] = cm
+	}
+	cmLock.RUnlock()
+
+	counts := make(map[string]int)
+	for name, cm := range conns {
+		counts[name] = cm.Count()
 	}
 
-	return nil, false
+	return counts
 }
 
-func NewHttpConnection(id string, ch chan []byte, h MessageHandler, meta map[string]interface{}) (*HttpConnection, error) {
-	if ch != nil {
-		return defaultCM.NewHttpConnection(id, ch, h, meta)
-	} else {
-		return &HttpConnection{
-			identifier: id,
-			h:          h,
-			metadata:   meta,
-			createdAt:  time.Now(),
-		}, nil
-	}
-}
-
-func NewWebsocketConnection(id string, ws wsConn, h MessageHandler, meta map[string]interface{}) (*WebsocketConnection, error) {
-	if defaultCM != nil {
-		return defaultCM.NewWebsocketConnection(id, ws, h, meta)
-	}
-
-	return nil, noDefaultCMErr
+func FindConnectionManager(name string) (*ConnectionManager, bool) {
+	cmLock.RLock()
+	defer cmLock.RUnlock()
+	cm, found := connManagers[name]
+	return cm, found
 }

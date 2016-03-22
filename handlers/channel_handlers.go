@@ -52,8 +52,7 @@ func UpdateChannel(c web.C, w http.ResponseWriter, r *http.Request) {
 }
 
 func ListChannels(c web.C, w http.ResponseWriter, r *http.Request) {
-	chs := []*models.Channel{}
-	models.DB.Find(&chs)
+	chs := models.Channels()
 
 	cs := []*ChannelBrief{}
 	for _, ch := range chs {

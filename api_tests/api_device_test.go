@@ -168,5 +168,7 @@ func TestApiToDevice(t *testing.T) {
 		So(searchRes.TotalHits(), ShouldEqual, 2)
 	})
 
+	DeleteTestChannel(chId)
+
 	frisby.Global.PrintReport()
 }

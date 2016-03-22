@@ -39,3 +39,9 @@ func (d *Dashboard) FindById(id int) bool {
 	DB.First(d, id)
 	return !DB.NewRecord(d)
 }
+
+func Dashboards() []*Dashboard {
+	dashs := []*Dashboard{}
+	DB.Find(&dashs)
+	return dashs
+}

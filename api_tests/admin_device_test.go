@@ -110,5 +110,7 @@ func TestAdminToDevice(t *testing.T) {
 		cli.Close()
 	})
 
+	DeleteTestChannel(chId)
+
 	frisby.Global.PrintReport()
 }

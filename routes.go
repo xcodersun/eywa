@@ -86,9 +86,10 @@ func AdminRouter() http.Handler {
 	admin.Get("/channels/:id/tag_stats", handlers.GetChannelTagStats)
 	admin.Get("/channels/:id/index_stats", handlers.GetChannelIndexStats)
 
-	admin.Get("/connections/count", handlers.ConnectionCounts)
-	admin.Get("/channels/:channel_id/devices/:device_id/status", handlers.ConnectionStatus)
+	admin.Get("/connections/counts", handlers.ConnectionCounts)
+	admin.Get("/channels/:channel_id/connections/count", handlers.ConnectionCount)
 
+	admin.Get("/channels/:channel_id/devices/:device_id/status", handlers.ConnectionStatus)
 	admin.Post("/channels/:channel_id/devices/:device_id/send", handlers.SendToDevice)
 	admin.Post("/channels/:channel_id/devices/:device_id/request", handlers.RequestToDevice)
 

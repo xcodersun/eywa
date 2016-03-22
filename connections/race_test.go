@@ -1,6 +1,7 @@
 package connections
 
 import (
+	"fmt"
 	. "github.com/vivowares/eywa/Godeps/_workspace/src/github.com/smartystreets/goconvey/convey"
 	. "github.com/vivowares/eywa/configs"
 	. "github.com/vivowares/eywa/utils"
@@ -39,10 +40,11 @@ func TestRaceConditions(t *testing.T) {
 	meta := make(map[string]interface{})
 
 	Convey("burst various sends for race condition test, with wg", t, func() {
-		InitializeCM()
-		defer CloseCM()
+		cm, _ := NewConnectionManager("default")
+		defer CloseConnectionManager("default")
+
 		ws := &fakeWsConn{randomErr: false}
-		conn, _ := NewWebsocketConnection("test", ws, h, meta)
+		conn, _ := cm.NewWebsocketConnection("test", ws, h, meta)
 
 		concurrency := 1000
 		var wg sync.WaitGroup
@@ -71,7 +73,7 @@ func TestRaceConditions(t *testing.T) {
 		wg.Wait()
 		conn.Close()
 		conn.Wait()
-		So(Count(), ShouldEqual, 0)
+		So(cm.Count(), ShouldEqual, 0)
 
 		So(ws.closed, ShouldBeTrue)
 		So(conn.msgChans.len(), ShouldEqual, 0) //?
@@ -85,9 +87,10 @@ func TestRaceConditions(t *testing.T) {
 	})
 
 	Convey("burst various sends for race condition test, without wg", t, func() {
-		InitializeCM()
+		cm, _ := NewConnectionManager("default")
+
 		ws := &fakeWsConn{randomErr: false}
-		conn, _ := NewWebsocketConnection("test", ws, h, meta)
+		conn, _ := cm.NewWebsocketConnection("test", ws, h, meta)
 
 		concurrency := 1000
 		errs := make([]error, concurrency)
@@ -110,13 +113,13 @@ func TestRaceConditions(t *testing.T) {
 			}(i)
 		}
 
-		CloseCM()
-		So(Count(), ShouldEqual, 0)
+		CloseConnectionManager("default")
+		So(cm.Count(), ShouldEqual, 0)
 		So(ws.closed, ShouldBeTrue)
 	})
 
 	Convey("successfully closes all created ws connections.", t, func() {
-		InitializeCM()
+		cm, _ := NewConnectionManager("default")
 
 		concurrency := 100
 		wss := make([]*fakeWsConn, concurrency)
@@ -127,14 +130,14 @@ func TestRaceConditions(t *testing.T) {
 		wg.Add(concurrency)
 		for i := 0; i < concurrency; i++ {
 			go func(iter int) {
-				NewWebsocketConnection("test"+strconv.Itoa(iter), wss[iter], h, meta)
+				cm.NewWebsocketConnection("test"+strconv.Itoa(iter), wss[iter], h, meta)
 				wg.Done()
 			}(i)
 		}
 		wg.Wait()
-		CloseCM()
+		CloseConnectionManager("default")
 
-		So(Count(), ShouldEqual, 0)
+		So(cm.Count(), ShouldEqual, 0)
 
 		allClosed := true
 		for _, ws := range wss {
@@ -147,7 +150,7 @@ func TestRaceConditions(t *testing.T) {
 
 	Convey("real life race conditions, close all underlying ws conn.", t, func() {
 		concurrency := 1000
-		InitializeCM()
+		cm, _ := NewConnectionManager("default")
 		wss := make([]*fakeWsConn, concurrency)
 		for i := 0; i < concurrency; i++ {
 			wss[i] = &fakeWsConn{randomErr: rand.Intn(4) == 0}
@@ -159,7 +162,7 @@ func TestRaceConditions(t *testing.T) {
 		for i := 0; i < concurrency; i++ {
 			go func(iter int) {
 				time.Sleep(time.Duration(rand.Intn(500)) * time.Millisecond)
-				conn, err := NewWebsocketConnection("test"+strconv.Itoa(iter), wss[iter], h, meta)
+				conn, err := cm.NewWebsocketConnection("test"+strconv.Itoa(iter), wss[iter], h, meta)
 				conns[iter] = conn
 				errs[iter] = err
 				switch rand.Intn(3) {
@@ -174,8 +177,8 @@ func TestRaceConditions(t *testing.T) {
 			}(i)
 		}
 
-		CloseCM()
-		So(Count(), ShouldEqual, 0)
+		CloseConnectionManager("default")
+		So(cm.Count(), ShouldEqual, 0)
 
 		time.Sleep(time.Duration(1+rand.Intn(3)) * time.Second)
 		wg.Wait()
@@ -189,7 +192,7 @@ func TestRaceConditions(t *testing.T) {
 	})
 
 	Convey("successfully closes all created http connections.", t, func() {
-		InitializeCM()
+		cm, _ := NewConnectionManager("default")
 
 		concurrency := 1000
 		chs := make([]chan []byte, concurrency)
@@ -200,16 +203,16 @@ func TestRaceConditions(t *testing.T) {
 		wg.Add(concurrency)
 		for i := 0; i < concurrency; i++ {
 			go func(iter int) {
-				NewHttpConnection("test"+strconv.Itoa(iter), chs[iter], func(Connection, *Message, error) {}, nil)
+				cm.NewHttpConnection("test"+strconv.Itoa(iter), chs[iter], func(Connection, *Message, error) {}, nil)
 				wg.Done()
 			}(i)
 		}
 
 		time.Sleep(time.Duration(1+rand.Intn(3)) * time.Second)
-		CloseCM()
+		CloseConnectionManager("default")
 		wg.Wait()
 
-		So(Count(), ShouldEqual, 0)
+		So(cm.Count(), ShouldEqual, 0)
 
 		select {
 		case <-time.After(3 * time.Second):
@@ -220,4 +223,38 @@ func TestRaceConditions(t *testing.T) {
 			}
 		}
 	})
+
+	Convey("burst create connection managers for race condition test", t, func() {
+		// reset the package level var
+		defer func() { closed = false }()
+
+		concurrency := 1000
+		seed := 10
+		seedNames := make([]string, seed)
+		cms := make([]*ConnectionManager, concurrency)
+		for i := 0; i < seed; i++ {
+			seedNames[i] = fmt.Sprintf("seed-%d", i)
+		}
+
+		for i := 0; i < concurrency; i++ {
+			go func(_i int) {
+				cm, err := NewConnectionManager(fmt.Sprintf("new-%d", _i))
+				if err == nil {
+					cms[_i] = cm
+				}
+			}(i)
+		}
+
+		InitializeCMs(seedNames)
+		CloseCMs()
+		So(len(connManagers), ShouldEqual, 0)
+		allClosed := true
+		for _, cm := range cms {
+			if cm != nil && cm.closed.Get() != true {
+				allClosed = false
+			}
+		}
+		So(allClosed, ShouldBeTrue)
+	})
+
 }

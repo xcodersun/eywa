@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/zenazn/goji/web"
 	. "github.com/vivowares/eywa/configs"
 	. "github.com/vivowares/eywa/connections"
@@ -43,7 +44,14 @@ func HttpPushHandler(c web.C, w http.ResponseWriter, r *http.Request) {
 
 	meta := QueryToMap(r.URL.Query())
 	meta["_ip"] = strings.Split(r.RemoteAddr, ":")[0]
-	httpConn, err := NewHttpConnection(deviceId, nil, h, map[string]interface{}{
+
+	cm, found := FindConnectionManager(c.URLParams["channel_id"])
+	if !found {
+		Render.JSON(w, http.StatusInternalServerError, map[string]string{
+			"error": fmt.Sprintf("connection manager is not initialized for channel: %s", c.URLParams["channel_id"]),
+		})
+	}
+	httpConn, err := cm.NewHttpConnection(deviceId, nil, h, map[string]interface{}{
 		"channel":  ch,
 		"metadata": meta,
 	})
@@ -102,7 +110,15 @@ func HttpLongPollingHandler(c web.C, w http.ResponseWriter, r *http.Request) {
 	pollCh := make(chan []byte, 1)
 	meta := QueryToMap(r.URL.Query())
 	meta["_ip"] = strings.Split(r.RemoteAddr, ":")[0]
-	httpConn, err := NewHttpConnection(deviceId, pollCh, h, map[string]interface{}{
+
+	cm, found := FindConnectionManager(c.URLParams["channel_id"])
+	if !found {
+		Render.JSON(w, http.StatusInternalServerError, map[string]string{
+			"error": fmt.Sprintf("connection manager is not initialized for channel: %s", c.URLParams["channel_id"]),
+		})
+	}
+
+	httpConn, err := cm.NewHttpConnection(deviceId, pollCh, h, map[string]interface{}{
 		"channel":  ch,
 		"metadata": meta,
 	})

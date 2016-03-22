@@ -16,6 +16,11 @@ func TestChannel(t *testing.T) {
 	dbFile := path.Join(pwd, "eywa_test.db")
 
 	SetConfig(&Conf{
+		Connections: &ConnectionsConf{
+			Registry:      "memory",
+			NShards:       4,
+			InitShardSize: 16,
+		},
 		Database: &DbConf{
 			DbType: "sqlite3",
 			DbFile: dbFile,
@@ -146,13 +151,13 @@ func TestChannel(t *testing.T) {
 			AccessTokens: []string{"token1"},
 		}
 
-		c.Create()
+		err := c.Create()
 		var count int
 		DB.Model(&Channel{}).Count(&count)
 		So(count, ShouldEqual, 1)
 
 		c.Tags = []string{"tag2", "tag3"}
-		err := c.Update()
+		err = c.Update()
 		So(err.Error(), ShouldContainSubstring, "removing a tag is not allowed: tag1")
 
 		c.Tags = []string{"tag1", "tag2"}

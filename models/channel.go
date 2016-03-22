@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/speps/go-hashids"
 	"github.com/vivowares/eywa/Godeps/_workspace/src/gopkg.in/olivere/elastic.v3"
+	"github.com/vivowares/eywa/connections"
 	. "github.com/vivowares/eywa/utils"
 	"strings"
 	"time"
@@ -110,6 +111,23 @@ func (c *Channel) BeforeCreate() error {
 	return c.validate()
 }
 
+func (c *Channel) AfterCreate() error {
+	name, err := c.HashId()
+	if err != nil {
+		return err
+	}
+	_, err = connections.NewConnectionManager(name)
+	return err
+}
+
+func (c *Channel) AfterDelete() error {
+	name, err := c.HashId()
+	if err != nil {
+		return err
+	}
+	return connections.CloseConnectionManager(name)
+}
+
 func (c *Channel) BeforeUpdate() error {
 	ch := &Channel{}
 	if found := ch.FindById(c.Id); !found {
@@ -150,6 +168,12 @@ func (c *Channel) Update() error {
 func (c *Channel) FindById(id int) bool {
 	DB.First(c, id)
 	return !DB.NewRecord(c)
+}
+
+func Channels() []*Channel {
+	chs := []*Channel{}
+	DB.Find(&chs)
+	return chs
 }
 
 func (c *Channel) HashId() (string, error) {

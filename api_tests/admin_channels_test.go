@@ -68,6 +68,10 @@ func GetChannelPath(hashId string) string {
 	return fmt.Sprintf("%s/%s/%s", ApiServer, "admin/channels", hashId)
 }
 
+func ConnectionCountsPath() string {
+	return fmt.Sprintf("%s/%s", ApiServer, "admin/connections/counts")
+}
+
 func TestAdminChannels(t *testing.T) {
 
 	InitializeDB()
@@ -126,6 +130,15 @@ func TestAdminChannels(t *testing.T) {
 			So(reflect.DeepEqual(ch, expResp), ShouldBeTrue)
 		})
 
+		f = frisby.Create("get connection counts").Get(ConnectionCountsPath()).Send()
+		f.ExpectStatus(http.StatusOK).AfterContent(func(F *frisby.Frisby, resp []byte, err error) {
+			counts := make(map[string]int)
+			json.Unmarshal(resp, &counts)
+			count, found := counts[expResp.Id]
+			So(found, ShouldBeTrue)
+			So(count, ShouldEqual, 0)
+		})
+
 		f = frisby.Create("update channel").Put(GetChannelPath(chId))
 		f.SetJson(map[string]string{"name": "updated name"}).Send()
 
@@ -141,6 +154,14 @@ func TestAdminChannels(t *testing.T) {
 
 		f = frisby.Create("delete channel").Delete(GetChannelPath(chId)).Send()
 		f.ExpectStatus(http.StatusOK)
+
+		f = frisby.Create("get connection counts").Get(ConnectionCountsPath()).Send()
+		f.ExpectStatus(http.StatusOK).AfterContent(func(F *frisby.Frisby, resp []byte, err error) {
+			counts := make(map[string]int)
+			json.Unmarshal(resp, &counts)
+			_, found := counts[expResp.Id]
+			So(found, ShouldBeFalse)
+		})
 
 		f = frisby.Create("list channels").Get(ListChannelPath()).Send()
 

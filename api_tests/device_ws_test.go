@@ -24,7 +24,7 @@ import (
 
 func CreateTestChannel() (string, *Channel) {
 	ch := &Channel{
-		Name:         "test http upload",
+		Name:         "test channel",
 		Description:  "desc",
 		Tags:         []string{"tag1", "tag2"},
 		Fields:       map[string]string{"field1": "int"},
@@ -45,6 +45,11 @@ func CreateTestChannel() (string, *Channel) {
 	return chId, ch
 }
 
+func DeleteTestChannel(chId string) {
+	f := frisby.Create("delete channel").Delete(GetChannelPath(chId)).SetHeader("Authentication", authStr()).Send()
+	f.ExpectStatus(http.StatusOK)
+}
+
 func CreateWsConnection(chId, deviceId string, ch *Channel) *websocket.Conn {
 	u := url.URL{
 		Scheme: "ws",
@@ -59,12 +64,12 @@ func CreateWsConnection(chId, deviceId string, ch *Channel) *websocket.Conn {
 	return cli
 }
 
-func ConnectionCountPath() string {
-	return fmt.Sprintf("%s/%s", ApiServer, "admin/connections/count")
+func ConnectionCountPath(chId string) string {
+	return fmt.Sprintf("%s/admin/channels/%s/connections/count", ApiServer, chId)
 }
 
-func CheckConnectionCount() int64 {
-	f := frisby.Create("check connection count").Get(ConnectionCountPath()).
+func CheckConnectionCount(chId string) int64 {
+	f := frisby.Create("check connection count").Get(ConnectionCountPath(chId)).
 		SetHeader("Content-Type", "application/json").
 		SetHeader("Accept", "application/json").
 		SetHeader("Authentication", authStr()).
@@ -73,7 +78,7 @@ func CheckConnectionCount() int64 {
 	var count int64
 	f.ExpectStatus(http.StatusOK).
 		AfterJson(func(F *frisby.Frisby, js *simplejson.Json, err error) {
-		count, _ = js.MustMap()["count"].(json.Number).Int64()
+		count, _ = js.MustMap()[chId].(json.Number).Int64()
 	})
 	return count
 }
@@ -92,7 +97,7 @@ func TestWsConnection(t *testing.T) {
 
 	Convey("successfully ping the server and get the timestamp", t, func() {
 		cli := CreateWsConnection(chId, "abc", ch)
-		So(CheckConnectionCount(), ShouldEqual, 1)
+		So(CheckConnectionCount(chId), ShouldEqual, 1)
 		cli.SetPongHandler(func(data string) error {
 			_, err := strconv.ParseInt(data, 10, 64)
 			So(err, ShouldBeNil)
@@ -103,13 +108,13 @@ func TestWsConnection(t *testing.T) {
 		cli.ReadMessage()
 
 		cli.Close()
-		So(CheckConnectionCount(), ShouldEqual, 0)
+		So(CheckConnectionCount(chId), ShouldEqual, 0)
 	})
 
 	Convey("successfully uploads structured data and get it indexed", t, func() {
 
 		cli := CreateWsConnection(chId, "abc", ch)
-		So(CheckConnectionCount(), ShouldEqual, 1)
+		So(CheckConnectionCount(chId), ShouldEqual, 1)
 
 		tag1 := uuid.NewV4().String()
 		data := fmt.Sprintf("1|123|tag1=%s&field1=100", tag1)
@@ -124,8 +129,10 @@ func TestWsConnection(t *testing.T) {
 		So(searchRes.TotalHits(), ShouldEqual, 1)
 
 		cli.Close()
-		So(CheckConnectionCount(), ShouldEqual, 0)
+		So(CheckConnectionCount(chId), ShouldEqual, 0)
 	})
+
+	DeleteTestChannel(chId)
 
 	frisby.Global.PrintReport()
 }

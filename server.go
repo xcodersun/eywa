@@ -40,7 +40,16 @@ func main() {
 	case "serve":
 		FatalIfErr(models.InitializeDB())
 		FatalIfErr(models.InitializeIndexClient())
-		FatalIfErr(connections.InitializeCM())
+		names := make([]string, 0)
+		chs := models.Channels()
+		for _, ch := range chs {
+			name, err := ch.HashId()
+			if err != nil {
+				FatalIfErr(err)
+			}
+			names = append(names, name)
+		}
+		FatalIfErr(connections.InitializeCMs(names))
 		handlers.InitWsUpgrader()
 		serve()
 	case "migrate":

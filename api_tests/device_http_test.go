@@ -4,7 +4,7 @@ package api_tests
 
 import (
 	"fmt"
-	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/bitly/go-simplejson"
+	// "github.com/vivowares/eywa/Godeps/_workspace/src/github.com/bitly/go-simplejson"
 	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/satori/go.uuid"
 	. "github.com/vivowares/eywa/Godeps/_workspace/src/github.com/smartystreets/goconvey/convey"
 	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/verdverm/frisby"
@@ -39,25 +39,9 @@ func TestHttpConnection(t *testing.T) {
 
 	InitializeIndexClient()
 
-	Convey("successfully uploads the structed data and indexed into ES via http", t, func() {
-		reqBody := Channel{
-			Name:         "test http upload",
-			Description:  "desc",
-			Tags:         []string{"tag1", "tag2"},
-			Fields:       map[string]string{"field1": "int"},
-			AccessTokens: []string{"token1"},
-		}
-		f := frisby.Create("create channel").Post(ListChannelPath()).
-			SetHeader("Content-Type", "application/json").
-			SetHeader("Accept", "application/json").
-			SetHeader("Authentication", authStr()).
-			SetJson(reqBody).Send()
+	chId, _ := CreateTestChannel()
 
-		var chId string
-		f.ExpectStatus(http.StatusCreated).
-			AfterJson(func(F *frisby.Frisby, js *simplejson.Json, err error) {
-			chId = js.MustMap()["id"].(string)
-		})
+	Convey("successfully uploads the structed data and indexed into ES via http", t, func() {
 
 		deviceId := "abc"
 		tag1 := uuid.NewV4().String()
@@ -66,7 +50,7 @@ func TestHttpConnection(t *testing.T) {
 			"tag2":   "monday",
 			"field1": 100,
 		}
-		f = frisby.Create("http upload").Post(HttpUploadPath(chId, deviceId)).
+		f := frisby.Create("http upload").Post(HttpUploadPath(chId, deviceId)).
 			SetHeader("AccessToken", "token1").SetJson(data).Send()
 		f.ExpectStatus(http.StatusOK)
 
@@ -82,25 +66,6 @@ func TestHttpConnection(t *testing.T) {
 		f := frisby.Create("disable index").SetHeader("Authentication", authStr()).
 			Put(ConfigsPath()).SetJson(map[string]interface{}{"indices": map[string]interface{}{"disable": true}}).Send()
 		f.ExpectStatus(http.StatusOK)
-
-		reqBody := Channel{
-			Name:         "test http upload2",
-			Description:  "desc",
-			Tags:         []string{"tag1", "tag2"},
-			Fields:       map[string]string{"field1": "int"},
-			AccessTokens: []string{"token1"},
-		}
-		f = frisby.Create("create channel").Post(ListChannelPath()).
-			SetHeader("Content-Type", "application/json").
-			SetHeader("Accept", "application/json").
-			SetHeader("Authentication", authStr()).
-			SetJson(reqBody).Send()
-
-		var chId string
-		f.ExpectStatus(http.StatusCreated).
-			AfterJson(func(F *frisby.Frisby, js *simplejson.Json, err error) {
-			chId = js.MustMap()["id"].(string)
-		})
 
 		deviceId := "abc"
 		tag1 := uuid.NewV4().String()
@@ -124,6 +89,8 @@ func TestHttpConnection(t *testing.T) {
 			Put(ConfigsPath()).SetJson(map[string]interface{}{"indices": map[string]interface{}{"disable": false}}).Send()
 		f.ExpectStatus(http.StatusOK)
 	})
+
+	DeleteTestChannel(chId)
 
 	frisby.Global.PrintReport()
 }

@@ -2,6 +2,8 @@ package models
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	"github.com/vivowares/eywa/Godeps/_workspace/src/gopkg.in/olivere/elastic.v3"
 	"github.com/vivowares/eywa/connections"
 	. "github.com/vivowares/eywa/utils"
@@ -27,7 +29,17 @@ type ConnectionHistory struct {
 	Duration       *int64    `json:"duration,omitempty"`
 }
 
-func FindConnectionStatus(ch *Channel, devId string, withHistory bool) *ConnectionStatus {
+func FindConnectionStatus(ch *Channel, devId string, withHistory bool) (*ConnectionStatus, error) {
+	name, err := ch.HashId()
+	if err != nil {
+		return nil, err
+	}
+
+	cm, found := connections.FindConnectionManager(name)
+	if !found {
+		return nil, errors.New(fmt.Sprintf("connection manager is not initialized for channel: %s", name))
+	}
+
 	s := &ConnectionStatus{
 		ChannelName: ch.Name,
 		Status:      "offline",
@@ -35,7 +47,7 @@ func FindConnectionStatus(ch *Channel, devId string, withHistory bool) *Connecti
 		Histories:   make([]*ConnectionHistory, 0),
 	}
 
-	conn, found := connections.FindConnection(devId)
+	conn, found := cm.FindConnection(devId)
 	if found {
 		s.Status = "online"
 		ct := conn.CreatedAt().UTC()
@@ -81,5 +93,5 @@ func FindConnectionStatus(ch *Channel, devId string, withHistory bool) *Connecti
 		}
 	}
 
-	return s
+	return s, nil
 }
