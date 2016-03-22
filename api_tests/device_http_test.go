@@ -4,7 +4,6 @@ package api_tests
 
 import (
 	"fmt"
-	// "github.com/vivowares/eywa/Godeps/_workspace/src/github.com/bitly/go-simplejson"
 	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/satori/go.uuid"
 	. "github.com/vivowares/eywa/Godeps/_workspace/src/github.com/smartystreets/goconvey/convey"
 	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/verdverm/frisby"
