@@ -2,6 +2,7 @@ package connections
 
 import (
 	"errors"
+	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/google/btree"
 	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/gorilla/websocket"
 	. "github.com/vivowares/eywa/configs"
 	"strconv"
@@ -10,11 +11,12 @@ import (
 )
 
 var closedCMErr = errors.New("connection manager is closed")
+var degree = 32
 
 type ConnectionManager struct {
 	id     string
 	closed bool
-	conns  map[string]Connection
+	conns  *btree.BTree
 	sync.Mutex
 }
 
@@ -62,13 +64,12 @@ func (cm *ConnectionManager) NewWebsocketConnection(id string, ws wsConn, h Mess
 		return nil, closedCMErr
 	}
 
-	_conn, found := cm.conns[conn.Identifier()]
+	_conn := cm.conns.ReplaceOrInsert(conn)
 
-	cm.conns[conn.Identifier()] = conn
 	cm.Unlock()
 
-	if found {
-		go _conn.close(false)
+	if _conn != nil {
+		go _conn.(Connection).close(false)
 	}
 
 	conn.start()
@@ -99,13 +100,11 @@ func (cm *ConnectionManager) NewHttpConnection(id string, httpConn *httpConn, h 
 		return nil, closedCMErr
 	}
 
-	_conn, found := cm.conns[conn.Identifier()]
-
-	cm.conns[conn.Identifier()] = conn
+	_conn := cm.conns.ReplaceOrInsert(conn)
 	cm.Unlock()
 
-	if found {
-		go _conn.close(false)
+	if _conn != nil {
+		go _conn.(Connection).close(false)
 	}
 
 	return conn, nil
@@ -115,15 +114,19 @@ func (cm *ConnectionManager) FindConnection(id string) (Connection, bool) {
 	cm.Lock()
 	defer cm.Unlock()
 
-	conn, found := cm.conns[id]
-	return conn, found
+	_conn := cm.conns.Get(&Lesser{id: id})
+	if _conn == nil {
+		return nil, false
+	}
+
+	return _conn.(Connection), true
 }
 
 func (cm *ConnectionManager) Count() int {
 	cm.Lock()
 	defer cm.Unlock()
 
-	return len(cm.conns)
+	return cm.conns.Len()
 }
 
 func (cm *ConnectionManager) close() error {
@@ -137,12 +140,13 @@ func (cm *ConnectionManager) close() error {
 	cm.closed = true
 
 	var wg sync.WaitGroup
-	conns := make([]Connection, len(cm.conns))
+	conns := make([]Connection, cm.conns.Len())
 	i := 0
-	for _, conn := range cm.conns {
-		conns[i] = conn
+	cm.conns.Ascend(func(it btree.Item) bool {
+		conns[i] = it.(Connection)
 		i += 1
-	}
+		return true
+	})
 	wg.Add(len(conns))
 
 	cm.Unlock()
@@ -164,7 +168,7 @@ func (cm *ConnectionManager) unregister(c Connection) {
 	cm.Lock()
 	defer cm.Unlock()
 
-	delete(cm.conns, c.Identifier())
+	cm.conns.Delete(&Lesser{id: c.Identifier()})
 }
 
 func (cm *ConnectionManager) Closed() bool {

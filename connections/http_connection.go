@@ -2,6 +2,8 @@ package connections
 
 import (
 	"errors"
+	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/google/btree"
+	"strings"
 	"sync"
 	"time"
 )
@@ -75,6 +77,11 @@ func (c *HttpConnection) Closed() bool { return c.closed }
 func (c *HttpConnection) LastPingedAt() time.Time { return c.createdAt }
 
 func (c *HttpConnection) ConnectionManager() *ConnectionManager { return c.cm }
+
+func (c *HttpConnection) Less(than btree.Item) bool {
+	conn := than.(Connection)
+	return strings.Compare(c.identifier, conn.Identifier()) < 0
+}
 
 func (c *HttpConnection) Poll(dur time.Duration) []byte {
 	defer c.close(true)

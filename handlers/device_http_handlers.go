@@ -6,11 +6,8 @@ import (
 	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/zenazn/goji/web/middleware"
 	. "github.com/vivowares/eywa/configs"
 	. "github.com/vivowares/eywa/connections"
-	. "github.com/vivowares/eywa/message_handlers"
 	. "github.com/vivowares/eywa/utils"
-	"io/ioutil"
 	"net/http"
-	"strconv"
 	"strings"
 	"time"
 )
@@ -38,12 +35,11 @@ func HttpPushHandler(c web.C, w http.ResponseWriter, r *http.Request) {
 	cm, found := FindConnectionManager(c.URLParams["channel_id"])
 	if !found {
 		Render.JSON(w, http.StatusInternalServerError, map[string]string{
-			"error": fmt.Sprintf("connection manager is not initialized for channel: %s", c.URLParams["channel_id"]),
+			"error": fmt.Sprintf("connection manager is not initialized for channel %s", c.URLParams["channel_id"]),
 		})
 		return
 	}
 
-	h := messageHandler(ch)
 	meta := QueryToMap(r.URL.Query())
 	meta["ip"] = strings.Split(r.RemoteAddr, ":")[0]
 	meta["request_id"] = c.Env[middleware.RequestIDKey].(string)
@@ -54,7 +50,7 @@ func HttpPushHandler(c web.C, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	httpConn, err := cm.NewHttpConnection(deviceId, conn, h, meta)
+	_, err = cm.NewHttpConnection(deviceId, conn, messageHandler(ch), meta)
 	if err != nil {
 		Render.JSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
 		return
@@ -89,12 +85,12 @@ func HttpLongPollingHandler(c web.C, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h := messageHandler(ch)
 	meta := QueryToMap(r.URL.Query())
 
 	timeout := Config().Connections.Http.Timeouts.LongPolling.Duration
 	if timeoutStr, found := meta["timeout"]; found {
 		delete(meta, "timeout")
+		var err error
 		timeout, err = time.ParseDuration(timeoutStr)
 		if err != nil {
 			Render.JSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
@@ -105,13 +101,13 @@ func HttpLongPollingHandler(c web.C, w http.ResponseWriter, r *http.Request) {
 	meta["ip"] = strings.Split(r.RemoteAddr, ":")[0]
 	meta["request_id"] = c.Env[middleware.RequestIDKey].(string)
 
-	conn, err := HttpUp.Upgrade(w, r, HttpPush)
+	conn, err := HttpUp.Upgrade(w, r, HttpPoll)
 	if err != nil {
 		Render.JSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
 		return
 	}
 
-	httpConn, err := cm.NewHttpConnection(deviceId, conn, h, meta)
+	httpConn, err := cm.NewHttpConnection(deviceId, conn, messageHandler(ch), meta)
 	if err != nil {
 		Render.JSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
 		return

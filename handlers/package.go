@@ -1,19 +1,19 @@
 package handlers
 
 import (
+	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/zenazn/goji/web"
 	. "github.com/vivowares/eywa/connections"
 	. "github.com/vivowares/eywa/message_handlers"
-	. "github.com/vivowares/eywa/models"
-	. "github.com/vivowares/eywa/utils"
+	"github.com/vivowares/eywa/models"
 )
 
-func findCachedChannel(c web.C, idName string) (*Channel, bool) {
-	id := DecodeHashId(c.URLParams[idName])
-	ch, found := FetchCachedChannelById(id)
+func findCachedChannel(c web.C, idName string) (*models.Channel, bool) {
+	id := models.DecodeHashId(c.URLParams[idName])
+	ch, found := models.FetchCachedChannelById(id)
 	return ch, found
 }
 
-func messageHandler(ch *Channel) MessageHandler {
+func messageHandler(ch *models.Channel) MessageHandler {
 	md := NewMiddlewareStack()
 	for _, hStr := range ch.MessageHandlers {
 		if m, found := SupportedMessageHandlers[hStr]; found {

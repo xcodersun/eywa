@@ -13,6 +13,15 @@ const (
 	TypeDisconnectMessage MessageType = 9
 )
 
+var SupportedMessageTypes = map[MessageType]string{
+	TypeUploadMessage:     "upload",
+	TypeResponseMessage:   "response",
+	TypeSendMessage:       "send",
+	TypeRequestMessage:    "request",
+	TypeConnectMessage:    "connect",
+	TypeDisconnectMessage: "disconnect",
+}
+
 type Message interface {
 	Type() MessageType
 	TypeString() string

@@ -34,6 +34,10 @@ type websocketMessage struct {
 	raw     []byte
 }
 
+func NewWebsocketMessage(t MessageType, id string, payload []byte, raw []byte) *websocketMessage {
+	return &websocketMessage{_type: t, id: id, payload: payload, raw: raw}
+}
+
 func (m *websocketMessage) TypeString() string { return SupportedWebsocketMessageTypes[m._type] }
 func (m *websocketMessage) Type() MessageType  { return m._type }
 func (m *websocketMessage) Id() string         { return m.id }

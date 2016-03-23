@@ -3,6 +3,7 @@ package connections
 import (
 	"errors"
 	"fmt"
+	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/google/btree"
 	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/gorilla/websocket"
 	. "github.com/vivowares/eywa/configs"
 	"io/ioutil"
@@ -84,7 +85,7 @@ func CloseCMs() {
 }
 
 func NewConnectionManager(id string) (*ConnectionManager, error) {
-	cm := &ConnectionManager{id: id, conns: make(map[string]Connection)}
+	cm := &ConnectionManager{id: id, conns: btree.New(degree)}
 
 	cmLock.Lock()
 	defer cmLock.Unlock()

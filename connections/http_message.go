@@ -20,6 +20,10 @@ type httpMessage struct {
 	raw   []byte
 }
 
+func NewHttpMessage(t MessageType, id string, raw []byte) *httpMessage {
+	return &httpMessage{_type: t, id: id, raw: raw}
+}
+
 func (m *httpMessage) TypeString() string { return SupportedHttpMessageTypes[m._type] }
 func (m *httpMessage) Type() MessageType  { return m._type }
 func (m *httpMessage) Id() string         { return m.id }

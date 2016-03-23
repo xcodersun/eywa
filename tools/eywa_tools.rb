@@ -9,7 +9,7 @@ SupportedTasks = [
   'delete-channel', 'show-channel', 'connection-counts',
   'connection-status', 'show-settings', 'update-settings',
   'send-to-connection', 'request-to-connection', 'query-value',
-  'query-series', 'query-raw'
+  'query-series', 'query-raw', 'query-connections'
 ]
 
 def parse_opts(args)
@@ -737,6 +737,49 @@ def query_raw(opt)
   end
 end
 
+def query_connections(opt)
+  channel_id = get_option(opt, :channel_id, false, Proc.new{|opt| list_channels(opt)})
+  params = {
+    size: get_option(opt, :size, true),
+    connection_type: get_option(opt, :connection_type, true),
+    online: get_option(opt, :online, true),
+    time_range: get_option(opt, :time_range, true),
+  }.delete_if{|_, v| v.length == 0}
+
+  puts "Please review your query:"
+  puts JSON.pretty_generate(params)
+  puts "Press enter to continue, or Ctrl-C to abort"
+  gets
+
+  code = nil
+  resp = nil
+  uri = URI("http#{opt[:use_ssl] ? 's': ""}://#{opt[:host]}:#{opt[:port]}/admin/channels/#{channel_id}/connections")
+  uri.query = URI.encode_www_form(params)
+  begin
+    Net::HTTP.start(uri.host, uri.port, :use_ssl => uri.scheme == 'https', :verify_mode => OpenSSL::SSL::VERIFY_NONE) do |http|
+      http.read_timeout = 3600
+      request = Net::HTTP::Get.new uri
+      request.add_field('Authentication', opt[:auth_token])
+
+      response = http.request request
+      code = response.code
+      resp = response.body
+    end
+  rescue => e
+    puts e.message
+  end
+
+  if code.to_i != 200
+    puts resp
+    puts 'Failed to query connections.'
+    print_wiki_query
+    exit 1
+  end
+
+  print_response(resp)
+  puts 'Successfully queried connections!'
+end
+
 Signal.trap("INT") {
   puts "\nTask aborted."
   exit 1
@@ -770,6 +813,8 @@ when 'query-series'
   query_series(options)
 when 'query-raw'
   query_raw(options)
+when 'query-connections'
+  query_connections(options)
 when 'send-to-connection'
   send_to_connection(options)
 when 'request-to-connection'

@@ -63,7 +63,7 @@ func TestAdminToDevice(t *testing.T) {
 		So(rcvMsgType, ShouldEqual, websocket.BinaryMessage)
 		strs := strings.Split(string(rcvData), "|")
 		So(strs[len(strs)-1], ShouldEqual, fmt.Sprintf("{\"test\":\"%s\"}", message))
-		So(strs[0], ShouldEqual, strconv.Itoa(TypeSendMessage))
+		So(strs[0], ShouldEqual, strconv.Itoa(int(TypeSendMessage)))
 
 		wg.Wait()
 		cli.Close()
@@ -79,18 +79,15 @@ func TestAdminToDevice(t *testing.T) {
 		var rcvData []byte
 		var rcvMsgType int
 		var rcvErr error
-		var sendMsgType int
+		var sendMsgType MessageType
 		go func() {
 			cli.SetReadDeadline(time.Now().Add(2 * time.Second))
 			rcvMsgType, rcvData, rcvErr = cli.ReadMessage()
-			msg, _ := Unmarshal(rcvData)
-			rcvMessage = string(msg.Payload)
-			sendMsgType = msg.MessageType
-			msg = &Message{
-				MessageType: TypeResponseMessage,
-				MessageId:   msg.MessageId,
-				Payload:     []byte(respMsg),
-			}
+			msg := NewWebsocketMessage(TypeRequestMessage, "", nil, rcvData)
+			msg.Unmarshal()
+			rcvMessage = string(msg.Payload())
+			sendMsgType = msg.Type()
+			msg = NewWebsocketMessage(TypeResponseMessage, msg.Id(), []byte(respMsg), nil)
 			p, _ := msg.Marshal()
 			cli.WriteMessage(websocket.BinaryMessage, p)
 		}()

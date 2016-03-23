@@ -3,11 +3,13 @@ package connections
 import (
 	"errors"
 	"fmt"
+	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/google/btree"
 	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/gorilla/websocket"
 	. "github.com/vivowares/eywa/configs"
 	"io"
 	"net"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 )
@@ -113,6 +115,11 @@ func (c *WebsocketConnection) Closed() bool { return c.closed }
 func (c *WebsocketConnection) Metadata() map[string]string { return c.metadata }
 
 func (c *WebsocketConnection) ConnectionManager() *ConnectionManager { return c.cm }
+
+func (c *WebsocketConnection) Less(than btree.Item) bool {
+	conn := than.(Connection)
+	return strings.Compare(c.identifier, conn.Identifier()) < 0
+}
 
 func (c *WebsocketConnection) Send(msg []byte) error {
 	return c.sendAsyncMessage(TypeSendMessage, msg)

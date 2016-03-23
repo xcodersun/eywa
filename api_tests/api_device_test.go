@@ -67,7 +67,7 @@ func TestApiToDevice(t *testing.T) {
 		So(rcvMsgType, ShouldEqual, websocket.BinaryMessage)
 		strs := strings.Split(string(rcvData), "|")
 		So(strs[len(strs)-1], ShouldEqual, fmt.Sprintf("{\"test\":\"%s\"}", message))
-		So(strs[0], ShouldEqual, strconv.Itoa(TypeSendMessage))
+		So(strs[0], ShouldEqual, strconv.Itoa(int(TypeSendMessage)))
 
 		wg.Wait()
 		cli.Close()
@@ -83,18 +83,15 @@ func TestApiToDevice(t *testing.T) {
 		var rcvData []byte
 		var rcvMsgType int
 		var rcvErr error
-		var sendMsgType int
+		var sendMsgType MessageType
 		go func() {
 			cli.SetReadDeadline(time.Now().Add(2 * time.Second))
 			rcvMsgType, rcvData, rcvErr = cli.ReadMessage()
-			msg, _ := Unmarshal(rcvData)
-			rcvMessage = string(msg.Payload)
-			sendMsgType = msg.MessageType
-			msg = &Message{
-				MessageType: TypeResponseMessage,
-				MessageId:   msg.MessageId,
-				Payload:     []byte(respMsg),
-			}
+			msg := NewWebsocketMessage(TypeRequestMessage, "", nil, rcvData)
+			msg.Unmarshal()
+			rcvMessage = string(msg.Payload())
+			sendMsgType = msg.Type()
+			msg = NewWebsocketMessage(TypeResponseMessage, msg.Id(), []byte(respMsg), nil)
 			p, _ := msg.Marshal()
 			cli.WriteMessage(websocket.BinaryMessage, p)
 		}()
@@ -159,11 +156,11 @@ func TestApiToDevice(t *testing.T) {
 		time.Sleep(3 * time.Second)
 		So(response, ShouldEqual, `{"test":"message"}`)
 
-		searchRes, err := IndexClient.Search().Index("_all").Type("messages").Query(elastic.NewTermQuery("tag1", tag1)).Do()
+		searchRes, err := IndexClient.Search().Index("_all").Type(IndexTypeMessages).Query(elastic.NewTermQuery("tag1", tag1)).Do()
 		So(err, ShouldBeNil)
 		So(searchRes.TotalHits(), ShouldEqual, 1)
 
-		searchRes, err = IndexClient.Search().Index("_all").Type("activities").Query(elastic.NewTermQuery("device_id", deviceId)).Do()
+		searchRes, err = IndexClient.Search().Index("_all").Type(IndexTypeActivities).Query(elastic.NewTermQuery("device_id", deviceId)).Do()
 		So(err, ShouldBeNil)
 		So(searchRes.TotalHits(), ShouldEqual, 2)
 	})

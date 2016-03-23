@@ -1,38 +1,33 @@
 package message_handlers
 
 import (
-	"fmt"
+	"errors"
 	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/satori/go.uuid"
 	. "github.com/vivowares/eywa/configs"
 	. "github.com/vivowares/eywa/connections"
-	. "github.com/vivowares/eywa/loggers"
 	. "github.com/vivowares/eywa/models"
 )
 
-var SupportedMessageHandlers = map[string]*Middleware{"indexer": Indexer}
+var channelNotFound = errors.New("channel not found when indexing data")
 
 var Indexer = NewMiddleware("indexer", func(h MessageHandler) MessageHandler {
 	fn := func(c Connection, m Message, e error) {
-		if !Config().Indices.Disable && e == nil && m != nil {
+
+		if !Config().Indices.Disable && e == nil && m != nil && (m.Type() == TypeUploadMessage || m.Type() == TypeDisconnectMessage || m.Type() == TypeConnectMessage) {
 			if ch, found := findCachedChannel(c.ConnectionManager().Id()); found {
 				id := uuid.NewV1().String()
-				p, err := NewPoint(id, ch, c, m)
-				if err == nil {
-					p.Metadata(c.Metadata())
-					_, err := IndexClient.Index().
+				var p *Point
+				p, e = NewPoint(id, ch, c, m)
+				if e == nil {
+					_, e = IndexClient.Index().
 						Index(TimedIndexName(ch, p.Timestamp)).
 						Type(p.IndexType()).
 						Id(id).
 						BodyJson(p).
 						Do()
-					if err != nil {
-						Logger.Error(fmt.Sprintf("error indexing point, %s", err.Error()))
-					}
-				} else {
-					Logger.Error(fmt.Sprintf("error creating point, %s", err.Error()))
 				}
 			} else {
-				// TODO
+				e = channelNotFound
 			}
 		}
 

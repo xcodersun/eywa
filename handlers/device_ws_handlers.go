@@ -2,13 +2,9 @@ package handlers
 
 import (
 	"fmt"
-	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/gorilla/websocket"
 	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/zenazn/goji/web"
 	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/zenazn/goji/web/middleware"
-	. "github.com/vivowares/eywa/configs"
 	"github.com/vivowares/eywa/connections"
-	. "github.com/vivowares/eywa/message_handlers"
-	"github.com/vivowares/eywa/models"
 	. "github.com/vivowares/eywa/utils"
 	"net/http"
 	"strings"
@@ -41,8 +37,6 @@ func WsHandler(c web.C, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h := messageHandler(ch)
-
 	ws, err := connections.WsUp.Upgrade(w, r, nil)
 	if err != nil {
 		Render.JSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
@@ -53,7 +47,7 @@ func WsHandler(c web.C, w http.ResponseWriter, r *http.Request) {
 	meta["ip"] = strings.Split(r.RemoteAddr, ":")[0]
 	meta["request_id"] = c.Env[middleware.RequestIDKey].(string)
 
-	_, err = cm.NewWebsocketConnection(deviceId, ws, h, meta)
+	_, err = cm.NewWebsocketConnection(deviceId, ws, messageHandler(ch), meta)
 
 	if err != nil {
 		Render.JSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})

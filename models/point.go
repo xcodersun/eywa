@@ -30,17 +30,22 @@ type Point struct {
 // extra information about a point is mixed in here
 func (p *Point) MarshalJSON() ([]byte, error) {
 	j := make(map[string]interface{})
-	j["id"] = p.Id
 	j["device_id"] = p.conn.Identifier()
 	j["channel_name"] = p.ch.Name
-	j["timestamp"] = p.Timestamp.UTC().UnixNano() / int64(time.Millisecond)
-	j["message_type"] = p.msg.TypeString()
+	j["timestamp"] = NanoToMilli(p.Timestamp.UnixNano())
+
 	if p.msg.Type() == TypeDisconnectMessage {
+		j["activity"] = p.msg.TypeString()
+
 		if p.conn.ClosedAt().IsZero() {
 			j["duration"] = NanoToMilli(time.Now().Sub(p.conn.CreatedAt()).Nanoseconds())
 		} else {
 			j["duration"] = NanoToMilli(p.conn.ClosedAt().Sub(p.conn.CreatedAt()).Nanoseconds())
 		}
+	} else if p.msg.Type() == TypeConnectMessage {
+		j["activity"] = p.msg.TypeString()
+	} else {
+		j["message_type"] = p.msg.TypeString()
 	}
 
 	for k, v := range p.Tags {
@@ -71,9 +76,9 @@ func (p *Point) parseJson() error {
 		}
 		sec := MilliSecToSec(timestamp)
 		nano := MilliSecToNano(timestamp)
-		p.Timestamp = time.Unix(sec, nano).UTC()
+		p.Timestamp = time.Unix(sec, nano)
 	} else {
-		p.Timestamp = time.Now().UTC()
+		p.Timestamp = time.Now()
 	}
 
 	p.Tags = make(map[string]string)
@@ -92,13 +97,6 @@ func (p *Point) parseJson() error {
 	for fieldName, fieldType := range p.ch.Fields {
 		if fieldValue, found := jsonValues[fieldName]; found {
 			switch fieldType {
-			case "string":
-				var v string
-				err := json.Unmarshal(fieldValue, &v)
-				if err != nil {
-					return err
-				}
-				p.Fields[fieldName] = v
 			case "int":
 				var v int64
 				err := json.Unmarshal(fieldValue, &v)
@@ -140,9 +138,9 @@ func (p *Point) parseUrl() error {
 		}
 		sec := MilliSecToSec(timestamp)
 		nano := MilliSecToNano(timestamp)
-		p.Timestamp = time.Unix(sec, nano).UTC()
+		p.Timestamp = time.Unix(sec, nano)
 	} else {
-		p.Timestamp = time.Now().UTC()
+		p.Timestamp = time.Now()
 	}
 
 	p.Tags = make(map[string]string)
@@ -156,8 +154,6 @@ func (p *Point) parseUrl() error {
 	for fieldName, fieldType := range p.ch.Fields {
 		if fieldValue := urlValues.Get(fieldName); len(fieldValue) > 0 {
 			switch fieldType {
-			case "string":
-				p.Fields[fieldName] = fieldValue
 			case "int":
 				v, err := strconv.ParseInt(fieldValue, 10, 64)
 				if err != nil {
@@ -217,6 +213,8 @@ func NewPoint(id string, ch *Channel, conn Connection, m Message) (*Point, error
 	if err != nil {
 		return nil, err
 	}
+
+	p.Metadata(conn.Metadata())
 	return p, nil
 }
 
