@@ -1,34 +1,54 @@
 package connections
 
 import (
+	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/satori/go.uuid"
 	. "github.com/vivowares/eywa/Godeps/_workspace/src/github.com/smartystreets/goconvey/convey"
-	. "github.com/vivowares/eywa/configs"
-	. "github.com/vivowares/eywa/utils"
+	"sync"
 	"testing"
-	"time"
 )
 
 func TestHttpConnection(t *testing.T) {
 
-	SetConfig(&Conf{
-		Connections: &ConnectionsConf{
-			Registry:      "memory",
-			NShards:       2,
-			InitShardSize: 8,
-			Websocket: &WsConnectionConf{
-				RequestQueueSize: 8,
-				Timeouts: &WsConnectionTimeoutConf{
-					Write:    &JSONDuration{2 * time.Second},
-					Read:     &JSONDuration{300 * time.Second},
-					Request:  &JSONDuration{1 * time.Second},
-					Response: &JSONDuration{2 * time.Second},
-				},
-				BufferSizes: &WsConnectionBufferSizeConf{
-					Write: 1024,
-					Read:  1024,
-				},
-			},
-		},
+	Convey("replacing a connection, will close the old one", t, func() {
+		cm, _ := NewConnectionManager("default")
+		defer CloseConnectionManager("default")
+
+		ch1 := make(chan []byte, 1)
+		reqId1 := uuid.NewV4().String()
+		var wgConn sync.WaitGroup
+		var wgDisconn sync.WaitGroup
+		connected := false
+		disconnected := false
+		wgConn.Add(1)    // expect to see connect message handled
+		wgDisconn.Add(1) // expect to see disconnect message handled
+		h := func(c Connection, m *Message, e error) {
+			if m != nil {
+				if m.MessageType == TypeConnectMessage {
+					connected = true
+					wgConn.Done()
+				} else if m.MessageType == TypeDisconnectMessage {
+					disconnected = true
+					wgDisconn.Done()
+				}
+			}
+		}
+		httpConn, err := cm.NewHttpConnection("test", reqId1, ch1, h, nil)
+		So(err, ShouldBeNil)
+		wgConn.Wait()
+		So(connected, ShouldBeTrue)
+
+		//now register a new connection with the same id
+		//the old one should be closed
+		ch2 := make(chan []byte, 1)
+		reqId2 := uuid.NewV4().String()
+		_httpConn, err := cm.NewHttpConnection("test", reqId2, ch2, func(Connection, *Message, error) {}, nil)
+		So(err, ShouldBeNil)
+		So(cm.Count(), ShouldEqual, 1)
+
+		wgDisconn.Wait()
+		So(disconnected, ShouldBeTrue)
+		So(httpConn.Closed(), ShouldBeTrue)
+		So(_httpConn.Closed(), ShouldBeFalse)
 	})
 
 	Convey("sends message and closes an registered http connection", t, func() {
@@ -36,7 +56,8 @@ func TestHttpConnection(t *testing.T) {
 		defer CloseConnectionManager("default")
 
 		ch := make(chan []byte, 1)
-		_, err := cm.NewHttpConnection("test", ch, func(Connection, *Message, error) {}, nil)
+		reqId := uuid.NewV4().String()
+		_, err := cm.NewHttpConnection("test", reqId, ch, func(Connection, *Message, error) {}, nil)
 		So(err, ShouldBeNil)
 
 		httpConn, found := cm.FindConnection("test")
@@ -46,12 +67,7 @@ func TestHttpConnection(t *testing.T) {
 
 		msg := <-ch
 		So(string(msg), ShouldEqual, "message")
-
-		httpConn.Close()
-		_, found = cm.FindConnection("test")
-		So(found, ShouldBeFalse)
-
-		err = httpConn.Send([]byte("another message"))
-		So(err, ShouldNotBeNil)
+		So(httpConn.Closed(), ShouldBeTrue)
+		So(cm.Count(), ShouldEqual, 0)
 	})
 }

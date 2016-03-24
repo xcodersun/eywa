@@ -17,9 +17,6 @@ security:
     key_file:
   api_key: dRiftingcLouds
 connections:
-  registry: memory
-  nshards: 4
-  init_shard_size: 128
   http:
     timeouts:
       long_polling: 600s

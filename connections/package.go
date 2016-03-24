@@ -3,8 +3,6 @@ package connections
 import (
 	"errors"
 	"fmt"
-	. "github.com/vivowares/eywa/configs"
-	. "github.com/vivowares/eywa/utils"
 	"sync"
 )
 
@@ -46,24 +44,7 @@ func CloseCMs() {
 }
 
 func NewConnectionManager(name string) (*ConnectionManager, error) {
-	cm := &ConnectionManager{closed: &AtomBool{}}
-	switch Config().Connections.Registry {
-	case "memory":
-		cm.Registry = &InMemoryRegistry{}
-	default:
-		cm.Registry = &InMemoryRegistry{}
-	}
-	if err := cm.Registry.Ping(); err != nil {
-		return nil, err
-	}
-
-	cm.shards = make([]*shard, Config().Connections.NShards)
-	for i := 0; i < Config().Connections.NShards; i++ {
-		cm.shards[i] = &shard{
-			cm:    cm,
-			conns: make(map[string]Connection, Config().Connections.InitShardSize),
-		}
-	}
+	cm := &ConnectionManager{conns: make(map[string]Connection)}
 
 	cmLock.Lock()
 	defer cmLock.Unlock()

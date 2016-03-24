@@ -73,9 +73,6 @@ func ReadConfig(buf io.Reader) (*Conf, error) {
 	}
 
 	connConfig := &ConnectionsConf{
-		Registry:      v.GetString("connections.registry"),
-		NShards:       v.GetInt("connections.nshards"),
-		InitShardSize: v.GetInt("connections.init_shard_size"),
 		Http: &HttpConnectionConf{
 			Timeouts: &HttpConnectionTimeoutConf{
 				LongPolling: &JSONDuration{v.GetDuration("connections.http.timeouts.long_polling")},
@@ -253,11 +250,8 @@ type ServiceConf struct {
 }
 
 type ConnectionsConf struct {
-	Registry      string              `json:"registry" assign:"registry;;-"`
-	NShards       int                 `json:"nshards" assign:"nshards;;-"`
-	InitShardSize int                 `json:"init_shard_size" assign:"init_shard_size;;-"`
-	Http          *HttpConnectionConf `json:"http" assign:"http;;"`
-	Websocket     *WsConnectionConf   `json:"websocket" assign:"websocket;;"`
+	Http      *HttpConnectionConf `json:"http" assign:"http;;"`
+	Websocket *WsConnectionConf   `json:"websocket" assign:"websocket;;"`
 }
 
 type HttpConnectionConf struct {

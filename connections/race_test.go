@@ -2,6 +2,7 @@ package connections
 
 import (
 	"fmt"
+	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/satori/go.uuid"
 	. "github.com/vivowares/eywa/Godeps/_workspace/src/github.com/smartystreets/goconvey/convey"
 	. "github.com/vivowares/eywa/configs"
 	. "github.com/vivowares/eywa/utils"
@@ -17,9 +18,6 @@ func TestRaceConditions(t *testing.T) {
 
 	SetConfig(&Conf{
 		Connections: &ConnectionsConf{
-			Registry:      "memory",
-			NShards:       4,
-			InitShardSize: 8,
 			Websocket: &WsConnectionConf{
 				RequestQueueSize: 8,
 				Timeouts: &WsConnectionTimeoutConf{
@@ -44,7 +42,7 @@ func TestRaceConditions(t *testing.T) {
 		defer CloseConnectionManager("default")
 
 		ws := &fakeWsConn{randomErr: false}
-		conn, _ := cm.NewWebsocketConnection("test", ws, h, meta)
+		conn, _ := cm.NewWebsocketConnection("test", uuid.NewV4().String(), ws, h, meta)
 
 		concurrency := 1000
 		var wg sync.WaitGroup
@@ -71,8 +69,8 @@ func TestRaceConditions(t *testing.T) {
 		}
 
 		wg.Wait()
-		conn.Close()
-		conn.Wait()
+		conn.close(true)
+		conn.wait()
 		So(cm.Count(), ShouldEqual, 0)
 
 		So(ws.closed, ShouldBeTrue)
@@ -90,7 +88,7 @@ func TestRaceConditions(t *testing.T) {
 		cm, _ := NewConnectionManager("default")
 
 		ws := &fakeWsConn{randomErr: false}
-		conn, _ := cm.NewWebsocketConnection("test", ws, h, meta)
+		conn, _ := cm.NewWebsocketConnection("test", uuid.NewV4().String(), ws, h, meta)
 
 		concurrency := 1000
 		errs := make([]error, concurrency)
@@ -130,7 +128,7 @@ func TestRaceConditions(t *testing.T) {
 		wg.Add(concurrency)
 		for i := 0; i < concurrency; i++ {
 			go func(iter int) {
-				cm.NewWebsocketConnection("test"+strconv.Itoa(iter), wss[iter], h, meta)
+				cm.NewWebsocketConnection("test"+strconv.Itoa(iter), uuid.NewV4().String(), wss[iter], h, meta)
 				wg.Done()
 			}(i)
 		}
@@ -162,7 +160,7 @@ func TestRaceConditions(t *testing.T) {
 		for i := 0; i < concurrency; i++ {
 			go func(iter int) {
 				time.Sleep(time.Duration(rand.Intn(500)) * time.Millisecond)
-				conn, err := cm.NewWebsocketConnection("test"+strconv.Itoa(iter), wss[iter], h, meta)
+				conn, err := cm.NewWebsocketConnection("test"+strconv.Itoa(iter), uuid.NewV4().String(), wss[iter], h, meta)
 				conns[iter] = conn
 				errs[iter] = err
 				switch rand.Intn(3) {
@@ -180,7 +178,6 @@ func TestRaceConditions(t *testing.T) {
 		CloseConnectionManager("default")
 		So(cm.Count(), ShouldEqual, 0)
 
-		time.Sleep(time.Duration(1+rand.Intn(3)) * time.Second)
 		wg.Wait()
 		allClosed := true
 		for i, ws := range wss {
@@ -203,7 +200,7 @@ func TestRaceConditions(t *testing.T) {
 		wg.Add(concurrency)
 		for i := 0; i < concurrency; i++ {
 			go func(iter int) {
-				cm.NewHttpConnection("test"+strconv.Itoa(iter), chs[iter], func(Connection, *Message, error) {}, nil)
+				cm.NewHttpConnection("test"+strconv.Itoa(iter), uuid.NewV4().String(), chs[iter], func(Connection, *Message, error) {}, nil)
 				wg.Done()
 			}(i)
 		}
@@ -250,7 +247,7 @@ func TestRaceConditions(t *testing.T) {
 		So(len(connManagers), ShouldEqual, 0)
 		allClosed := true
 		for _, cm := range cms {
-			if cm != nil && cm.closed.Get() != true {
+			if cm != nil && cm.Closed() != true {
 				allClosed = false
 			}
 		}

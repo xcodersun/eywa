@@ -3,6 +3,7 @@ package handlers
 import (
 	"fmt"
 	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/zenazn/goji/web"
+	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/zenazn/goji/web/middleware"
 	. "github.com/vivowares/eywa/configs"
 	. "github.com/vivowares/eywa/connections"
 	. "github.com/vivowares/eywa/message_handlers"
@@ -51,7 +52,7 @@ func HttpPushHandler(c web.C, w http.ResponseWriter, r *http.Request) {
 			"error": fmt.Sprintf("connection manager is not initialized for channel: %s", c.URLParams["channel_id"]),
 		})
 	}
-	httpConn, err := cm.NewHttpConnection(deviceId, nil, h, map[string]interface{}{
+	httpConn, err := cm.NewHttpConnection(deviceId, c.Env[middleware.RequestIDKey].(string), nil, h, map[string]interface{}{
 		"channel":  ch,
 		"metadata": meta,
 	})
@@ -118,7 +119,7 @@ func HttpLongPollingHandler(c web.C, w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	httpConn, err := cm.NewHttpConnection(deviceId, pollCh, h, map[string]interface{}{
+	httpConn, err := cm.NewHttpConnection(deviceId, c.Env[middleware.RequestIDKey].(string), pollCh, h, map[string]interface{}{
 		"channel":  ch,
 		"metadata": meta,
 	})
@@ -127,7 +128,6 @@ func HttpLongPollingHandler(c web.C, w http.ResponseWriter, r *http.Request) {
 		Render.JSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
 		return
 	}
-	defer httpConn.Close()
 
 	payload, err := ioutil.ReadAll(r.Body)
 	if err != nil {

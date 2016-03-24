@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/gorilla/websocket"
 	. "github.com/vivowares/eywa/configs"
-	. "github.com/vivowares/eywa/loggers"
 	"io"
 	"net"
 	"strconv"
@@ -77,11 +76,12 @@ type wsConn interface {
 }
 
 type WebsocketConnection struct {
-	shard        *shard
+	cm           *ConnectionManager
 	ws           wsConn
 	createdAt    time.Time
 	lastPingedAt time.Time
 	closedAt     time.Time
+	requestId    string
 	identifier   string
 	h            MessageHandler
 	metadata     map[string]interface{}
@@ -100,6 +100,8 @@ type WebsocketConnection struct {
 	closewch chan bool        // size=1
 	rch      chan struct{}    // size=0
 }
+
+func (c *WebsocketConnection) RequestId() string { return c.requestId }
 
 func (c *WebsocketConnection) Identifier() string { return c.identifier }
 
@@ -224,7 +226,7 @@ func (c *WebsocketConnection) wListen() {
 				}
 
 				if _, ok := err.(*WebsocketError); ok {
-					c.Close()
+					c.close(true)
 				}
 			} else {
 				if req.msg.MessageType == TypeRequestMessage {
@@ -278,7 +280,6 @@ func (c *WebsocketConnection) readWsMessage() (*Message, error) {
 	}
 
 	c.lastPingedAt = time.Now()
-	// c.shard.updateRegistry(c)
 
 	if messageType == websocket.CloseMessage {
 		return &Message{
@@ -298,54 +299,54 @@ func (c *WebsocketConnection) rListen() {
 		default:
 			message, err := c.readWsMessage()
 			if err != nil {
-				c.h(c, nil, err)
+				go c.h(c, nil, err)
 				if _, ok := err.(*WebsocketError); ok {
-					c.Close()
+					c.close(true)
 					return
 				}
 			} else if message.MessageType == TypeDisconnectMessage {
-				c.Close()
+				c.close(true)
 				return
 			} else if message.MessageType == TypeResponseMessage {
 				ch, found := c.msgChans.find(message.MessageId)
 				if found {
 					c.msgChans.delete(message.MessageId)
 					ch <- &MessageResp{msg: message}
-					c.h(c, message, nil)
+					go c.h(c, message, nil)
 				} else {
-					c.h(c, message, wsUnexpectedMessageErr)
+					go c.h(c, message, wsUnexpectedMessageErr)
 				}
 			} else {
-				c.h(c, message, nil)
+				go c.h(c, message, nil)
 			}
 		}
 	}
 }
 
-func (c *WebsocketConnection) Close() error {
+func (c *WebsocketConnection) close(unregister bool) error {
 	c.closeOnce.Do(func() {
 		c.closed = true
 		c.closedAt = time.Now()
 		close(c.wch)
 		close(c.rch)
 		c.closewch <- true
-		c.shard.unregister(c)
-		Logger.Debug(fmt.Sprintf("websocket connection: %s closed", c.Identifier()))
-		c.h(c, &Message{MessageType: TypeDisconnectMessage}, nil)
+		if unregister {
+			c.cm.unregister(c)
+		}
+		go c.h(c, &Message{MessageType: TypeDisconnectMessage}, nil)
 	})
 	return nil
 }
 
-func (c *WebsocketConnection) Wait() {
+func (c *WebsocketConnection) wait() {
 	c.wg.Wait()
 }
 
-func (c *WebsocketConnection) Start() {
+func (c *WebsocketConnection) start() {
 	c.wg.Add(2)
 	go c.rListen()
 	go c.wListen()
-	Logger.Debug(fmt.Sprintf("websocket connection: %s started", c.Identifier()))
-	c.h(c, &Message{MessageType: TypeConnectMessage}, nil)
+	go c.h(c, &Message{MessageType: TypeConnectMessage}, nil)
 }
 
 func (c *WebsocketConnection) ConnectionType() string {

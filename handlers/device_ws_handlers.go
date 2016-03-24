@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/gorilla/websocket"
 	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/zenazn/goji/web"
+	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/zenazn/goji/web/middleware"
 	. "github.com/vivowares/eywa/configs"
 	"github.com/vivowares/eywa/connections"
 	. "github.com/vivowares/eywa/message_handlers"
@@ -65,7 +66,7 @@ func WsHandler(c web.C, w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	_, err = cm.NewWebsocketConnection(deviceId, ws, h, map[string]interface{}{
+	_, err = cm.NewWebsocketConnection(deviceId, c.Env[middleware.RequestIDKey].(string), ws, h, map[string]interface{}{
 		"channel":  ch,
 		"metadata": meta,
 	})

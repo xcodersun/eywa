@@ -16,11 +16,6 @@ func TestChannel(t *testing.T) {
 	dbFile := path.Join(pwd, "eywa_test.db")
 
 	SetConfig(&Conf{
-		Connections: &ConnectionsConf{
-			Registry:      "memory",
-			NShards:       4,
-			InitShardSize: 16,
-		},
 		Database: &DbConf{
 			DbType: "sqlite3",
 			DbFile: dbFile,

@@ -105,10 +105,6 @@
 			"Rev": "530dd3d2cafa09958178e8c557bc4abeea1651a5"
 		},
 		{
-			"ImportPath": "github.com/spaolacci/murmur3",
-			"Rev": "0d12bf811670bf6a1a63828dfbd003eded177fce"
-		},
-		{
 			"ImportPath": "github.com/speps/go-hashids",
 			"Rev": "3bd0a9294bb4972b68fdbde49dd81864932fc8a2"
 		},

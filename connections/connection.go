@@ -5,10 +5,9 @@ import (
 )
 
 type Connection interface {
+	RequestId() string
 	Identifier() string
-	Close() error
 	Closed() bool
-	Wait()
 	ConnectionType() string
 	CreatedAt() time.Time
 	ClosedAt() time.Time
@@ -16,5 +15,8 @@ type Connection interface {
 	Metadata() map[string]interface{}
 	MessageHandler() MessageHandler
 	Send([]byte) error
-	Start()
+
+	start()
+	close(bool) error
+	wait()
 }

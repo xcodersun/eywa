@@ -20,7 +20,6 @@
 |github.com/satori/go.uuid|https://github.com/satori/go.uuid/blob/master/LICENSE|
 |github.com/smartystreets/assertions|https://github.com/smartystreets/assertions/blob/master/LICENSE.md|
 |github.com/smartystreets/goconvey/convey|https://github.com/smartystreets/goconvey/blob/master/LICENSE.md|
-|github.com/spaolacci/murmur3|https://github.com/spaolacci/murmur3/blob/master/LICENSE|
 |github.com/spf13/cast|https://github.com/spf13/cast/blob/master/LICENSE|
 |github.com/spf13/jwalterweatherman|https://github.com/spf13/jwalterweatherman/blob/master/LICENSE|
 |github.com/spf13/pflag|https://github.com/spf13/pflag/blob/master/LICENSE|

@@ -2,12 +2,8 @@ package connections
 
 import (
 	"errors"
-	"fmt"
 	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/gorilla/websocket"
-	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/spaolacci/murmur3"
 	. "github.com/vivowares/eywa/configs"
-	. "github.com/vivowares/eywa/loggers"
-	. "github.com/vivowares/eywa/utils"
 	"strconv"
 	"sync"
 	"time"
@@ -18,28 +14,19 @@ var closedCMErr = errors.New("connection manager is closed")
 var HttpCloseChan = make(chan struct{})
 
 type ConnectionManager struct {
-	closed   *AtomBool
-	shards   []*shard
-	Registry Registry
+	closed bool
+	conns  map[string]Connection
+	sync.Mutex
 }
 
-func (cm *ConnectionManager) NewWebsocketConnection(id string, ws wsConn, h MessageHandler, meta map[string]interface{}) (*WebsocketConnection, error) {
-	if cm.closed.Get() {
-		ws.Close()
-		return nil, closedCMErr
-	}
+func (cm *ConnectionManager) NewWebsocketConnection(id, reqId string, ws wsConn, h MessageHandler, meta map[string]interface{}) (*WebsocketConnection, error) {
 
-	hasher := murmur3.New32()
-	hasher.Write([]byte(id))
-	shard := cm.shards[hasher.Sum32()%uint32(len(cm.shards))]
-
-	t := time.Now()
 	conn := &WebsocketConnection{
-		shard:        shard,
+		cm:           cm,
 		ws:           ws,
 		identifier:   id,
-		createdAt:    t,
-		lastPingedAt: t,
+		createdAt:    time.Now(),
+		lastPingedAt: time.Now(),
 		h:            h,
 		metadata:     meta,
 
@@ -53,9 +40,6 @@ func (cm *ConnectionManager) NewWebsocketConnection(id string, ws wsConn, h Mess
 
 	ws.SetPingHandler(func(payload string) error {
 		conn.lastPingedAt = time.Now()
-		// conn.shard.updateRegistry(conn)
-		Logger.Debug(fmt.Sprintf("websocket connection: %s pinged", id))
-
 		//extend the read deadline after each ping
 		err := ws.SetReadDeadline(time.Now().Add(Config().Connections.Websocket.Timeouts.Read.Duration))
 		if err != nil {
@@ -68,20 +52,33 @@ func (cm *ConnectionManager) NewWebsocketConnection(id string, ws wsConn, h Mess
 			time.Now().Add(Config().Connections.Websocket.Timeouts.Write.Duration))
 	})
 
-	if err := shard.register(conn); err != nil {
+	cm.Lock()
+
+	if cm.closed {
 		ws.WriteControl(websocket.CloseMessage, []byte{}, time.Now().Add(Config().Connections.Websocket.Timeouts.Write.Duration))
 		ws.Close()
-		return nil, err
+		cm.Unlock()
+		return nil, closedCMErr
 	}
 
-	conn.Start()
+	_conn, found := cm.conns[conn.Identifier()]
+
+	cm.conns[conn.Identifier()] = conn
+	cm.Unlock()
+
+	if found {
+		go _conn.close(false)
+	}
+
+	conn.start()
 
 	return conn, nil
 }
 
-func (cm *ConnectionManager) NewHttpConnection(id string, ch chan []byte, h MessageHandler, meta map[string]interface{}) (*HttpConnection, error) {
+func (cm *ConnectionManager) NewHttpConnection(id, reqId string, ch chan []byte, h MessageHandler, meta map[string]interface{}) (*HttpConnection, error) {
 	if ch == nil {
 		return &HttpConnection{
+			requestId:  reqId,
 			identifier: id,
 			h:          h,
 			metadata:   meta,
@@ -89,61 +86,92 @@ func (cm *ConnectionManager) NewHttpConnection(id string, ch chan []byte, h Mess
 		}, nil
 	}
 
-	if cm.closed.Get() {
-		close(ch)
-		return nil, closedCMErr
-	}
-
-	hasher := murmur3.New32()
-	hasher.Write([]byte(id))
-	shard := cm.shards[hasher.Sum32()%uint32(len(cm.shards))]
-
-	t := time.Now()
 	conn := &HttpConnection{
+		requestId:  reqId,
 		identifier: id,
 		h:          h,
 		ch:         ch,
 		metadata:   meta,
-		createdAt:  t,
-		shard:      shard,
+		createdAt:  time.Now(),
+		cm:         cm,
 	}
 
-	if err := shard.register(conn); err != nil {
+	cm.Lock()
+	if cm.closed {
+		cm.Unlock()
 		close(ch)
-		return nil, err
+		return nil, closedCMErr
 	}
 
-	conn.Start()
+	_conn, found := cm.conns[conn.Identifier()]
 
+	cm.conns[conn.Identifier()] = conn
+	cm.Unlock()
+
+	if found {
+		go _conn.close(false)
+	}
+
+	conn.start()
 	return conn, nil
 }
 
 func (cm *ConnectionManager) FindConnection(id string) (Connection, bool) {
-	hasher := murmur3.New32()
-	hasher.Write([]byte(id))
-	shard := cm.shards[hasher.Sum32()%uint32(len(cm.shards))]
-	return shard.findConnection(id)
+	cm.Lock()
+	defer cm.Unlock()
+
+	conn, found := cm.conns[id]
+	return conn, found
 }
 
 func (cm *ConnectionManager) Count() int {
-	sum := 0
-	for _, sh := range cm.shards {
-		sum += sh.count()
-	}
-	return sum
+	cm.Lock()
+	defer cm.Unlock()
+
+	return len(cm.conns)
 }
 
 func (cm *ConnectionManager) close() error {
-	cm.closed.Set(true)
+	cm.Lock()
+
+	if cm.closed {
+		cm.Unlock()
+		return nil
+	}
+
+	cm.closed = true
 
 	var wg sync.WaitGroup
-	wg.Add(len(cm.shards))
-	for _, sh := range cm.shards {
-		go func(s *shard) {
-			s.Close()
-			wg.Done()
-		}(sh)
+	conns := make([]Connection, len(cm.conns))
+	i := 0
+	for _, conn := range cm.conns {
+		conns[i] = conn
+		i += 1
 	}
+	wg.Add(len(conns))
+
+	cm.Unlock()
+
+	for _, conn := range conns {
+		go func(c Connection) {
+			c.close(true)
+			c.wait()
+			wg.Done()
+		}(conn)
+	}
+
 	wg.Wait()
-	return cm.Registry.Close()
+
+	return nil
+}
+
+func (cm *ConnectionManager) unregister(c Connection) {
+	cm.Lock()
+	defer cm.Unlock()
+
+	delete(cm.conns, c.Identifier())
+}
+
+func (cm *ConnectionManager) Closed() bool {
+	return cm.closed
 }
