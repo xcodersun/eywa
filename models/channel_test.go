@@ -104,6 +104,11 @@ func TestChannel(t *testing.T) {
 		err = c.Create()
 		So(err.Error(), ShouldContainSubstring, "duplicate tag name")
 
+		c.Tags[0] = InternalTags[0]
+		err = c.Create()
+		So(err.Error(), ShouldContainSubstring, "used internal tags")
+
+		c.Tags[0] = "tag0"
 		c.Tags[1] = "tag1"
 		c.Fields = map[string]string{}
 		err = c.Create()

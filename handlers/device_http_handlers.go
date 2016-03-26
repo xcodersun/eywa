@@ -35,48 +35,29 @@ func HttpPushHandler(c web.C, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	md := NewMiddlewareStack()
-	for _, hStr := range ch.MessageHandlers {
-		if m, found := SupportedMessageHandlers[hStr]; found {
-			md.Use(m)
-		}
-	}
-	h := md.Chain(nil)
-
-	meta := QueryToMap(r.URL.Query())
-	meta["_ip"] = strings.Split(r.RemoteAddr, ":")[0]
-
 	cm, found := FindConnectionManager(c.URLParams["channel_id"])
 	if !found {
 		Render.JSON(w, http.StatusInternalServerError, map[string]string{
 			"error": fmt.Sprintf("connection manager is not initialized for channel: %s", c.URLParams["channel_id"]),
 		})
+		return
 	}
-	httpConn, err := cm.NewHttpConnection(deviceId, c.Env[middleware.RequestIDKey].(string), nil, h, map[string]interface{}{
-		"channel":  ch,
-		"metadata": meta,
-	})
 
+	h := messageHandler(ch)
+	meta := QueryToMap(r.URL.Query())
+	meta["ip"] = strings.Split(r.RemoteAddr, ":")[0]
+	meta["request_id"] = c.Env[middleware.RequestIDKey].(string)
+
+	conn, err := HttpUp.Upgrade(w, r, HttpPush)
 	if err != nil {
 		Render.JSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
 		return
 	}
 
-	payload, err := ioutil.ReadAll(r.Body)
+	httpConn, err := cm.NewHttpConnection(deviceId, conn, h, meta)
 	if err != nil {
-		Render.JSON(w, http.StatusBadRequest, map[string]string{"error": "invalid payload"})
+		Render.JSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
 		return
-	}
-
-	if len(payload) > 0 {
-		msgId := strconv.FormatInt(time.Now().UnixNano(), 16)
-		msg := &Message{
-			MessageType: TypeSendMessage,
-			MessageId:   msgId,
-			Payload:     payload,
-		}
-
-		httpConn.MessageHandler()(httpConn, msg, nil)
 	}
 }
 
@@ -100,62 +81,47 @@ func HttpLongPollingHandler(c web.C, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	md := NewMiddlewareStack()
-	for _, hStr := range ch.MessageHandlers {
-		if m, found := SupportedMessageHandlers[hStr]; found {
-			md.Use(m)
-		}
-	}
-	h := md.Chain(nil)
-
-	pollCh := make(chan []byte, 1)
-	meta := QueryToMap(r.URL.Query())
-	meta["_ip"] = strings.Split(r.RemoteAddr, ":")[0]
-
 	cm, found := FindConnectionManager(c.URLParams["channel_id"])
 	if !found {
 		Render.JSON(w, http.StatusInternalServerError, map[string]string{
 			"error": fmt.Sprintf("connection manager is not initialized for channel: %s", c.URLParams["channel_id"]),
 		})
+		return
 	}
 
-	httpConn, err := cm.NewHttpConnection(deviceId, c.Env[middleware.RequestIDKey].(string), pollCh, h, map[string]interface{}{
-		"channel":  ch,
-		"metadata": meta,
-	})
+	h := messageHandler(ch)
+	meta := QueryToMap(r.URL.Query())
 
+	timeout := Config().Connections.Http.Timeouts.LongPolling.Duration
+	if timeoutStr, found := meta["timeout"]; found {
+		delete(meta, "timeout")
+		timeout, err = time.ParseDuration(timeoutStr)
+		if err != nil {
+			Render.JSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+			return
+		}
+	}
+
+	meta["ip"] = strings.Split(r.RemoteAddr, ":")[0]
+	meta["request_id"] = c.Env[middleware.RequestIDKey].(string)
+
+	conn, err := HttpUp.Upgrade(w, r, HttpPush)
 	if err != nil {
 		Render.JSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
 		return
 	}
 
-	payload, err := ioutil.ReadAll(r.Body)
+	httpConn, err := cm.NewHttpConnection(deviceId, conn, h, meta)
 	if err != nil {
-		Render.JSON(w, http.StatusBadRequest, map[string]string{"error": "invalid payload"})
+		Render.JSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
 		return
 	}
 
-	if len(payload) > 0 {
-		msgId := strconv.FormatInt(time.Now().UnixNano(), 16)
-		msg := &Message{
-			MessageType: TypeSendMessage,
-			MessageId:   msgId,
-			Payload:     payload,
-		}
+	resp := httpConn.Poll(timeout)
 
-		httpConn.MessageHandler()(httpConn, msg, nil)
-	}
-
-	select {
-	case <-HttpCloseChan:
+	if resp == nil {
 		w.WriteHeader(http.StatusNoContent)
-	case <-time.After(Config().Connections.Http.Timeouts.LongPolling.Duration):
-		w.WriteHeader(http.StatusNoContent)
-	case p, ok := <-pollCh:
-		if ok {
-			w.Write(p)
-		} else {
-			w.WriteHeader(http.StatusNoContent)
-		}
+	} else {
+		w.Write(resp)
 	}
 }

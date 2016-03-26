@@ -1,7 +1,6 @@
 package connections
 
 import (
-	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/satori/go.uuid"
 	. "github.com/vivowares/eywa/Godeps/_workspace/src/github.com/smartystreets/goconvey/convey"
 	. "github.com/vivowares/eywa/configs"
 	. "github.com/vivowares/eywa/utils"
@@ -29,12 +28,12 @@ func TestConnectionManager(t *testing.T) {
 		},
 	})
 
-	h := func(c Connection, m *Message, e error) {}
-	meta := make(map[string]interface{})
+	h := func(c Connection, m Message, e error) {}
+	meta := make(map[string]string)
 
 	Convey("creates/registers/finds new connections.", t, func() {
 		cm, _ := NewConnectionManager("default")
-		conn, _ := cm.NewWebsocketConnection("test ws", uuid.NewV4().String(), &fakeWsConn{}, h, meta) // this connection should be started and registered
+		conn, _ := cm.NewWebsocketConnection("test ws", &fakeWsConn{}, h, meta) // this connection should be started and registered
 		So(cm.Count(), ShouldEqual, 1)
 
 		// the fake ReadMessage() always return empty string, which will still keep updating the
@@ -48,7 +47,12 @@ func TestConnectionManager(t *testing.T) {
 		So(found, ShouldBeTrue)
 
 		ch := make(chan []byte, 1)
-		_, err := cm.NewHttpConnection("test http", uuid.NewV4().String(), ch, func(Connection, *Message, error) {}, nil)
+		poll := &httpConn{
+			_type: HttpPoll,
+			ch:    ch,
+			body:  []byte("poll message"),
+		}
+		_, err := cm.NewHttpConnection("test http", poll, func(Connection, Message, error) {}, nil)
 		So(err, ShouldBeNil)
 
 		httpConn, found := cm.FindConnection("test http")
@@ -69,13 +73,18 @@ func TestConnectionManager(t *testing.T) {
 		CloseConnectionManager("default")
 
 		ws := &fakeWsConn{}
-		_, err := cm.NewWebsocketConnection("test ws", uuid.NewV4().String(), ws, h, meta)
+		_, err := cm.NewWebsocketConnection("test ws", ws, h, meta)
 		So(ws.closed, ShouldBeTrue)
 		So(err, ShouldNotBeNil)
 		So(cm.Count(), ShouldEqual, 0)
 
 		ch := make(chan []byte, 1)
-		_, err = cm.NewHttpConnection("test http", uuid.NewV4().String(), ch, func(Connection, *Message, error) {}, nil)
+		poll := &httpConn{
+			_type: HttpPoll,
+			ch:    ch,
+			body:  []byte("poll message"),
+		}
+		_, err = cm.NewHttpConnection("test http", poll, func(Connection, Message, error) {}, nil)
 		So(err, ShouldNotBeNil)
 		So(err, ShouldEqual, closedCMErr)
 		So(cm.Count(), ShouldEqual, 0)

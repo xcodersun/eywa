@@ -14,15 +14,6 @@ import (
 	"strings"
 )
 
-var upgrader *websocket.Upgrader
-
-func InitWsUpgrader() {
-	upgrader = &websocket.Upgrader{
-		ReadBufferSize:  Config().Connections.Websocket.BufferSizes.Read,
-		WriteBufferSize: Config().Connections.Websocket.BufferSizes.Write,
-	}
-}
-
 func WsHandler(c web.C, w http.ResponseWriter, r *http.Request) {
 	ch, found := findCachedChannel(c, "channel_id")
 	if !found {
@@ -42,42 +33,29 @@ func WsHandler(c web.C, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	md := connections.NewMiddlewareStack()
-	for _, hStr := range ch.MessageHandlers {
-		if m, found := SupportedMessageHandlers[hStr]; found {
-			md.Use(m)
-		}
+	cm, found := connections.FindConnectionManager(c.URLParams["channel_id"])
+	if !found {
+		Render.JSON(w, http.StatusInternalServerError, map[string]string{
+			"error": fmt.Sprintf("connection manager is not initialized for channel: %s", c.URLParams["channel_id"]),
+		})
+		return
 	}
-	h := md.Chain(nil)
 
-	ws, err := upgrader.Upgrade(w, r, nil)
+	h := messageHandler(ch)
+
+	ws, err := connections.WsUp.Upgrade(w, r, nil)
 	if err != nil {
 		Render.JSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
 		return
 	}
 
 	meta := QueryToMap(r.URL.Query())
-	meta["_ip"] = strings.Split(r.RemoteAddr, ":")[0]
+	meta["ip"] = strings.Split(r.RemoteAddr, ":")[0]
+	meta["request_id"] = c.Env[middleware.RequestIDKey].(string)
 
-	cm, found := connections.FindConnectionManager(c.URLParams["channel_id"])
-	if !found {
-		Render.JSON(w, http.StatusInternalServerError, map[string]string{
-			"error": fmt.Sprintf("connection manager is not initialized for channel: %s", c.URLParams["channel_id"]),
-		})
-	}
-
-	_, err = cm.NewWebsocketConnection(deviceId, c.Env[middleware.RequestIDKey].(string), ws, h, map[string]interface{}{
-		"channel":  ch,
-		"metadata": meta,
-	})
+	_, err = cm.NewWebsocketConnection(deviceId, ws, h, meta)
 
 	if err != nil {
 		Render.JSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
 	}
-}
-
-func findCachedChannel(c web.C, idName string) (*models.Channel, bool) {
-	id := models.DecodeHashId(c.URLParams[idName])
-	ch, found := models.FetchCachedChannelById(id)
-	return ch, found
 }

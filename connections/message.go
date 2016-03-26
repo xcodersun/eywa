@@ -1,95 +1,24 @@
 package connections
 
-import (
-	"bytes"
-	"errors"
-	"fmt"
-	"strconv"
-)
+type MessageType uint8
 
 const (
-	TypeSendMessage     = 1
-	TypeRequestMessage  = 2
-	TypeResponseMessage = 4
+	TypeUploadMessage   MessageType = 1 // upstream
+	TypeRequestMessage  MessageType = 2 // downstream
+	TypeSendMessage     MessageType = 3 // downstream
+	TypeResponseMessage MessageType = 4 // upstream
 
 	// these two messages are only used for connection states internally
-	TypeConnectMessage    = 0
-	TypeDisconnectMessage = 8
+	TypeConnectMessage    MessageType = 8
+	TypeDisconnectMessage MessageType = 9
 )
 
-var emptyMsgIdErr = errors.New("empty MessageId")
-
-type Message struct {
-	MessageType int
-	MessageId   string
-	Payload     []byte
-}
-
-type MessageResp struct {
-	msg *Message
-	err error
-}
-
-type MessageReq struct {
-	msg    *Message
-	respCh chan *MessageResp
-}
-
-func (m *Message) Marshal() ([]byte, error) {
-	p := bytes.Buffer{}
-
-	_, err := p.WriteString(fmt.Sprintf("%d|%s|", m.MessageType, m.MessageId))
-	if err != nil {
-		return nil, err
-	}
-
-	_, err = p.Write(m.Payload)
-	if err != nil {
-		return nil, err
-	}
-
-	return p.Bytes(), nil
-}
-
-func Marshal(m *Message) ([]byte, error) {
-	return m.Marshal()
-}
-
-func Unmarshal(raw []byte) (*Message, error) {
-	msg := &Message{}
-	pips := 0
-	var pip1, pip2 int
-	for idx, b := range raw {
-		if b == '|' {
-			pips += 1
-			if pips == 1 {
-				pip1 = idx
-				msgType, err := strconv.Atoi(string(raw[0:idx]))
-				if err != nil {
-					return nil, err
-				} else if msgType != TypeSendMessage &&
-					msgType != TypeRequestMessage && msgType != TypeResponseMessage && msgType != TypeDisconnectMessage {
-					return nil, errors.New(fmt.Sprintf("invalid MessageType %d, raw: %s", msgType, raw))
-				} else {
-					msg.MessageType = msgType
-				}
-			} else if pips == 2 {
-				pip2 = idx
-				msg.MessageId = string(raw[pip1+1 : pip2])
-				break
-			} else {
-				break
-			}
-		}
-	}
-	if pips != 2 {
-		return nil, errors.New(fmt.Sprintf("expected 2 pips instead of %d, raw: %s", pips, raw))
-	}
-
-	if len(msg.MessageId) == 0 && msg.MessageType != TypeDisconnectMessage {
-		return nil, emptyMsgIdErr
-	}
-
-	msg.Payload = raw[pip2+1:]
-	return msg, nil
+type Message interface {
+	Type() MessageType
+	TypeString() string
+	Id() string
+	Payload() []byte
+	Raw() []byte
+	Marshal() ([]byte, error)
+	Unmarshal() error
 }

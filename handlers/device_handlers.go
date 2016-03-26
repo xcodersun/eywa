@@ -23,6 +23,7 @@ func SendToDevice(c web.C, w http.ResponseWriter, r *http.Request) {
 		Render.JSON(w, http.StatusInternalServerError, map[string]string{
 			"error": fmt.Sprintf("connection manager is not initialized for channel: %s", c.URLParams["channel_id"]),
 		})
+		return
 	}
 
 	deviceId := c.URLParams["device_id"]
@@ -56,6 +57,7 @@ func RequestToDevice(c web.C, w http.ResponseWriter, r *http.Request) {
 		Render.JSON(w, http.StatusInternalServerError, map[string]string{
 			"error": fmt.Sprintf("connection manager is not initialized for channel: %s", c.URLParams["channel_id"]),
 		})
+		return
 	}
 
 	timeout := Config().Connections.Websocket.Timeouts.Response.Duration

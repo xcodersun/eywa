@@ -5,18 +5,24 @@ import (
 )
 
 type Connection interface {
-	RequestId() string
 	Identifier() string
 	Closed() bool
 	ConnectionType() string
 	CreatedAt() time.Time
 	ClosedAt() time.Time
 	LastPingedAt() time.Time
-	Metadata() map[string]interface{}
-	MessageHandler() MessageHandler
-	Send([]byte) error
+	Metadata() map[string]string
+	ConnectionManager() *ConnectionManager
 
 	start()
 	close(bool) error
 	wait()
+}
+
+type Sender interface {
+	Send([]byte) error
+}
+
+type Requester interface {
+	Request([]byte, time.Duration) ([]byte, error)
 }

@@ -12,17 +12,13 @@ import (
 var SupportedMessageHandlers = map[string]*Middleware{"indexer": Indexer}
 
 var Indexer = NewMiddleware("indexer", func(h MessageHandler) MessageHandler {
-	fn := func(c Connection, m *Message, e error) {
-		if !Config().Indices.Disable && e == nil {
-			if chItr, found := c.Metadata()["channel"]; found {
-				ch := chItr.(*Channel)
+	fn := func(c Connection, m Message, e error) {
+		if !Config().Indices.Disable && e == nil && m != nil {
+			if ch, found := findCachedChannel(c.ConnectionManager().Id()); found {
 				id := uuid.NewV1().String()
 				p, err := NewPoint(id, ch, c, m)
 				if err == nil {
-					if meta, found := c.Metadata()["metadata"]; found && meta != nil {
-						p.Metadata(meta.(map[string]string))
-					}
-
+					p.Metadata(c.Metadata())
 					_, err := IndexClient.Index().
 						Index(TimedIndexName(ch, p.Timestamp)).
 						Type(p.IndexType()).
@@ -35,6 +31,8 @@ var Indexer = NewMiddleware("indexer", func(h MessageHandler) MessageHandler {
 				} else {
 					Logger.Error(fmt.Sprintf("error creating point, %s", err.Error()))
 				}
+			} else {
+				// TODO
 			}
 		}
 

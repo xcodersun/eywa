@@ -40,6 +40,10 @@ func logStart(reqID string, r *http.Request) {
 
 func logEnd(reqID string, w mutil.WriterProxy, dt time.Duration) {
 	status := w.Status()
+	if status == 0 {
+		status = 200
+	}
+
 	if status < 400 {
 		Logger.Info(fmt.Sprintf("[%s] Returning %03d in %s", reqID, status, dt))
 	} else if status >= 400 && status < 500 {

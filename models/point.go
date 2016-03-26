@@ -19,7 +19,7 @@ var IndexTypeActivities = "activities"
 type Point struct {
 	ch   *Channel
 	conn Connection
-	msg  *Message
+	msg  Message
 
 	Id        string
 	Timestamp time.Time
@@ -34,20 +34,13 @@ func (p *Point) MarshalJSON() ([]byte, error) {
 	j["device_id"] = p.conn.Identifier()
 	j["channel_name"] = p.ch.Name
 	j["timestamp"] = p.Timestamp.UTC().UnixNano() / int64(time.Millisecond)
-	switch p.msg.MessageType {
-	case TypeResponseMessage:
-		j["message_type"] = "response"
-	case TypeSendMessage:
-		j["message_type"] = "send"
-	case TypeRequestMessage:
-		j["message_type"] = "request"
-	case TypeDisconnectMessage:
-		j["message_type"] = "disconnect"
-		if !p.conn.ClosedAt().IsZero() {
+	j["message_type"] = p.msg.TypeString()
+	if p.msg.Type() == TypeDisconnectMessage {
+		if p.conn.ClosedAt().IsZero() {
+			j["duration"] = NanoToMilli(time.Now().Sub(p.conn.CreatedAt()).Nanoseconds())
+		} else {
 			j["duration"] = NanoToMilli(p.conn.ClosedAt().Sub(p.conn.CreatedAt()).Nanoseconds())
 		}
-	case TypeConnectMessage:
-		j["message_type"] = "connect"
 	}
 
 	for k, v := range p.Tags {
@@ -65,7 +58,7 @@ func (p *Point) MarshalJSON() ([]byte, error) {
 
 func (p *Point) parseJson() error {
 	jsonValues := make(map[string]json.RawMessage)
-	err := json.Unmarshal(p.msg.Payload, &jsonValues)
+	err := json.Unmarshal(p.msg.Payload(), &jsonValues)
 	if err != nil {
 		return jsonParsingErr
 	}
@@ -135,7 +128,7 @@ func (p *Point) parseJson() error {
 }
 
 func (p *Point) parseUrl() error {
-	urlValues, err := url.ParseQuery(string(p.msg.Payload))
+	urlValues, err := url.ParseQuery(string(p.msg.Payload()))
 	if err != nil {
 		return urlParsingErr
 	}
@@ -203,13 +196,13 @@ func (p *Point) Metadata(meta map[string]string) {
 }
 
 func (p *Point) IndexType() string {
-	if p.msg.MessageType == TypeConnectMessage || p.msg.MessageType == TypeDisconnectMessage {
+	if p.msg.Type() == TypeConnectMessage || p.msg.Type() == TypeDisconnectMessage {
 		return IndexTypeActivities
 	}
 	return IndexTypeMessages
 }
 
-func NewPoint(id string, ch *Channel, conn Connection, m *Message) (*Point, error) {
+func NewPoint(id string, ch *Channel, conn Connection, m Message) (*Point, error) {
 	p := &Point{
 		ch:   ch,
 		conn: conn,

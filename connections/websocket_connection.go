@@ -12,30 +12,30 @@ import (
 	"time"
 )
 
-var wsClosedConnErr = errors.New("websocket connection is closed")
-var wsUnexpectedMessageErr = errors.New("unexpected response message received from websocket, probably due to response timeout?")
+var wsConnClosedErr = errors.New("websocket connection is closed")
+var wsUnexpectedMessageErr = errors.New("unexpected response message received from websocket connection, probably due to response timeout?")
 
-type WebsocketError struct {
+type websocketError struct {
 	message string
 }
 
-func (e *WebsocketError) Error() string {
+func (e *websocketError) Error() string {
 	return fmt.Sprintf("WebsocketError: %s", e.message)
 }
 
 type syncRespChanMap struct {
 	sync.Mutex
-	m map[string]chan *MessageResp
+	m map[string]chan *websocketMessageResp
 }
 
-func (sm *syncRespChanMap) put(msgId string, ch chan *MessageResp) {
+func (sm *syncRespChanMap) put(msgId string, ch chan *websocketMessageResp) {
 	sm.Lock()
 	defer sm.Unlock()
 
 	sm.m[msgId] = ch
 }
 
-func (sm *syncRespChanMap) find(msgId string) (chan *MessageResp, bool) {
+func (sm *syncRespChanMap) find(msgId string) (chan *websocketMessageResp, bool) {
 	sm.Lock()
 	defer sm.Unlock()
 
@@ -81,10 +81,9 @@ type WebsocketConnection struct {
 	createdAt    time.Time
 	lastPingedAt time.Time
 	closedAt     time.Time
-	requestId    string
 	identifier   string
 	h            MessageHandler
-	metadata     map[string]interface{}
+	metadata     map[string]string
 
 	wg        sync.WaitGroup
 	closeOnce sync.Once
@@ -96,12 +95,10 @@ type WebsocketConnection struct {
 	// close the connection when it blows up.
 	msgChans *syncRespChanMap
 
-	wch      chan *MessageReq // size=?
-	closewch chan bool        // size=1
-	rch      chan struct{}    // size=0
+	wch      chan *websocketMessageReq // size=?
+	closewch chan bool                 // size=1
+	rch      chan struct{}             // size=0
 }
-
-func (c *WebsocketConnection) RequestId() string { return c.requestId }
 
 func (c *WebsocketConnection) Identifier() string { return c.identifier }
 
@@ -113,44 +110,38 @@ func (c *WebsocketConnection) LastPingedAt() time.Time { return c.lastPingedAt }
 
 func (c *WebsocketConnection) Closed() bool { return c.closed }
 
-func (c *WebsocketConnection) MessageHandler() MessageHandler { return c.h }
+func (c *WebsocketConnection) Metadata() map[string]string { return c.metadata }
 
-func (c *WebsocketConnection) Metadata() map[string]interface{} { return c.metadata }
+func (c *WebsocketConnection) ConnectionManager() *ConnectionManager { return c.cm }
 
 func (c *WebsocketConnection) Send(msg []byte) error {
 	return c.sendAsyncMessage(TypeSendMessage, msg)
-}
-
-func (c *WebsocketConnection) Response(msg []byte) error {
-	return c.sendAsyncMessage(TypeResponseMessage, msg)
 }
 
 func (c *WebsocketConnection) Request(msg []byte, timeout time.Duration) ([]byte, error) {
 	return c.sendSyncMessage(TypeRequestMessage, msg, timeout)
 }
 
-func (c *WebsocketConnection) sendAsyncMessage(messageType int, payload []byte) (err error) {
+func (c *WebsocketConnection) sendAsyncMessage(messageType MessageType, payload []byte) (err error) {
 	defer func() {
 		if r := recover(); r != nil {
-			err = wsClosedConnErr
+			err = wsConnClosedErr
 		}
 	}()
 
-	msgId := strconv.FormatInt(time.Now().UnixNano(), 16)
-	msg := &Message{
-		MessageType: messageType,
-		MessageId:   msgId,
-		Payload:     payload,
+	msg := &websocketMessage{
+		_type:   messageType,
+		payload: payload,
 	}
 
-	respCh := make(chan *MessageResp, 1)
+	respCh := make(chan *websocketMessageResp, 1)
 
 	timeout := Config().Connections.Websocket.Timeouts.Request.Duration
 	select {
 	case <-time.After(timeout):
-		err = errors.New(fmt.Sprintf("request timed out for %s", timeout))
+		err = errors.New(fmt.Sprintf("websocket connection request timed out for %s", timeout))
 		return
-	case c.wch <- &MessageReq{
+	case c.wch <- &websocketMessageReq{
 		msg:    msg,
 		respCh: respCh,
 	}:
@@ -159,7 +150,7 @@ func (c *WebsocketConnection) sendAsyncMessage(messageType int, payload []byte) 
 	timeout = Config().Connections.Websocket.Timeouts.Request.Duration
 	select {
 	case <-time.After(timeout):
-		err = errors.New(fmt.Sprintf("request timed out for %s", timeout))
+		err = errors.New(fmt.Sprintf("websocket connection request timed out for %s", timeout))
 		return
 	case resp := <-respCh:
 		err = resp.err
@@ -167,45 +158,43 @@ func (c *WebsocketConnection) sendAsyncMessage(messageType int, payload []byte) 
 	}
 }
 
-func (c *WebsocketConnection) sendSyncMessage(messageType int, payload []byte, timeout time.Duration) (respMsg []byte, err error) {
-	respMsg = []byte{}
-
+func (c *WebsocketConnection) sendSyncMessage(messageType MessageType, payload []byte, timeout time.Duration) (respMsg []byte, err error) {
 	defer func() {
 		if r := recover(); r != nil {
-			err = wsClosedConnErr
+			err = wsConnClosedErr
 		}
 	}()
 
-	msgId := strconv.FormatInt(time.Now().UnixNano(), 16)
-	msg := &Message{
-		MessageType: messageType,
-		MessageId:   msgId,
-		Payload:     payload,
+	respMsg = []byte{}
+	msg := &websocketMessage{
+		_type:   messageType,
+		id:      strconv.FormatInt(time.Now().UnixNano(), 16),
+		payload: payload,
 	}
 
-	respCh := make(chan *MessageResp, 1)
+	respCh := make(chan *websocketMessageResp, 1)
 
 	reqTimeout := Config().Connections.Websocket.Timeouts.Request.Duration
 	select {
 	case <-time.After(reqTimeout):
-		err = errors.New(fmt.Sprintf("request timed out for %s", reqTimeout))
+		err = errors.New(fmt.Sprintf("websocket connection request timed out for %s", reqTimeout))
 		return
-	case c.wch <- &MessageReq{
+	case c.wch <- &websocketMessageReq{
 		msg:    msg,
 		respCh: respCh,
 	}:
 		defer func() {
-			c.msgChans.delete(msgId)
+			c.msgChans.delete(msg.id)
 		}()
 	}
 
 	select {
 	case <-time.After(timeout):
-		err = errors.New(fmt.Sprintf("response timed out for %s", timeout))
+		err = errors.New(fmt.Sprintf("websocket connection response timed out for %s", timeout))
 		return
 	case resp := <-respCh:
 		if resp.msg != nil {
-			respMsg = resp.msg.Payload
+			respMsg = resp.msg.payload
 		}
 		err = resp.err
 		return
@@ -219,75 +208,83 @@ func (c *WebsocketConnection) wListen() {
 		req, more := <-c.wch
 		if more {
 			err := c.sendWsMessage(req.msg)
+
 			if err != nil {
-				req.respCh <- &MessageResp{
+				req.respCh <- &websocketMessageResp{
 					msg: nil,
 					err: err,
 				}
 
-				if _, ok := err.(*WebsocketError); ok {
+				if _, ok := err.(*websocketError); ok {
 					c.close(true)
 				}
 			} else {
-				if req.msg.MessageType == TypeRequestMessage {
-					c.msgChans.put(req.msg.MessageId, req.respCh)
+				if req.msg._type == TypeRequestMessage {
+					c.msgChans.put(req.msg.id, req.respCh)
 				} else {
-					req.respCh <- &MessageResp{}
+					req.respCh <- &websocketMessageResp{}
 				}
 			}
+
+			go c.h(c, req.msg, err)
+
 		} else {
 			<-c.closewch
-			c.sendWsMessage(&Message{MessageType: TypeDisconnectMessage})
+			c.sendWsMessage(&websocketMessage{_type: TypeDisconnectMessage})
 			return
 		}
 	}
 }
 
-func (c *WebsocketConnection) sendWsMessage(message *Message) error {
-	err := c.ws.SetWriteDeadline(time.Now().Add(Config().Connections.Websocket.Timeouts.Write.Duration))
+func (c *WebsocketConnection) sendWsMessage(message *websocketMessage) (err error) {
+	var p []byte
+	p, err = message.Marshal()
 	if err != nil {
-		return &WebsocketError{message: "error setting write deadline, " + err.Error()}
+		return
 	}
 
-	if message.MessageType == TypeDisconnectMessage {
-		err = c.ws.WriteMessage(websocket.CloseMessage, message.Payload)
+	err = c.ws.SetWriteDeadline(time.Now().Add(Config().Connections.Websocket.Timeouts.Write.Duration))
+	if err != nil {
+		return &websocketError{message: "error setting write deadline for websocket connection, " + err.Error()}
+	}
+
+	if message._type == TypeDisconnectMessage {
+		err = c.ws.WriteMessage(websocket.CloseMessage, message.payload)
 		err = c.ws.Close()
 	} else {
-		var p []byte
-		p, err = message.Marshal()
-		if err == nil {
-			err = c.ws.WriteMessage(websocket.BinaryMessage, p)
-			if err != nil {
-				err = &WebsocketError{message: err.Error()}
-			}
+		err = c.ws.WriteMessage(websocket.BinaryMessage, p)
+		if err != nil {
+			err = &websocketError{message: err.Error()}
 		}
 	}
-	return err
+	return
 }
 
-func (c *WebsocketConnection) readWsMessage() (*Message, error) {
+func (c *WebsocketConnection) readWsMessage() (*websocketMessage, error) {
 	if err := c.ws.SetReadDeadline(time.Now().Add(Config().Connections.Websocket.Timeouts.Read.Duration)); err != nil {
-		return nil, &WebsocketError{
-			message: fmt.Sprintf("error setting read deadline, %s", err.Error()),
+		return nil, &websocketError{
+			message: fmt.Sprintf("error setting read deadline for websocket connection, %s", err.Error()),
 		}
 	}
 
 	messageType, messageBody, err := c.ws.ReadMessage()
 	if err != nil {
-		return nil, &WebsocketError{
-			message: fmt.Sprintf("error reading message, %s", err.Error()),
+		return nil, &websocketError{
+			message: fmt.Sprintf("error reading message from websocket connection, %s", err.Error()),
 		}
 	}
 
 	c.lastPingedAt = time.Now()
 
 	if messageType == websocket.CloseMessage {
-		return &Message{
-			MessageType: TypeDisconnectMessage,
+		return &websocketMessage{
+			_type: TypeDisconnectMessage,
 		}, nil
 	}
 
-	return Unmarshal(messageBody)
+	m := &websocketMessage{raw: messageBody}
+	err = m.Unmarshal()
+	return m, err
 }
 
 func (c *WebsocketConnection) rListen() {
@@ -299,19 +296,19 @@ func (c *WebsocketConnection) rListen() {
 		default:
 			message, err := c.readWsMessage()
 			if err != nil {
-				go c.h(c, nil, err)
-				if _, ok := err.(*WebsocketError); ok {
+				go c.h(c, message, err)
+				if _, ok := err.(*websocketError); ok {
 					c.close(true)
 					return
 				}
-			} else if message.MessageType == TypeDisconnectMessage {
+			} else if message._type == TypeDisconnectMessage {
 				c.close(true)
 				return
-			} else if message.MessageType == TypeResponseMessage {
-				ch, found := c.msgChans.find(message.MessageId)
+			} else if message._type == TypeResponseMessage {
+				ch, found := c.msgChans.find(message.id)
 				if found {
-					c.msgChans.delete(message.MessageId)
-					ch <- &MessageResp{msg: message}
+					c.msgChans.delete(message.id)
+					ch <- &websocketMessageResp{msg: message}
 					go c.h(c, message, nil)
 				} else {
 					go c.h(c, message, wsUnexpectedMessageErr)
@@ -333,7 +330,7 @@ func (c *WebsocketConnection) close(unregister bool) error {
 		if unregister {
 			c.cm.unregister(c)
 		}
-		go c.h(c, &Message{MessageType: TypeDisconnectMessage}, nil)
+		go c.h(c, &websocketMessage{_type: TypeDisconnectMessage}, nil)
 	})
 	return nil
 }
@@ -346,7 +343,7 @@ func (c *WebsocketConnection) start() {
 	c.wg.Add(2)
 	go c.rListen()
 	go c.wListen()
-	go c.h(c, &Message{MessageType: TypeConnectMessage}, nil)
+	go c.h(c, &websocketMessage{_type: TypeConnectMessage}, nil)
 }
 
 func (c *WebsocketConnection) ConnectionType() string {

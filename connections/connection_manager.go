@@ -11,15 +11,16 @@ import (
 
 var closedCMErr = errors.New("connection manager is closed")
 
-var HttpCloseChan = make(chan struct{})
-
 type ConnectionManager struct {
+	id     string
 	closed bool
 	conns  map[string]Connection
 	sync.Mutex
 }
 
-func (cm *ConnectionManager) NewWebsocketConnection(id, reqId string, ws wsConn, h MessageHandler, meta map[string]interface{}) (*WebsocketConnection, error) {
+func (cm *ConnectionManager) Id() string { return cm.id }
+
+func (cm *ConnectionManager) NewWebsocketConnection(id string, ws wsConn, h MessageHandler, meta map[string]string) (*WebsocketConnection, error) {
 
 	conn := &WebsocketConnection{
 		cm:           cm,
@@ -30,9 +31,9 @@ func (cm *ConnectionManager) NewWebsocketConnection(id, reqId string, ws wsConn,
 		h:            h,
 		metadata:     meta,
 
-		wch: make(chan *MessageReq, Config().Connections.Websocket.RequestQueueSize),
+		wch: make(chan *websocketMessageReq, Config().Connections.Websocket.RequestQueueSize),
 		msgChans: &syncRespChanMap{
-			m: make(map[string]chan *MessageResp),
+			m: make(map[string]chan *websocketMessageResp),
 		},
 		closewch: make(chan bool, 1),
 		rch:      make(chan struct{}),
@@ -55,9 +56,9 @@ func (cm *ConnectionManager) NewWebsocketConnection(id, reqId string, ws wsConn,
 	cm.Lock()
 
 	if cm.closed {
+		cm.Unlock()
 		ws.WriteControl(websocket.CloseMessage, []byte{}, time.Now().Add(Config().Connections.Websocket.Timeouts.Write.Duration))
 		ws.Close()
-		cm.Unlock()
 		return nil, closedCMErr
 	}
 
@@ -75,31 +76,26 @@ func (cm *ConnectionManager) NewWebsocketConnection(id, reqId string, ws wsConn,
 	return conn, nil
 }
 
-func (cm *ConnectionManager) NewHttpConnection(id, reqId string, ch chan []byte, h MessageHandler, meta map[string]interface{}) (*HttpConnection, error) {
-	if ch == nil {
-		return &HttpConnection{
-			requestId:  reqId,
-			identifier: id,
-			h:          h,
-			metadata:   meta,
-			createdAt:  time.Now(),
-		}, nil
-	}
-
+func (cm *ConnectionManager) NewHttpConnection(id string, httpConn *httpConn, h MessageHandler, meta map[string]string) (*HttpConnection, error) {
 	conn := &HttpConnection{
-		requestId:  reqId,
 		identifier: id,
 		h:          h,
-		ch:         ch,
+		httpConn:   httpConn,
 		metadata:   meta,
 		createdAt:  time.Now(),
 		cm:         cm,
+	}
+	conn.start()
+
+	if httpConn._type == HttpPush {
+		conn.close(false)
+		return conn, nil
 	}
 
 	cm.Lock()
 	if cm.closed {
 		cm.Unlock()
-		close(ch)
+		conn.close(false)
 		return nil, closedCMErr
 	}
 
@@ -112,7 +108,6 @@ func (cm *ConnectionManager) NewHttpConnection(id, reqId string, ch chan []byte,
 		go _conn.close(false)
 	}
 
-	conn.start()
 	return conn, nil
 }
 

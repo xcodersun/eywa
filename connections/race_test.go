@@ -2,7 +2,6 @@ package connections
 
 import (
 	"fmt"
-	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/satori/go.uuid"
 	. "github.com/vivowares/eywa/Godeps/_workspace/src/github.com/smartystreets/goconvey/convey"
 	. "github.com/vivowares/eywa/configs"
 	. "github.com/vivowares/eywa/utils"
@@ -34,15 +33,15 @@ func TestRaceConditions(t *testing.T) {
 		},
 	})
 
-	h := func(c Connection, m *Message, e error) {}
-	meta := make(map[string]interface{})
+	h := func(c Connection, m Message, e error) {}
+	meta := make(map[string]string)
 
 	Convey("burst various sends for race condition test, with wg", t, func() {
 		cm, _ := NewConnectionManager("default")
 		defer CloseConnectionManager("default")
 
 		ws := &fakeWsConn{randomErr: false}
-		conn, _ := cm.NewWebsocketConnection("test", uuid.NewV4().String(), ws, h, meta)
+		conn, _ := cm.NewWebsocketConnection("test", ws, h, meta)
 
 		concurrency := 1000
 		var wg sync.WaitGroup
@@ -52,14 +51,11 @@ func TestRaceConditions(t *testing.T) {
 			go func(index int) {
 				var msg []byte
 				var err error
-				switch rand.Intn(3) {
+				switch rand.Intn(2) {
 				case 0:
 					msg = []byte("async" + strconv.Itoa(index))
 					err = conn.Send(msg)
 				case 1:
-					msg = []byte("resp" + strconv.Itoa(index))
-					err = conn.Response(msg)
-				case 2:
 					msg = []byte("sync" + strconv.Itoa(index))
 					_, err = conn.Request(msg, Config().Connections.Websocket.Timeouts.Response.Duration)
 				}
@@ -88,7 +84,7 @@ func TestRaceConditions(t *testing.T) {
 		cm, _ := NewConnectionManager("default")
 
 		ws := &fakeWsConn{randomErr: false}
-		conn, _ := cm.NewWebsocketConnection("test", uuid.NewV4().String(), ws, h, meta)
+		conn, _ := cm.NewWebsocketConnection("test", ws, h, meta)
 
 		concurrency := 1000
 		errs := make([]error, concurrency)
@@ -96,14 +92,11 @@ func TestRaceConditions(t *testing.T) {
 			go func(index int) {
 				var msg []byte
 				var err error
-				switch rand.Intn(3) {
+				switch rand.Intn(2) {
 				case 0:
 					msg = []byte("async" + strconv.Itoa(index))
 					err = conn.Send(msg)
 				case 1:
-					msg = []byte("resp" + strconv.Itoa(index))
-					err = conn.Response(msg)
-				case 2:
 					msg = []byte("sync" + strconv.Itoa(index))
 					_, err = conn.Request(msg, Config().Connections.Websocket.Timeouts.Response.Duration)
 				}
@@ -128,7 +121,7 @@ func TestRaceConditions(t *testing.T) {
 		wg.Add(concurrency)
 		for i := 0; i < concurrency; i++ {
 			go func(iter int) {
-				cm.NewWebsocketConnection("test"+strconv.Itoa(iter), uuid.NewV4().String(), wss[iter], h, meta)
+				cm.NewWebsocketConnection("test"+strconv.Itoa(iter), wss[iter], h, meta)
 				wg.Done()
 			}(i)
 		}
@@ -160,15 +153,13 @@ func TestRaceConditions(t *testing.T) {
 		for i := 0; i < concurrency; i++ {
 			go func(iter int) {
 				time.Sleep(time.Duration(rand.Intn(500)) * time.Millisecond)
-				conn, err := cm.NewWebsocketConnection("test"+strconv.Itoa(iter), uuid.NewV4().String(), wss[iter], h, meta)
+				conn, err := cm.NewWebsocketConnection("test"+strconv.Itoa(iter), wss[iter], h, meta)
 				conns[iter] = conn
 				errs[iter] = err
-				switch rand.Intn(3) {
+				switch rand.Intn(2) {
 				case 0:
 					conn.Send([]byte("async" + strconv.Itoa(iter)))
 				case 1:
-					conn.Response([]byte("resp" + strconv.Itoa(iter)))
-				case 2:
 					conn.Request([]byte("sync"+strconv.Itoa(iter)), Config().Connections.Websocket.Timeouts.Response.Duration)
 				}
 				wg.Done()
@@ -200,7 +191,12 @@ func TestRaceConditions(t *testing.T) {
 		wg.Add(concurrency)
 		for i := 0; i < concurrency; i++ {
 			go func(iter int) {
-				cm.NewHttpConnection("test"+strconv.Itoa(iter), uuid.NewV4().String(), chs[iter], func(Connection, *Message, error) {}, nil)
+				poll := &httpConn{
+					_type: HttpPoll,
+					ch:    chs[iter],
+					body:  []byte("poll message"),
+				}
+				cm.NewHttpConnection("test"+strconv.Itoa(iter), poll, func(Connection, Message, error) {}, nil)
 				wg.Done()
 			}(i)
 		}

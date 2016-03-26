@@ -13,13 +13,13 @@ import (
 var HistoryLength = 100
 
 type ConnectionStatus struct {
-	ChannelName  string                 `json:"channel"`
-	Status       string                 `json:"status"`
-	ConnectedAt  *time.Time             `json:"connected_at,omitempty"`
-	LastPingedAt *time.Time             `json:"last_pinged_at,omitempty"`
-	Identifier   string                 `json:"identifier"`
-	Metadata     map[string]interface{} `json:"metadata,omitempty"`
-	Histories    []*ConnectionHistory   `json:"histories,omitempty"`
+	ChannelName  string               `json:"channel"`
+	Status       string               `json:"status"`
+	ConnectedAt  *time.Time           `json:"connected_at,omitempty"`
+	LastPingedAt *time.Time           `json:"last_pinged_at,omitempty"`
+	Identifier   string               `json:"identifier"`
+	Metadata     map[string]string    `json:"metadata,omitempty"`
+	Histories    []*ConnectionHistory `json:"histories,omitempty"`
 }
 
 type ConnectionHistory struct {
@@ -64,8 +64,8 @@ func FindConnectionStatus(ch *Channel, devId string, withHistory bool) (*Connect
 		boolQ.Must(mustQs...)
 
 		orQs := make([]elastic.Query, 0)
-		orQs = append(orQs, elastic.NewTermQuery("message_type", "start"))
-		orQs = append(orQs, elastic.NewTermQuery("message_type", "close"))
+		orQs = append(orQs, elastic.NewTermQuery("message_type", connections.SupportedWebsocketMessageTypes[connections.TypeConnectMessage]))
+		orQs = append(orQs, elastic.NewTermQuery("message_type", connections.SupportedWebsocketMessageTypes[connections.TypeDisconnectMessage]))
 		boolQ.Should(orQs...)
 
 		resp, err := IndexClient.Search().Index(GlobalIndexName(ch)).Type(IndexTypeActivities).Query(boolQ).Sort("timestamp", false).Size(HistoryLength).Do()

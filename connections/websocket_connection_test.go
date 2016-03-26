@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/gorilla/websocket"
-	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/satori/go.uuid"
 	. "github.com/vivowares/eywa/Godeps/_workspace/src/github.com/smartystreets/goconvey/convey"
 	. "github.com/vivowares/eywa/configs"
 	. "github.com/vivowares/eywa/utils"
@@ -42,6 +41,9 @@ type fakeWsConn struct {
 	randomErr        bool
 	message          []byte
 	syncSleepTime    time.Duration
+	requested        *sync.WaitGroup
+	responsed        bool
+	uploaded         bool
 	sync.Mutex
 }
 
@@ -75,10 +77,20 @@ func (f *fakeWsConn) ReadMessage() (int, []byte, error) {
 	f.Lock()
 	m := string(f.message)
 	f.Unlock()
-	if strings.HasSuffix(m, "message sync") {
-		msg, _ := Unmarshal(f.message)
+	if strings.HasSuffix(m, "message sync") && !f.responsed {
+		f.responsed = true
+		msg := &websocketMessage{raw: []byte(m)}
+		msg.Unmarshal()
 		time.Sleep(f.syncSleepTime)
-		return websocket.BinaryMessage, []byte(fmt.Sprintf("%d|%s|response sync", TypeResponseMessage, msg.MessageId)), nil
+		if f.requested != nil {
+			f.requested.Wait()
+		}
+		return websocket.BinaryMessage, []byte(fmt.Sprintf("%d|%s|response sync", TypeResponseMessage, msg.id)), nil
+	}
+
+	if !f.uploaded {
+		f.uploaded = true
+		return websocket.BinaryMessage, []byte(fmt.Sprintf("%d|%s|message upload", TypeUploadMessage, "random id")), nil
 	}
 
 	if f.randomErr && rand.Intn(3) == 0 {
@@ -118,22 +130,18 @@ func TestWsConnection(t *testing.T) {
 		},
 	})
 
-	h := func(c Connection, m *Message, e error) {}
-	meta := make(map[string]interface{})
+	h := func(c Connection, m Message, e error) {}
+	meta := make(map[string]string)
 
 	Convey("errors out for request/response timeout", t, func() {
 		conn := &WebsocketConnection{
 			ws:         &fakeWsConn{},
 			identifier: "test",
 			h:          h,
-			wch:        make(chan *MessageReq, 1),
+			wch:        make(chan *websocketMessageReq, 1),
 		}
 
-		err := conn.Response([]byte("resp"))
-		So(err, ShouldNotBeNil)
-		So(err.Error(), ShouldContainSubstring, "request timed out for 1s")
-
-		err = conn.Send([]byte("async"))
+		err := conn.Send([]byte("async"))
 		So(err, ShouldNotBeNil)
 		So(err.Error(), ShouldContainSubstring, "request timed out for 1s")
 
@@ -143,8 +151,7 @@ func TestWsConnection(t *testing.T) {
 
 		cm, err := NewConnectionManager("default")
 		defer CloseConnectionManager("default")
-		reqId := uuid.NewV4().String()
-		conn, _ = cm.NewWebsocketConnection("test", reqId, &fakeWsConn{syncSleepTime: 5 * time.Second}, h, meta)
+		conn, _ = cm.NewWebsocketConnection("test", &fakeWsConn{syncSleepTime: 5 * time.Second}, h, meta)
 		So(cm.Count(), ShouldEqual, 1)
 
 		_, err = conn.Request([]byte("sync"), 3*time.Second)
@@ -157,8 +164,7 @@ func TestWsConnection(t *testing.T) {
 		cm, err := NewConnectionManager("default")
 		defer CloseConnectionManager("default")
 
-		reqId := uuid.NewV4().String()
-		conn, _ := cm.NewWebsocketConnection("test", reqId, &fakeWsConn{}, h, meta)
+		conn, _ := cm.NewWebsocketConnection("test", &fakeWsConn{}, h, meta)
 		So(cm.Count(), ShouldEqual, 1)
 
 		conn.close(true)
@@ -166,7 +172,7 @@ func TestWsConnection(t *testing.T) {
 		So(cm.Count(), ShouldEqual, 0)
 		err = conn.Send([]byte("message async"))
 		So(err, ShouldNotBeNil)
-		So(err.Error(), ShouldContainSubstring, "connection is closed")
+		So(err.Error(), ShouldContainSubstring, "websocket connection is closed")
 	})
 
 	Convey("closes connection after write/read error", t, func() {
@@ -174,8 +180,7 @@ func TestWsConnection(t *testing.T) {
 		defer CloseConnectionManager("default")
 
 		ws := &fakeWsConn{writeErr: errors.New("write err")}
-		reqId := uuid.NewV4().String()
-		conn, _ := cm.NewWebsocketConnection("test write err", reqId, ws, h, meta)
+		conn, _ := cm.NewWebsocketConnection("test write err", ws, h, meta)
 		So(cm.Count(), ShouldEqual, 1)
 
 		err = conn.Send([]byte("async"))
@@ -185,10 +190,8 @@ func TestWsConnection(t *testing.T) {
 		So(ws.closed, ShouldBeTrue)
 		So(cm.Count(), ShouldEqual, 0)
 
-		reqId = uuid.NewV4().String()
 		ws = &fakeWsConn{readMessageErr: errors.New("read err")}
-		conn, _ = cm.NewWebsocketConnection("test read err", reqId, ws, h, meta)
-
+		conn, _ = cm.NewWebsocketConnection("test read err", ws, h, meta)
 		conn.wait()
 		So(ws.closed, ShouldBeTrue)
 		So(cm.Count(), ShouldEqual, 0)
@@ -198,9 +201,8 @@ func TestWsConnection(t *testing.T) {
 		cm, err := NewConnectionManager("default")
 		defer CloseConnectionManager("default")
 
-		reqId := uuid.NewV4().String()
 		fw := &fakeWsConn{}
-		conn, _ := cm.NewWebsocketConnection("test", reqId, fw, h, meta)
+		conn, _ := cm.NewWebsocketConnection("test", fw, h, meta)
 		So(cm.Count(), ShouldEqual, 1)
 
 		err = conn.Send([]byte("message async"))
@@ -212,9 +214,15 @@ func TestWsConnection(t *testing.T) {
 		cm, err := NewConnectionManager("default")
 		defer CloseConnectionManager("default")
 
-		reqId := uuid.NewV4().String()
-		fw := &fakeWsConn{}
-		conn, _ := cm.NewWebsocketConnection("test", reqId, fw, h, meta)
+		var reqWg sync.WaitGroup
+		reqWg.Add(1)
+		h := func(c Connection, m Message, err error) {
+			if m != nil && m.Type() == TypeRequestMessage {
+				reqWg.Done()
+			}
+		}
+		fw := &fakeWsConn{requested: &reqWg}
+		conn, _ := cm.NewWebsocketConnection("test", fw, h, meta)
 		So(cm.Count(), ShouldEqual, 1)
 
 		msg, err := conn.Request([]byte("message sync"), Config().Connections.Websocket.Timeouts.Response.Duration)
@@ -227,35 +235,34 @@ func TestWsConnection(t *testing.T) {
 		cm, _ := NewConnectionManager("default")
 		defer CloseConnectionManager("default")
 
-		reqId1 := uuid.NewV4().String()
 		var wgConn sync.WaitGroup
 		var wgDisconn sync.WaitGroup
 		connected := false
 		disconnected := false
 		wgConn.Add(1)    // expect to see connect message handled
 		wgDisconn.Add(1) // expect to see disconnect message handled
-		h := func(c Connection, m *Message, e error) {
+		h := func(c Connection, m Message, e error) {
 			if m != nil {
-				if m.MessageType == TypeConnectMessage {
+				if m.Type() == TypeConnectMessage {
 					connected = true
 					wgConn.Done()
-				} else if m.MessageType == TypeDisconnectMessage {
+				} else if m.Type() == TypeDisconnectMessage {
 					disconnected = true
 					wgDisconn.Done()
 				}
 			}
 		}
 
-		httpConn, err := cm.NewWebsocketConnection("test", reqId1, &fakeWsConn{}, h, meta)
+		httpConn, err := cm.NewWebsocketConnection("test", &fakeWsConn{}, h, meta)
 		So(err, ShouldBeNil)
 		So(cm.Count(), ShouldEqual, 1)
 		wgConn.Wait()
 		So(connected, ShouldBeTrue)
+		So(disconnected, ShouldBeFalse)
 
 		//now register a new connection with the same id
 		//the old one should be closed
-		reqId2 := uuid.NewV4().String()
-		_httpConn, err := cm.NewWebsocketConnection("test", reqId2, &fakeWsConn{}, func(Connection, *Message, error) {}, meta)
+		_httpConn, err := cm.NewWebsocketConnection("test", &fakeWsConn{}, func(Connection, Message, error) {}, meta)
 		So(err, ShouldBeNil)
 		So(cm.Count(), ShouldEqual, 1)
 
@@ -265,4 +272,75 @@ func TestWsConnection(t *testing.T) {
 		So(_httpConn.Closed(), ShouldBeFalse)
 	})
 
+	Convey("captures the messages in handler during the connection life cycle", t, func() {
+		cm, _ := NewConnectionManager("default")
+		defer CloseConnectionManager("default")
+
+		var connected, disconnected, sent, uploaded, requested, responsed bool
+		var connWg, disConnWg, sentWg, uploadWg, requestWg, responseWg sync.WaitGroup
+		connWg.Add(1)
+		disConnWg.Add(1)
+		sentWg.Add(1)
+		uploadWg.Add(1)
+		requestWg.Add(1)
+		responseWg.Add(1)
+
+		h := func(c Connection, m Message, e error) {
+			if m != nil {
+				if m.Type() == TypeConnectMessage {
+					connected = true
+					connWg.Done()
+				} else if m.Type() == TypeDisconnectMessage {
+					disconnected = true
+					disConnWg.Done()
+				} else if m.Type() == TypeSendMessage {
+					sent = true
+					sentWg.Done()
+				} else if m.Type() == TypeUploadMessage {
+					uploaded = true
+					uploadWg.Done()
+				} else if m.Type() == TypeRequestMessage {
+					requested = true
+					requestWg.Done()
+				} else if m.Type() == TypeResponseMessage {
+					responsed = true
+					responseWg.Done()
+				}
+			}
+		}
+
+		conn, err := cm.NewWebsocketConnection("test", &fakeWsConn{requested: &requestWg}, h, meta)
+		So(err, ShouldBeNil)
+		So(cm.Count(), ShouldEqual, 1)
+		connWg.Wait()
+		uploadWg.Wait()
+		So(connected, ShouldBeTrue)
+		So(uploaded, ShouldBeTrue)
+		So(sent, ShouldBeFalse)
+		So(requested, ShouldBeFalse)
+		So(responsed, ShouldBeFalse)
+		So(disconnected, ShouldBeFalse)
+
+		err = conn.Send([]byte("message async"))
+		So(err, ShouldBeNil)
+		sentWg.Wait()
+		So(sent, ShouldBeTrue)
+		So(requested, ShouldBeFalse)
+		So(responsed, ShouldBeFalse)
+		So(disconnected, ShouldBeFalse)
+
+		_, err = conn.Request([]byte("message sync"), Config().Connections.Websocket.Timeouts.Response.Duration)
+		So(err, ShouldBeNil)
+		requestWg.Wait()
+		responseWg.Wait()
+		So(requested, ShouldBeTrue)
+		So(responsed, ShouldBeTrue)
+		So(disconnected, ShouldBeFalse)
+		So(conn.msgChans.len(), ShouldEqual, 0)
+
+		conn.close(true)
+		disConnWg.Wait()
+		So(cm.Count(), ShouldEqual, 0)
+		So(disconnected, ShouldBeTrue)
+	})
 }

@@ -13,7 +13,12 @@ func BenchmarkNewHttpConnection(b *testing.B) {
 	defer CloseConnectionManager("default")
 
 	for n := 0; n < b.N; n++ {
-		cm.NewHttpConnection(strconv.Itoa(n), "", make(chan []byte), func(Connection, *Message, error) {}, nil)
+		poll := &httpConn{
+			_type: HttpPoll,
+			ch:    make(chan []byte, 1),
+			body:  []byte("poll message"),
+		}
+		cm.NewHttpConnection(strconv.Itoa(n), poll, func(Connection, Message, error) {}, nil)
 	}
 }
 
@@ -40,6 +45,6 @@ func BenchmarkNewWsConnection(b *testing.B) {
 	defer CloseConnectionManager("default")
 
 	for n := 0; n < b.N; n++ {
-		cm.NewWebsocketConnection(strconv.Itoa(n), "", &fakeWsConn{}, func(Connection, *Message, error) {}, nil)
+		cm.NewWebsocketConnection(strconv.Itoa(n), &fakeWsConn{}, func(Connection, Message, error) {}, nil)
 	}
 }

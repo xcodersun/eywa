@@ -11,8 +11,8 @@ import (
 	"time"
 )
 
-var SupportedDataTypes = []string{"float", "int", "boolean", "string"}
-var InternalTags = []string{"_ip"}
+var SupportedDataTypes = []string{"float", "int", "boolean"}
+var InternalTags = []string{"ip", "device_id", "channel_name", "timestamp"}
 var Salt = "Cc4D5xBlbCBqYTuimuNPGsio7YoMo8d8"
 var HashLen = 16
 
@@ -71,6 +71,10 @@ func (c *Channel) validate() error {
 	tagMap := make(map[string]bool, 0)
 
 	for _, tagName := range c.Tags {
+		if StringSliceContains(InternalTags, tagName) {
+			return errors.New(fmt.Sprintf("used internal tags: %s", strings.Join(InternalTags, ",")))
+		}
+
 		if !AlphaNumeric(tagName) {
 			return errors.New("invalid tag name, only letters, numbers and underscores are allowed")
 		}
