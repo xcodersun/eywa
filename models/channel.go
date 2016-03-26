@@ -12,7 +12,7 @@ import (
 )
 
 var SupportedDataTypes = []string{"float", "int", "boolean"}
-var InternalTags = []string{"ip", "device_id", "channel_name", "timestamp"}
+var InternalTags = []string{"ip", "device_id", "channel_name", "timestamp", "request_id"}
 var Salt = "Cc4D5xBlbCBqYTuimuNPGsio7YoMo8d8"
 var HashLen = 16
 
@@ -251,5 +251,9 @@ func DecodeHashId(hash string) int {
 	hd.Salt = Salt
 	hd.MinLength = HashLen
 	h := hashids.NewWithData(hd)
-	return h.Decode(hash)[0]
+	ids := h.Decode(hash)
+	if len(ids) != 1 {
+		return -1
+	}
+	return ids[0]
 }

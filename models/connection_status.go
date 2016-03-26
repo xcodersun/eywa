@@ -114,7 +114,7 @@ func (h *ConnectionHistory) MarshalJSON() ([]byte, error) {
 
 func (h *ConnectionHistory) UnmarshalJSON(data []byte) error {
 	j := make(map[string]interface{})
-	err := json.Unmarshal(data, j)
+	err := json.Unmarshal(data, &j)
 	if err != nil {
 		return err
 	}
@@ -136,18 +136,12 @@ func (h *ConnectionHistory) UnmarshalJSON(data []byte) error {
 	}
 
 	if ts, found := j["timestamp"]; found {
-		milli, err := (ts.(json.Number).Int64())
-		if err != nil {
-			return err
-		}
+		milli := int64(ts.(float64))
 		h.Timestamp = time.Unix(MilliSecToSec(milli), MilliSecToNano(milli))
 	}
 
 	if dur, found := j["duration"]; found {
-		milli, err := (dur.(json.Number).Int64())
-		if err != nil {
-			return err
-		}
+		milli := int64(dur.(float64))
 		h.Duration = time.Duration(milli) * time.Millisecond
 	}
 

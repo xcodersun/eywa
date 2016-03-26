@@ -13,6 +13,14 @@ func findCachedChannel(c web.C, idName string) (*models.Channel, bool) {
 	return ch, found
 }
 
+func findChannel(c web.C) (*models.Channel, bool) {
+	id := models.DecodeHashId(c.URLParams["id"])
+	ch := &models.Channel{}
+	found := ch.FindById(id)
+
+	return ch, found
+}
+
 func messageHandler(ch *models.Channel) MessageHandler {
 	md := NewMiddlewareStack()
 	for _, hStr := range ch.MessageHandlers {

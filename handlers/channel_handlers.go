@@ -127,11 +127,3 @@ func DeleteChannel(c web.C, w http.ResponseWriter, r *http.Request) {
 		}
 	}
 }
-
-func findChannel(c web.C) (*models.Channel, bool) {
-	id := models.DecodeHashId(c.URLParams["id"])
-	ch := &models.Channel{}
-	found := ch.FindById(id)
-
-	return ch, found
-}
