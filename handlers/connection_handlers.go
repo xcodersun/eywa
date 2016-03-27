@@ -10,6 +10,8 @@ import (
 	. "github.com/vivowares/eywa/utils"
 	"io/ioutil"
 	"net/http"
+	"strconv"
+	"strings"
 	"time"
 )
 
@@ -26,7 +28,7 @@ func ConnectionCount(c web.C, w http.ResponseWriter, r *http.Request) {
 
 	cm, found := connections.FindConnectionManager(c.URLParams["channel_id"])
 	if !found {
-		Render.JSON(w, http.StatusInternalServerError, map[string]string{
+		Render.JSON(w, http.StatusNotFound, map[string]string{
 			"error": fmt.Sprintf("connection manager is not initialized for channel: %s", c.URLParams["channel_id"]),
 		})
 		return
@@ -62,7 +64,7 @@ func SendToDevice(c web.C, w http.ResponseWriter, r *http.Request) {
 
 	cm, found := connections.FindConnectionManager(c.URLParams["channel_id"])
 	if !found {
-		Render.JSON(w, http.StatusInternalServerError, map[string]string{
+		Render.JSON(w, http.StatusNotFound, map[string]string{
 			"error": fmt.Sprintf("connection manager is not initialized for channel: %s", c.URLParams["channel_id"]),
 		})
 		return
@@ -102,7 +104,7 @@ func RequestToDevice(c web.C, w http.ResponseWriter, r *http.Request) {
 
 	cm, found := connections.FindConnectionManager(c.URLParams["channel_id"])
 	if !found {
-		Render.JSON(w, http.StatusInternalServerError, map[string]string{
+		Render.JSON(w, http.StatusNotFound, map[string]string{
 			"error": fmt.Sprintf("connection manager is not initialized for channel: %s", c.URLParams["channel_id"]),
 		})
 		return
@@ -145,4 +147,42 @@ func RequestToDevice(c web.C, w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Write(msg)
+}
+
+func ScanConnections(c web.C, w http.ResponseWriter, r *http.Request) {
+	ch, found := findCachedChannel(c, "channel_id")
+	if !found {
+		Render.JSON(w, http.StatusNotFound, map[string]string{"error": "channel is not found"})
+		return
+	}
+
+	size := 25 //default page size
+	sizeStr := r.URL.Query().Get("size")
+	if len(sizeStr) > 0 {
+		var err error
+		size, err = strconv.Atoi(sizeStr)
+		if err != nil {
+			Render.JSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+			return
+		}
+	}
+
+	lastId := strings.TrimSpace(r.URL.Query().Get("last"))
+
+	cm, found := connections.FindConnectionManager(c.URLParams["channel_id"])
+	if !found {
+		Render.JSON(w, http.StatusNotFound, map[string]string{
+			"error": fmt.Sprintf("connection manager is not initialized for channel: %s", c.URLParams["channel_id"]),
+		})
+		return
+	}
+
+	conns := cm.Scan(lastId, size)
+
+	connSts := make([]*models.ConnectionStatus, len(conns))
+	for i, conn := range conns {
+		connSts[i] = models.NewConnectionStatus(ch, conn)
+	}
+
+	Render.JSON(w, http.StatusOK, connSts)
 }

@@ -9,7 +9,7 @@ SupportedTasks = [
   'delete-channel', 'show-channel', 'connection-counts',
   'connection-status', 'show-settings', 'update-settings',
   'send-to-connection', 'request-to-connection', 'query-value',
-  'query-series', 'query-raw', 'query-connections'
+  'query-series', 'query-raw', 'scan-connections'
 ]
 
 def parse_opts(args)
@@ -737,13 +737,11 @@ def query_raw(opt)
   end
 end
 
-def query_connections(opt)
+def scan_connections(opt)
   channel_id = get_option(opt, :channel_id, false, Proc.new{|opt| list_channels(opt)})
   params = {
     size: get_option(opt, :size, true),
-    connection_type: get_option(opt, :connection_type, true),
-    online: get_option(opt, :online, true),
-    time_range: get_option(opt, :time_range, true),
+    last: get_option(opt, :last, true)
   }.delete_if{|_, v| v.length == 0}
 
   puts "Please review your query:"
@@ -753,7 +751,7 @@ def query_connections(opt)
 
   code = nil
   resp = nil
-  uri = URI("http#{opt[:use_ssl] ? 's': ""}://#{opt[:host]}:#{opt[:port]}/admin/channels/#{channel_id}/connections")
+  uri = URI("http#{opt[:use_ssl] ? 's': ""}://#{opt[:host]}:#{opt[:port]}/admin/channels/#{channel_id}/connections/scan")
   uri.query = URI.encode_www_form(params)
   begin
     Net::HTTP.start(uri.host, uri.port, :use_ssl => uri.scheme == 'https', :verify_mode => OpenSSL::SSL::VERIFY_NONE) do |http|
@@ -777,7 +775,7 @@ def query_connections(opt)
   end
 
   print_response(resp)
-  puts 'Successfully queried connections!'
+  puts 'Successfully scanned connections!'
 end
 
 Signal.trap("INT") {
@@ -813,8 +811,8 @@ when 'query-series'
   query_series(options)
 when 'query-raw'
   query_raw(options)
-when 'query-connections'
-  query_connections(options)
+when 'scan-connections'
+  scan_connections(options)
 when 'send-to-connection'
   send_to_connection(options)
 when 'request-to-connection'

@@ -34,7 +34,7 @@ func HttpPushHandler(c web.C, w http.ResponseWriter, r *http.Request) {
 
 	cm, found := FindConnectionManager(c.URLParams["channel_id"])
 	if !found {
-		Render.JSON(w, http.StatusInternalServerError, map[string]string{
+		Render.JSON(w, http.StatusNotFound, map[string]string{
 			"error": fmt.Sprintf("connection manager is not initialized for channel %s", c.URLParams["channel_id"]),
 		})
 		return
@@ -79,7 +79,7 @@ func HttpLongPollingHandler(c web.C, w http.ResponseWriter, r *http.Request) {
 
 	cm, found := FindConnectionManager(c.URLParams["channel_id"])
 	if !found {
-		Render.JSON(w, http.StatusInternalServerError, map[string]string{
+		Render.JSON(w, http.StatusNotFound, map[string]string{
 			"error": fmt.Sprintf("connection manager is not initialized for channel: %s", c.URLParams["channel_id"]),
 		})
 		return

@@ -174,3 +174,39 @@ func (cm *ConnectionManager) unregister(c Connection) {
 func (cm *ConnectionManager) Closed() bool {
 	return cm.closed
 }
+
+func (cm *ConnectionManager) Scan(lastId string, size int) []Connection {
+	cm.Lock()
+	defer cm.Unlock()
+
+	conns := make([]Connection, 0)
+	if len(lastId) == 0 {
+		i := 0
+		cm.conns.Ascend(func(it btree.Item) bool {
+			i += 1
+			if i > size {
+				return false
+			}
+
+			conns = append(conns, it.(Connection))
+			return true
+		})
+	} else {
+		i := 0
+		cm.conns.AscendGreaterOrEqual(&Lesser{id: lastId}, func(it btree.Item) bool {
+			conn := it.(Connection)
+			if conn.Identifier() == lastId {
+				return true
+			} else {
+				i += 1
+				if i > size {
+					return false
+				}
+				conns = append(conns, conn)
+				return true
+			}
+		})
+	}
+
+	return conns
+}

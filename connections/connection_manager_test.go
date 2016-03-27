@@ -4,6 +4,8 @@ import (
 	. "github.com/vivowares/eywa/Godeps/_workspace/src/github.com/smartystreets/goconvey/convey"
 	. "github.com/vivowares/eywa/configs"
 	. "github.com/vivowares/eywa/utils"
+	"reflect"
+	"strconv"
 	"testing"
 	"time"
 )
@@ -90,5 +92,74 @@ func TestConnectionManager(t *testing.T) {
 		So(cm.Count(), ShouldEqual, 0)
 		_, ok := <-ch
 		So(ok, ShouldBeFalse)
+	})
+
+	Convey("test scan connections", t, func() {
+		cm, _ := NewConnectionManager("default")
+		defer CloseConnectionManager("default")
+
+		n := 5
+		for i := 1; i <= n; i++ {
+			cm.NewWebsocketConnection("conn"+strconv.Itoa(i), &fakeWsConn{}, func(Connection, Message, error) {}, nil)
+		}
+		So(cm.Count(), ShouldEqual, n)
+
+		conns := cm.Scan("", 0)
+		So(len(conns), ShouldEqual, 0)
+
+		conns = cm.Scan("", 3)
+		So(len(conns), ShouldEqual, 3)
+		connIds := make([]string, len(conns))
+		for i, conn := range conns {
+			connIds[i] = conn.Identifier()
+		}
+		So(reflect.DeepEqual(connIds, []string{"conn1", "conn2", "conn3"}), ShouldBeTrue)
+
+		conns = cm.Scan("", n+3)
+		So(len(conns), ShouldEqual, n)
+		connIds = make([]string, len(conns))
+		for i, conn := range conns {
+			connIds[i] = conn.Identifier()
+		}
+		So(reflect.DeepEqual(connIds, []string{"conn1", "conn2", "conn3", "conn4", "conn5"}), ShouldBeTrue)
+
+		conns = cm.Scan("conn1", 0)
+		So(len(conns), ShouldEqual, 0)
+
+		conns = cm.Scan("conn1", 3)
+		So(len(conns), ShouldEqual, 3)
+		connIds = make([]string, len(conns))
+		for i, conn := range conns {
+			connIds[i] = conn.Identifier()
+		}
+		So(reflect.DeepEqual(connIds, []string{"conn2", "conn3", "conn4"}), ShouldBeTrue)
+
+		conns = cm.Scan("conn1", n+3)
+		So(len(conns), ShouldEqual, n-1)
+		connIds = make([]string, len(conns))
+		for i, conn := range conns {
+			connIds[i] = conn.Identifier()
+		}
+		So(reflect.DeepEqual(connIds, []string{"conn2", "conn3", "conn4", "conn5"}), ShouldBeTrue)
+
+		conns = cm.Scan("conn0", 0)
+		So(len(conns), ShouldEqual, 0)
+
+		conns = cm.Scan("conn0", 3)
+		So(len(conns), ShouldEqual, 3)
+		connIds = make([]string, len(conns))
+		for i, conn := range conns {
+			connIds[i] = conn.Identifier()
+		}
+		So(reflect.DeepEqual(connIds, []string{"conn1", "conn2", "conn3"}), ShouldBeTrue)
+
+		conns = cm.Scan("conn0", n+3)
+		So(len(conns), ShouldEqual, n)
+		connIds = make([]string, len(conns))
+		for i, conn := range conns {
+			connIds[i] = conn.Identifier()
+		}
+		So(reflect.DeepEqual(connIds, []string{"conn1", "conn2", "conn3", "conn4", "conn5"}), ShouldBeTrue)
+
 	})
 }

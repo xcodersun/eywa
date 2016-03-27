@@ -25,6 +25,19 @@ type ConnectionStatus struct {
 	Histories      []*ConnectionHistory
 }
 
+func NewConnectionStatus(ch *Channel, c Connection) *ConnectionStatus {
+	return &ConnectionStatus{
+		ChannelName:    ch.Name,
+		Status:         "online",
+		Identifier:     c.Identifier(),
+		ConnectedAt:    c.CreatedAt(),
+		LastPingedAt:   c.LastPingedAt(),
+		ConnectionType: c.ConnectionType(),
+		Metadata:       c.Metadata(),
+		Duration:       time.Now().Sub(c.CreatedAt()),
+	}
+}
+
 func (h *ConnectionStatus) MarshalJSON() ([]byte, error) {
 	j := make(map[string]interface{})
 
@@ -200,7 +213,6 @@ func FindConnectionStatus(ch *Channel, devId string, withHistory bool) (*Connect
 		boolQ.Must(elastic.NewTermQuery("activity", SupportedMessageTypes[TypeDisconnectMessage]))
 
 		resp, err := IndexClient.Search().Index(GlobalIndexName(ch)).Type(IndexTypeActivities).Query(boolQ).Sort("timestamp", false).Size(1).Do()
-		fmt.Println(resp.TotalHits())
 		if err == nil && len(resp.Hits.Hits) > 0 {
 			hit := resp.Hits.Hits[0]
 			h := &ConnectionHistory{}
