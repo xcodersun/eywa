@@ -4,9 +4,11 @@ import (
 	"errors"
 	"fmt"
 	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/zenazn/goji/web"
+	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/zenazn/goji/web/middleware"
 	. "github.com/vivowares/eywa/configs"
 	"github.com/vivowares/eywa/connections"
 	"github.com/vivowares/eywa/models"
+	"github.com/vivowares/eywa/pubsub"
 	. "github.com/vivowares/eywa/utils"
 	"io/ioutil"
 	"net/http"
@@ -185,4 +187,42 @@ func ScanConnections(c web.C, w http.ResponseWriter, r *http.Request) {
 	}
 
 	Render.JSON(w, http.StatusOK, connSts)
+}
+
+func AttachConnection(c web.C, w http.ResponseWriter, r *http.Request) {
+	_, found := findCachedChannel(c, "channel_id")
+	if !found {
+		Render.JSON(w, http.StatusNotFound, map[string]string{"error": "channel is not found"})
+		return
+	}
+
+	cm, found := connections.FindConnectionManager(c.URLParams["channel_id"])
+	if !found {
+		Render.JSON(w, http.StatusNotFound, map[string]string{
+			"error": fmt.Sprintf("connection manager is not initialized for channel: %s", c.URLParams["channel_id"]),
+		})
+		return
+	}
+
+	deviceId := c.URLParams["device_id"]
+	conn, found := cm.FindConnection(deviceId)
+	if !found {
+		Render.JSON(w, http.StatusNotFound, map[string]string{"error": "device is not online"})
+		return
+	}
+
+	ws, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		Render.JSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+		return
+	}
+
+	pubsub.NewWebsocketSubscriber(
+		conn.(pubsub.Publisher),
+		c.Env[middleware.RequestIDKey].(string),
+		ws,
+	).Subscribe(
+		fmt.Sprintf("You are now attached to connection %s:%s ...", cm.Id(), conn.Identifier()),
+	)
+
 }

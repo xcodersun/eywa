@@ -46,6 +46,7 @@ func (s *WebsocketSubscriber) Subscribe(banner string) {
 		defer func() {
 			s.p.Detach()
 			EM.Off(s.Topic())
+			fmt.Println("unsub")
 		}()
 
 		banner = fmt.Sprintf("%s\n%s\n\n", cowsay, banner)

@@ -47,7 +47,7 @@ func (c *Channel) validate() error {
 	// if c.MessageHandlers == nil {
 	// 	c.MessageHandlers = StringSlice(make([]string, 0))
 	// }
-	c.MessageHandlers = []string{"indexer"}
+	c.MessageHandlers = []string{"indexer", "logger"}
 
 	if c.AccessTokens == nil {
 		c.AccessTokens = StringSlice(make([]string, 0))
