@@ -800,10 +800,17 @@ def tail_log(opt)
   url = "ws#{opt[:use_ssl] ? 's': ""}://#{opt[:host]}:#{opt[:port]}/admin/tail"
   ws = WebSocket::Client::Simple.connect(url, {headers: {"Authentication"=>opt[:auth_token]}})
   opt[:ws] = ws
-  ws.on(:message){|msg|puts msg.data}
-  ws.on(:open){_sleep}
-
-  puts "Unable to tail server log, something weird happened ..."
+  welcome = nil
+  ws.on(:message) do |msg|
+    welcome = msg unless welcome
+    puts msg.data
+  end
+  sleep 1
+  if welcome.nil?
+    puts "Unable to tail server log, something weird happened ..."
+  else
+    _sleep
+  end
 end
 
 def attach_connection(opt)
@@ -813,10 +820,17 @@ def attach_connection(opt)
   url = "ws#{opt[:use_ssl] ? 's': ""}://#{opt[:host]}:#{opt[:port]}/admin/channels/#{channel_id}/devices/#{device_id}/attach"
   ws = WebSocket::Client::Simple.connect(url, {headers: {"Authentication"=>opt[:auth_token]}})
   opt[:ws] = ws
-  ws.on(:message){|msg|puts msg.data}
-  ws.on(:open){_sleep}
-
-  puts "Unable to attach to connection, check if it's online by `connection-status` ..."
+  welcome = nil
+  ws.on(:message) do |msg|
+    welcome = msg unless welcome
+    puts msg.data
+  end
+  sleep 1
+  if welcome.nil?
+    puts "Unable to attach to connection, check if it's online by `connection-status` ..."
+  else
+    _sleep
+  end
 end
 
 def _sleep
