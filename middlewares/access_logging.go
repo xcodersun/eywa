@@ -26,7 +26,7 @@ func AccessLogging(c *web.C, h http.Handler) http.Handler {
 		h.ServeHTTP(lw, r)
 		t2 := time.Now()
 
-		logEnd(reqID, lw, tee, t2.Sub(t1))
+		logEnd(reqID, lw, &buf, t2.Sub(t1))
 	}
 
 	return http.HandlerFunc(fn)
@@ -41,7 +41,7 @@ func logStart(reqID string, r *http.Request) {
 	}
 }
 
-func logEnd(reqID string, w mutil.WriterProxy, tee, dt time.Duration) {
+func logEnd(reqID string, w mutil.WriterProxy, tee *bytes.Buffer, dt time.Duration) {
 	status := w.Status()
 	if status == 0 {
 		status = 200
@@ -49,7 +49,7 @@ func logEnd(reqID string, w mutil.WriterProxy, tee, dt time.Duration) {
 
 	if status < 400 {
 		Logger.Info(fmt.Sprintf("[%s] Returning %03d in %s", reqID, status, dt))
-		Logger.Debug(fmt.Sprintf("[%s] Returning %03d in %s, with response: %s", reqID, status, dt, tee.String())
+		Logger.Debug(fmt.Sprintf("[%s] Returning %03d in %s, with response: %s", reqID, status, dt, tee.String()))
 	} else if status >= 400 && status < 500 {
 		Logger.Warn(fmt.Sprintf("[%s] Returning %03d in %s, with response: %s", reqID, status, dt, tee.String()))
 	} else {
