@@ -77,10 +77,6 @@
 			"Rev": "c7b9b28d405aea75359a0a5dfb89f52a84632f6d"
 		},
 		{
-			"ImportPath": "github.com/olebedev/emitter",
-			"Rev": "8f03f14fc8671b9c0c43c76b01236a4c998f3c8c"
-		},
-		{
 			"ImportPath": "github.com/olivere/elastic/uritemplates",
 			"Comment": "v2.0.23-27-ga8215e0",
 			"Rev": "a8215e0b307af4727033f0cbc52e42600c5baebc"
@@ -140,6 +136,10 @@
 			"ImportPath": "github.com/verdverm/frisby",
 			"Comment": "1.0.1-8-g709764c",
 			"Rev": "709764c9382cd689fa2ad9e32c0c6d831f9914a5"
+		},
+		{
+			"ImportPath": "github.com/vivowares/emitter",
+			"Rev": "66d7e996e73b3d1abe490eee7270118daa125291"
 		},
 		{
 			"ImportPath": "github.com/vivowares/waterwheel",

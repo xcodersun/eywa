@@ -30,7 +30,9 @@ var Indexer = NewMiddleware("indexer", func(h MessageHandler) MessageHandler {
 							Do()
 
 						if resp.Created {
-							c.(pubsub.Publisher).Publish(formatIndex(js))
+							c.(pubsub.Publisher).Publish(func() string {
+								return format("index", js)
+							})
 						}
 					}
 				}

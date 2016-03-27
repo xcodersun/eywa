@@ -10,11 +10,25 @@ var Logger = NewMiddleware("logger", func(h MessageHandler) MessageHandler {
 		pub := c.(pubsub.Publisher)
 
 		if e != nil {
-			pub.Publish(formatError(e))
+			pub.Publish(func() string {
+				return format("error", []byte(e.Error()))
+			})
 		}
 
 		if m != nil {
-			pub.Publish(formatMessage(m))
+			pub.Publish(func() string {
+				t := m.TypeString()
+				if len(t) == 0 {
+					t = "wrong type"
+				}
+
+				raw := []byte{}
+				if m.Raw() != nil {
+					raw = m.Raw()
+				}
+
+				return format(t, raw)
+			})
 		}
 
 		h(c, m, e)

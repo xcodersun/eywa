@@ -129,6 +129,11 @@ func (c *HttpConnection) close(unregister bool) error {
 		if c.httpConn._type == HttpPoll {
 			go c.h(c, &httpMessage{_type: TypeDisconnectMessage}, nil)
 		}
+
+		go func() {
+			time.Sleep(3 * time.Second) // for user experience
+			c.BasicPublisher.Unpublish()
+		}()
 	})
 	return nil
 }

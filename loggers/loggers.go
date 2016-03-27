@@ -70,5 +70,7 @@ func CloseLogger() {
 
 var SimpleTeeFormatter = func(r *waterwheel.Record, buf *[]byte) {
 	waterwheel.SimpleFormatter(r, buf)
-	pubsub.EywaLogPublisher.Publish(string(*buf))
+	pubsub.EywaLogPublisher.Publish(func() string {
+		return string(*buf)
+	})
 }

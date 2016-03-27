@@ -26,7 +26,9 @@ func (cm *ConnectionManager) Id() string { return cm.id }
 
 func (cm *ConnectionManager) NewWebsocketConnection(id string, ws wsConn, h MessageHandler, meta map[string]string) (*WebsocketConnection, error) {
 	p := pubsub.NewBasicPublisher(
-		strings.Replace(cm.id, "/", "-", -1) + "/" + strings.Replace(id, "/", "-", -1),
+		strings.Replace(cm.id, "/", "-", -1) + "/" +
+			strings.Replace(id, "/", "-", -1) + "/" +
+			strconv.FormatInt(time.Now().UnixNano(), 16),
 	)
 
 	conn := &WebsocketConnection{
@@ -85,7 +87,9 @@ func (cm *ConnectionManager) NewWebsocketConnection(id string, ws wsConn, h Mess
 
 func (cm *ConnectionManager) NewHttpConnection(id string, httpConn *httpConn, h MessageHandler, meta map[string]string) (*HttpConnection, error) {
 	p := pubsub.NewBasicPublisher(
-		strings.Replace(cm.id, "/", "-", -1) + "/" + strings.Replace(id, "/", "-", -1),
+		strings.Replace(cm.id, "/", "-", -1) + "/" +
+			strings.Replace(id, "/", "-", -1) + "/" +
+			strconv.FormatInt(time.Now().UnixNano(), 16),
 	)
 
 	conn := &HttpConnection{

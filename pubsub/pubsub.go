@@ -1,7 +1,7 @@
 package pubsub
 
 import (
-	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/olebedev/emitter"
+	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/vivowares/emitter"
 )
 
 var capacity uint = 512
@@ -17,5 +17,8 @@ type Publisher interface {
 	Attached() bool
 	Attach()
 	Detach()
-	Publish(string)
+	Publish(Callback)
+	Unpublish()
 }
+
+type Callback func() string

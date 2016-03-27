@@ -19,42 +19,12 @@ func findCachedChannel(idStr string) (*models.Channel, bool) {
 	return ch, found
 }
 
-func formatError(e error) string {
+func format(tag string, content []byte) string {
 	buf := []byte{}
-	buf = append(buf, []byte(fmt.Sprintf("%-12s", "ERROR"))...)
+	buf = append(buf, []byte(fmt.Sprintf("%-12s", strings.ToUpper(tag)))...)
 	formatTime(time.Now().UTC(), &buf)
 	buf = append(buf, []byte("  ")...)
-	buf = append(buf, []byte(e.Error())...)
-	buf = append(buf, '\n')
-	return string(buf)
-}
-
-func formatMessage(m Message) string {
-	buf := []byte{}
-	t := m.TypeString()
-	if len(t) == 0 {
-		t = "WRONG TYPE"
-	}
-	buf = append(buf, []byte(
-		fmt.Sprintf("%-12s", strings.ToUpper(t)),
-	)...)
-	formatTime(time.Now().UTC(), &buf)
-	buf = append(buf, []byte("  ")...)
-	raw := []byte{}
-	if m.Raw() != nil {
-		raw = m.Raw()
-	}
-	buf = append(buf, raw...)
-	buf = append(buf, '\n')
-	return string(buf)
-}
-
-func formatIndex(index []byte) string {
-	buf := []byte{}
-	buf = append(buf, []byte(fmt.Sprintf("%-12s", "INDEX"))...)
-	formatTime(time.Now().UTC(), &buf)
-	buf = append(buf, []byte("  ")...)
-	buf = append(buf, index...)
+	buf = append(buf, content...)
 	buf = append(buf, '\n')
 	return string(buf)
 }

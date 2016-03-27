@@ -1,6 +1,7 @@
 package pubsub
 
 import (
+	"fmt"
 	"sync/atomic"
 )
 
@@ -25,10 +26,22 @@ func (p *BasicPublisher) Attached() bool { return atomic.LoadInt32(&p.attachers)
 
 func (p *BasicPublisher) Topic() string { return p.topic }
 
-func (p *BasicPublisher) Publish(message string) {
+func (p *BasicPublisher) Publish(c Callback) {
 	go func() {
+		defer func() { recover() }()
+
+		fmt.Printf("all subscribers: %d\n", EM.Listeners("*"))
+
 		if p.Attached() {
-			EM.Emit(p.Topic()+"/*", message)
+			fmt.Printf("publishing %s:  %d\n", p.Topic()+"/*", len(EM.Listeners(p.Topic()+"/*")))
+			EM.Emit(p.Topic()+"/*", c())
 		}
 	}()
+}
+
+func (p *BasicPublisher) Unpublish() {
+	if p.Attached() {
+		EM.Off(p.Topic() + "/*")
+		fmt.Printf("unpublishing %s:  %d\n", p.Topic()+"/*", len(EM.Listeners(p.Topic()+"/*")))
+	}
 }

@@ -342,6 +342,11 @@ func (c *WebsocketConnection) close(unregister bool) error {
 			c.cm.unregister(c)
 		}
 		go c.h(c, &websocketMessage{_type: TypeDisconnectMessage}, nil)
+
+		go func() {
+			time.Sleep(3 * time.Second) // for user experience
+			c.BasicPublisher.Unpublish()
+		}()
 	})
 	return nil
 }
