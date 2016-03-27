@@ -9,7 +9,7 @@ func ToStringMap(m map[interface{}]interface{}) (map[string]interface{}, error) 
 			if vMap, ok := v.(map[interface{}]interface{}); ok {
 				vCon, err := ToStringMap(vMap)
 				if err != nil {
-					return res, err
+					return nil, err
 				} else {
 					res[kStr] = vCon
 				}
@@ -17,7 +17,7 @@ func ToStringMap(m map[interface{}]interface{}) (map[string]interface{}, error) 
 				res[kStr] = v
 			}
 		} else {
-			return res, errors.New("key in the map is not a string")
+			return nil, errors.New("key in the map is not a string")
 		}
 	}
 

@@ -218,6 +218,8 @@ func (c *WebsocketConnection) wListen() {
 		if more {
 			err := c.sendWsMessage(req.msg)
 
+			go c.h(c, req.msg, err)
+
 			if err != nil {
 				req.respCh <- &websocketMessageResp{
 					msg: nil,
@@ -226,8 +228,6 @@ func (c *WebsocketConnection) wListen() {
 
 				if _, ok := err.(*websocketError); ok {
 					c.close(true)
-				} else {
-					go c.h(c, req.msg, err)
 				}
 			} else {
 				if req.msg._type == TypeRequestMessage {
@@ -235,8 +235,6 @@ func (c *WebsocketConnection) wListen() {
 				} else {
 					req.respCh <- &websocketMessageResp{}
 				}
-
-				go c.h(c, req.msg, nil)
 			}
 
 		} else {
@@ -308,11 +306,13 @@ func (c *WebsocketConnection) rListen() {
 			message, err := c.readWsMessage()
 			if err != nil {
 				if _, ok := err.(*websocketError); ok {
+					go c.h(c, nil, err)
 					c.close(true)
 					return
 				}
 				go c.h(c, message, err)
 			} else if message._type == TypeDisconnectMessage {
+				go c.h(c, message, nil)
 				c.close(true)
 				return
 			} else if message._type == TypeResponseMessage {

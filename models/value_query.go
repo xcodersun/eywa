@@ -207,7 +207,9 @@ func (q *ValueQuery) QueryES() (interface{}, error) {
 			return nil, err
 		}
 		if resp.TotalHits() == 0 || resp.Hits == nil ||
-			len(resp.Hits.Hits) == 0 || resp.Hits.Hits[0].Fields[q.Field] == nil {
+			len(resp.Hits.Hits) == 0 {
+			return nil, nil
+		} else if _, found := resp.Hits.Hits[0].Fields[q.Field]; !found {
 			return nil, nil
 		} else {
 			values, ok := resp.Hits.Hits[0].Fields[q.Field].([]interface{})

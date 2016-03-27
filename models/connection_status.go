@@ -213,7 +213,7 @@ func FindConnectionStatus(ch *Channel, devId string, withHistory bool) (*Connect
 		boolQ.Must(elastic.NewTermQuery("activity", SupportedMessageTypes[TypeDisconnectMessage]))
 
 		resp, err := IndexClient.Search().Index(GlobalIndexName(ch)).Type(IndexTypeActivities).Query(boolQ).Sort("timestamp", false).Size(1).Do()
-		if err == nil && len(resp.Hits.Hits) > 0 {
+		if err == nil && resp.Hits != nil && resp.Hits.Hits != nil && len(resp.Hits.Hits) > 0 {
 			hit := resp.Hits.Hits[0]
 			h := &ConnectionHistory{}
 			err = json.Unmarshal(*hit.Source, h)
@@ -226,7 +226,7 @@ func FindConnectionStatus(ch *Channel, devId string, withHistory bool) (*Connect
 				}
 				s.Metadata = h.Metadata
 			} else {
-				fmt.Println(err)
+				return nil, err
 			}
 		}
 	}

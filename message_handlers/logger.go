@@ -10,11 +10,11 @@ var Logger = NewMiddleware("logger", func(h MessageHandler) MessageHandler {
 		pub := c.(pubsub.Publisher)
 
 		if e != nil {
-			pub.Publish(pubsub.FormatError(e))
+			pub.Publish(formatError(e))
 		}
 
-		if m != nil && m.Raw() != nil && len(m.Raw()) > 0 {
-			pub.Publish(pubsub.FormatRaw(m.Raw()))
+		if m != nil {
+			pub.Publish(formatMessage(m))
 		}
 
 		h(c, m, e)

@@ -118,16 +118,16 @@ func (q *RawQuery) QueryES() (interface{}, error) {
 			Do()
 
 		if err != nil {
-			return res, err
+			return nil, err
 		}
 
 		aggs, success := resp.Aggregations.Filter("name")
 		if !success {
-			return res, errors.New("error query raw data")
+			return nil, errors.New("error query raw data")
 		}
 		sum, success := aggs.Sum("bytes")
 		if !success {
-			return res, errors.New("error query raw data")
+			return nil, errors.New("error query raw data")
 		}
 
 		bytes := int64(*sum.Value)
@@ -146,7 +146,7 @@ func (q *RawQuery) QueryES() (interface{}, error) {
 	} else {
 		tmpFile, err := ioutil.TempFile(os.TempDir(), fmt.Sprintf("%s.raw", q.Channel.Name))
 		if err != nil {
-			return res, err
+			return nil, err
 		}
 
 		size := ScrollSize / Config().Indices.NumberOfShards
@@ -162,7 +162,7 @@ func (q *RawQuery) QueryES() (interface{}, error) {
 		}
 
 		if err != nil && err != elastic.EOS {
-			return res, err
+			return nil, err
 		}
 
 		res["file"] = tmpFile.Name()
