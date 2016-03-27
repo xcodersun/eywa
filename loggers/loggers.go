@@ -4,6 +4,7 @@ import (
 	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/vivowares/waterwheel"
 	"github.com/vivowares/eywa/Godeps/_workspace/src/gopkg.in/natefinch/lumberjack.v2"
 	. "github.com/vivowares/eywa/configs"
+	"github.com/vivowares/eywa/pubsub"
 	"log"
 )
 
@@ -25,7 +26,7 @@ func InitialLogger() {
 
 	Logger = waterwheel.NewAsyncLogger(
 		waterwheel.NewBufferedWriteCloser(Config().Logging.Eywa.BufferSize, rl),
-		waterwheel.SimpleFormatter,
+		SimpleTeeFormatter,
 		Config().Logging.Eywa.BufferSize,
 		Config().Logging.Eywa.Level,
 	)
@@ -65,4 +66,9 @@ func CloseLogger() {
 	Logger.Close()
 	esWc.Close()
 	dbWc.Close()
+}
+
+var SimpleTeeFormatter = func(r *waterwheel.Record, buf *[]byte) {
+	waterwheel.SimpleFormatter(r, buf)
+	pubsub.EywaLogPublisher.Publish(string(*buf))
 }

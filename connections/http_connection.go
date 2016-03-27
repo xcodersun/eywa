@@ -3,6 +3,7 @@ package connections
 import (
 	"errors"
 	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/google/btree"
+	"github.com/vivowares/eywa/pubsub"
 	"strings"
 	"sync"
 	"time"
@@ -60,6 +61,7 @@ type HttpConnection struct {
 	createdAt  time.Time
 	closedAt   time.Time
 	closeOnce  sync.Once
+	*pubsub.BasicPublisher
 
 	cm *ConnectionManager
 }

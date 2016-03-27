@@ -5,7 +5,9 @@ import (
 	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/google/btree"
 	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/gorilla/websocket"
 	. "github.com/vivowares/eywa/configs"
+	"github.com/vivowares/eywa/pubsub"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 )
@@ -23,15 +25,19 @@ type ConnectionManager struct {
 func (cm *ConnectionManager) Id() string { return cm.id }
 
 func (cm *ConnectionManager) NewWebsocketConnection(id string, ws wsConn, h MessageHandler, meta map[string]string) (*WebsocketConnection, error) {
+	p := pubsub.NewBasicPublisher(
+		strings.Replace(cm.id, "/", "-", -1) + "/" + strings.Replace(id, "/", "-", -1),
+	)
 
 	conn := &WebsocketConnection{
-		cm:           cm,
-		ws:           ws,
-		identifier:   id,
-		createdAt:    time.Now(),
-		lastPingedAt: time.Now(),
-		h:            h,
-		metadata:     meta,
+		cm:             cm,
+		ws:             ws,
+		identifier:     id,
+		createdAt:      time.Now(),
+		lastPingedAt:   time.Now(),
+		h:              h,
+		metadata:       meta,
+		BasicPublisher: p,
 
 		wch: make(chan *websocketMessageReq, Config().Connections.Websocket.RequestQueueSize),
 		msgChans: &syncRespChanMap{
@@ -78,13 +84,18 @@ func (cm *ConnectionManager) NewWebsocketConnection(id string, ws wsConn, h Mess
 }
 
 func (cm *ConnectionManager) NewHttpConnection(id string, httpConn *httpConn, h MessageHandler, meta map[string]string) (*HttpConnection, error) {
+	p := pubsub.NewBasicPublisher(
+		strings.Replace(cm.id, "/", "-", -1) + "/" + strings.Replace(id, "/", "-", -1),
+	)
+
 	conn := &HttpConnection{
-		identifier: id,
-		h:          h,
-		httpConn:   httpConn,
-		metadata:   meta,
-		createdAt:  time.Now(),
-		cm:         cm,
+		identifier:     id,
+		h:              h,
+		httpConn:       httpConn,
+		metadata:       meta,
+		createdAt:      time.Now(),
+		cm:             cm,
+		BasicPublisher: p,
 	}
 	conn.start()
 

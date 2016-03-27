@@ -6,6 +6,7 @@ import (
 	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/google/btree"
 	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/gorilla/websocket"
 	. "github.com/vivowares/eywa/configs"
+	"github.com/vivowares/eywa/pubsub"
 	"io"
 	"net"
 	"strconv"
@@ -86,6 +87,7 @@ type WebsocketConnection struct {
 	identifier   string
 	h            MessageHandler
 	metadata     map[string]string
+	*pubsub.BasicPublisher
 
 	wg        sync.WaitGroup
 	closeOnce sync.Once

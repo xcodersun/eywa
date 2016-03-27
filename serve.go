@@ -7,6 +7,7 @@ import (
 	"github.com/vivowares/eywa/connections"
 	. "github.com/vivowares/eywa/loggers"
 	"github.com/vivowares/eywa/models"
+	"github.com/vivowares/eywa/pubsub"
 	"io/ioutil"
 	"log"
 	"os"
@@ -84,6 +85,7 @@ func serve() {
 		Logger.Info("Eywa stopped")
 	})
 	graceful.PostHook(func() { CloseLogger() })
+	graceful.PostHook(func() { pubsub.Close() })
 	graceful.PostHook(func() { removePidFile() })
 
 	createPidFile()

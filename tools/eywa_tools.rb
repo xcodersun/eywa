@@ -209,7 +209,7 @@ def list_channels(opt)
   end
 
   if code.to_i != 200
-    puts 'Failed to list channels.'
+    puts "Failed to list channels. code=#{code}"
     exit 1
   end
 end
@@ -233,7 +233,7 @@ def show_channel(opt)
   end
 
   if code.to_i != 200
-    puts 'Failed to show channel details.'
+    puts "Failed to show channel details. code=#{code}"
     exit 1
   end
 end
@@ -268,7 +268,7 @@ def delete_channel(opt)
   end
 
   if code.to_i != 200
-    puts "Failed to delete channel: #{channel_id}."
+    puts "Failed to delete channel: #{channel_id}. code=#{code}"
     exit 1
   end
 
@@ -321,7 +321,7 @@ def create_channel(opt)
 
   if code.to_i != 201
     puts resp
-    puts 'Failed to create channel.'
+    puts "Failed to create channel. code=#{code}"
     exit 1
   end
 
@@ -393,7 +393,7 @@ def update_channel(opt)
   end
 
   if code.to_i != 200
-    puts 'Failed to update channel.'
+    puts "Failed to update channel. code=#{code}"
     exit 1
   end
 
@@ -418,7 +418,7 @@ def connection_counts(opt)
   end
 
   if code.to_i != 200
-    puts 'Failed to get connection counts.'
+    puts "Failed to get connection counts. code=#{code}"
     exit 1
   end
 end
@@ -457,7 +457,7 @@ def connection_status(opt)
   end
 
   if code.to_i != 200
-    puts 'Failed to get connection status.'
+    puts "Failed to get connection status. code=#{code}"
     exit 1
   end
 end
@@ -479,7 +479,7 @@ def show_settings(opt)
   end
 
   if code.to_i != 200
-    puts 'Failed to get Eywa settings.'
+    puts "Failed to get Eywa settings. code=#{code}"
     exit 1
   end
 end
@@ -505,7 +505,7 @@ def send_to_connection(opt)
   end
 
   if code.to_i != 200
-    puts "Failed to send message: [#{message}] to device: [#{device_id}] in channel: [#{channel_id}]."
+    puts "Failed to send message: [#{message}] to device: [#{device_id}] in channel: [#{channel_id}]. code=#{code}"
     exit 1
   end
   puts 'Message sent successfully!'
@@ -535,7 +535,7 @@ def request_to_connection(opt)
   end
 
   if code.to_i != 200
-    puts "Failed to request message: [#{message}] to device: [#{device_id}] in channel: [#{channel_id}]."
+    puts "Failed to request message: [#{message}] to device: [#{device_id}] in channel: [#{channel_id}]. code=#{code}"
     exit 1
   end
 
@@ -593,7 +593,7 @@ def update_settings(opt)
   end
 
   if code.to_i != 200
-    puts 'Failed to update Eywa settings.'
+    puts "Failed to update Eywa settings. code=#{code}"
     exit 1
   end
   puts 'Successfully updated Eywa settings!'
@@ -636,7 +636,7 @@ def query_value(opt)
 
   if code.to_i != 200
     puts resp
-    puts 'Failed to query value.'
+    puts "Failed to query value. code=#{code}"
     print_wiki_query
     exit 1
   end
@@ -682,7 +682,7 @@ def query_series(opt)
 
   if code.to_i != 200
     puts resp
-    puts 'Failed to query series.'
+    puts "Failed to query series. code=#{code}"
     print_wiki_query
     exit 1
   end
@@ -725,7 +725,7 @@ def query_raw(opt)
 
   if code.to_i != 200
     puts resp
-    puts 'Failed to query series.'
+    puts "Failed to query series. code=#{code}"
     print_wiki_query
     exit 1
   end
@@ -769,7 +769,7 @@ def scan_connections(opt)
 
   if code.to_i != 200
     puts resp
-    puts 'Failed to query connections.'
+    puts "Failed to query connections. code=#{code}"
     print_wiki_query
     exit 1
   end

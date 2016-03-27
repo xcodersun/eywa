@@ -1,11 +1,17 @@
 package handlers
 
 import (
+	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/gorilla/websocket"
 	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/zenazn/goji/web"
 	. "github.com/vivowares/eywa/connections"
 	. "github.com/vivowares/eywa/message_handlers"
 	"github.com/vivowares/eywa/models"
 )
+
+var upgrader = &websocket.Upgrader{
+	ReadBufferSize:  1024,
+	WriteBufferSize: 4096,
+}
 
 func findCachedChannel(c web.C, idName string) (*models.Channel, bool) {
 	id := models.DecodeHashId(c.URLParams[idName])

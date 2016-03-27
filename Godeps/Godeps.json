@@ -77,6 +77,10 @@
 			"Rev": "c7b9b28d405aea75359a0a5dfb89f52a84632f6d"
 		},
 		{
+			"ImportPath": "github.com/olebedev/emitter",
+			"Rev": "8f03f14fc8671b9c0c43c76b01236a4c998f3c8c"
+		},
+		{
 			"ImportPath": "github.com/olivere/elastic/uritemplates",
 			"Comment": "v2.0.23-27-ga8215e0",
 			"Rev": "a8215e0b307af4727033f0cbc52e42600c5baebc"
