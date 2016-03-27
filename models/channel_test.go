@@ -49,7 +49,7 @@ func TestChannel(t *testing.T) {
 		_c := &Channel{}
 		DB.Model(&Channel{}).First(_c)
 		So(_c.Name, ShouldEqual, "test")
-		So(reflect.DeepEqual(_c.MessageHandlers, StringSlice([]string{"indexer"})), ShouldBeTrue)
+		So(reflect.DeepEqual(_c.MessageHandlers, StringSlice([]string{"indexer", "logger"})), ShouldBeTrue)
 
 		c.Name = "updated test"
 		c.Update()
@@ -57,7 +57,7 @@ func TestChannel(t *testing.T) {
 		_c = &Channel{}
 		DB.Model(&Channel{}).First(_c)
 		So(_c.Name, ShouldEqual, "updated test")
-		So(reflect.DeepEqual(_c.MessageHandlers, StringSlice([]string{"indexer"})), ShouldBeTrue)
+		So(reflect.DeepEqual(_c.MessageHandlers, StringSlice([]string{"indexer", "logger"})), ShouldBeTrue)
 
 		c.Delete()
 		DB.Model(&Channel{}).Count(&count)

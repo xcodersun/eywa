@@ -3,14 +3,32 @@ require 'net/http'
 require 'json'
 require 'openssl'
 
+LOAD_MSG =<<-D
+Gem `websocket-client-simple` is not installed.
+Tasks: [attach-connection, tail-log] will be disabled.
+To install:
+  `gem install websocket-client-simple`
+
+D
+
 RequiredOpts = [:task, :host, :port, :username, :password]
 SupportedTasks = [
   'list-channels', 'create-channel', 'update-channel',
   'delete-channel', 'show-channel', 'connection-counts',
   'connection-status', 'show-settings', 'update-settings',
   'send-to-connection', 'request-to-connection', 'query-value',
-  'query-series', 'query-raw', 'scan-connections'
+  'query-series', 'query-raw', 'scan-connections', 'tail-log',
+  'attach-connection'
 ]
+
+def load_libs
+  begin
+    require('websocket-client-simple')
+  rescue LoadError
+    puts LOAD_MSG
+    exit 1
+  end
+end
 
 def parse_opts(args)
   options = {nop: true}
@@ -425,7 +443,7 @@ end
 
 def connection_status(opt)
   channel_id = get_option(opt, :channel_id, false, Proc.new{|opt, _| list_channels(opt)})
-  device_id = get_option(opt, :device_id)
+  device_id = get_option(opt, :device_id, false)
 
   if opt[:yes].nil?
     print "With connection history?(yes/no): "
@@ -778,13 +796,47 @@ def scan_connections(opt)
   puts 'Successfully scanned connections!'
 end
 
+def tail_log(opt)
+  url = "ws#{opt[:use_ssl] ? 's': ""}://#{opt[:host]}:#{opt[:port]}/admin/tail"
+  ws = WebSocket::Client::Simple.connect(url, {headers: {"Authentication"=>opt[:auth_token]}})
+  opt[:ws] = ws
+  ws.on(:message){|msg|puts msg.data}
+  ws.on(:open){_sleep}
+
+  puts "Unable to tail server log, something weird happened ..."
+end
+
+def attach_connection(opt)
+  channel_id = get_option(opt, :channel_id, false, Proc.new{|opt, _| list_channels(opt)})
+  device_id = get_option(opt, :device_id, false)
+
+  url = "ws#{opt[:use_ssl] ? 's': ""}://#{opt[:host]}:#{opt[:port]}/admin/channels/#{channel_id}/devices/#{device_id}/attach"
+  ws = WebSocket::Client::Simple.connect(url, {headers: {"Authentication"=>opt[:auth_token]}})
+  opt[:ws] = ws
+  ws.on(:message){|msg|puts msg.data}
+  ws.on(:open){_sleep}
+
+  puts "Unable to attach to connection, check if it's online by `connection-status` ..."
+end
+
+def _sleep
+  begin
+    sleep
+  rescue Interrupt
+  end
+end
+
+def cleanup_ws(opt)
+  opt[:ws].close if opt[:ws]
+end
+
+options = parse_opts(ARGV)
+options[:auth_token] = login(options)
+
 Signal.trap("INT") {
   puts "\nTask aborted."
   exit 1
 }
-
-options = parse_opts(ARGV)
-options[:auth_token] = login(options)
 
 case options[:task]
 when 'list-channels'
@@ -817,6 +869,12 @@ when 'send-to-connection'
   send_to_connection(options)
 when 'request-to-connection'
   request_to_connection(options)
+when 'tail-log'
+  load_libs
+  tail_log(options)
+when 'attach-connection'
+  load_libs
+  attach_connection(options)
 else
   puts "Unsupported task: [#{options[:task]}]."
   exit 1
