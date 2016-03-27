@@ -120,7 +120,8 @@ func (c *Channel) AfterCreate() error {
 	if err != nil {
 		return err
 	}
-	_, err = connections.NewConnectionManager(name)
+
+	connections.NewConnectionManager(name)
 	return err
 }
 
