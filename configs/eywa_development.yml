@@ -4,7 +4,6 @@ service:
   device_port: 8081
   pid_file: {{ .eywa_home }}/tmp/pids/eywa_development.pid
   assets: {{ .eywa_home }}/assets
-  header_path: {{ .eywa_home }}/headers
 security:
   dashboard:
     username: root

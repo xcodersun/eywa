@@ -5,32 +5,17 @@ import (
 	"fmt"
 	"strings"
 	"time"
-	"text/template"
-	"bytes"
-	"path"
-	"os"
 	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/speps/go-hashids"
 	"github.com/vivowares/eywa/Godeps/_workspace/src/gopkg.in/olivere/elastic.v3"
 	"github.com/vivowares/eywa/connections"
-	"github.com/vivowares/eywa/configs"
-	. "github.com/vivowares/eywa/assets"
 	. "github.com/vivowares/eywa/utils"
-	. "github.com/vivowares/eywa/loggers"
+
 )
 
 var SupportedDataTypes = []string{"float", "int", "boolean", "string"}
 var InternalTags = []string{"_ip"}
 var Salt = "Cc4D5xBlbCBqYTuimuNPGsio7YoMo8d8"
 var HashLen = 16
-
-type headerFileHandler func(ch *Channel)(string, error)
-var SupportedHeaderLanguages = []string{"clang"}
-var headerFileExtensions = map[string]string {
-	"clang": "%s.h",
-}
-var headerFileHandlers = map[string]headerFileHandler {
-    "clang": fetchClangHeaderContentByChannel,
-}
 
 type Channel struct {
 	Id              int         `sql:"type:integer primary key autoincrement" json:"-"`
@@ -256,72 +241,6 @@ func FetchCachedChannelIndexStatsById(id int) (*elastic.IndicesStatsResponse, bo
 	} else {
 		return nil, false
 	}
-}
-
-func FetchHeaderContentByChannel(ch *Channel, lang string) (string, string, error) {
-	basePath := configs.Config().Service.HeaderPath
-	fileName := fmt.Sprintf(headerFileExtensions[lang], ch.Name)
-	fileName = strings.Replace(fileName, " ", "_", -1)
-	filePath := path.Join(basePath, fileName)
-
-	err := os.MkdirAll(basePath, 0755)
-	if err != nil {
-		Logger.Error(fmt.Sprintf("%v", err))
-		return "", "", err
-	}
-
-	f, err := os.Create(filePath)
-	if err != nil {
-		Logger.Error(fmt.Sprintf("%v", err))
-		return "", "", err
-	}
-	defer f.Close()
-
-	content, err := headerFileHandlers[lang](ch)
-	if err != nil {
-		Logger.Error(fmt.Sprintf("%v", err))
-		return "", "", err
-	}
-
-	n, err := f.WriteString(content)
-	if err != nil {
-		Logger.Error(fmt.Sprintf("%v", err))
-		return "", "", err
-	} else if n != len(content) {
-		Logger.Warn(fmt.Sprintf("Incomplete header file content"))
-	}
-
-	return filePath, fileName, err
-}
-
-func fetchClangHeaderContentByChannel(ch *Channel) (string, error) {
-	var bufHeader, bufBody bytes.Buffer
-	tmplHeader, err := template.New("clang_http_post_header").Parse(CLANG_HTTP_POST_HEADER)
-	if err != nil {
-		return "", err
-	}
-	err = tmplHeader.Execute(&bufHeader, ch)
-	if err != nil {
-		Logger.Error(fmt.Sprintf("%v", err))
-		return "", err
-	}
-
-	tmplBody, err := template.New("clang_http_post_body").Parse(CLANG_HTTP_POST_BODY)
-	if err != nil {
-		Logger.Error(fmt.Sprintf("%v", err))
-		return "", err
-	}
-	err = tmplBody.Execute(&bufBody, ch)
-	if err != nil {
-		Logger.Error(fmt.Sprintf("%v", err))
-		return "", err
-	}
-	body := bufBody.String()
-	body = strings.Replace(body, ",}\\r\\n", "}\\r\\n", 1)
-
-	content := bufHeader.String()+body
-
-	return content, err
 }
 
 func DecodeHashId(hash string) int {

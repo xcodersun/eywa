@@ -8,7 +8,8 @@ import (
 	. "github.com/vivowares/eywa/utils"
 	"net/http"
 	"fmt"
-	"os"
+	"time"
+	"bytes"
 )
 
 func CreateChannel(c web.C, w http.ResponseWriter, r *http.Request) {
@@ -109,7 +110,7 @@ func GetChannelIndexStats(c web.C, w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func GetChannelHeaderFiles(c web.C, w http.ResponseWriter, r *http.Request) {
+func GetChannelHardwareTemplateFiles(c web.C, w http.ResponseWriter, r *http.Request) {
 	ch, found := findCachedChannel(c, "id")
 	if !found {
 		Render.JSON(w, http.StatusNotFound, map[string]string{"error": "channel not found"})
@@ -119,11 +120,11 @@ func GetChannelHeaderFiles(c web.C, w http.ResponseWriter, r *http.Request) {
 	hashId, _ := ch.HashId()
 	query := QueryToMap(r.URL.Query())
 	if len(query) == 0 {
-		headerFiles := make(map[string]string)
-		for _, lang := range models.SupportedHeaderLanguages {
-			headerFiles[lang] = fmt.Sprintf("/channels/%s/header_files?language=%s", hashId, lang)
+		templateFiles := make(map[string]string)
+		for _, lang := range SupportedHardwareTemplateLanguages {
+			templateFiles[lang] = fmt.Sprintf("/channels/%s/hardware_template?language=%s", hashId, lang)
 		}
-		Render.JSON(w, http.StatusOK, headerFiles)
+		Render.JSON(w, http.StatusOK, templateFiles)
 		return
 	}
 
@@ -132,16 +133,15 @@ func GetChannelHeaderFiles(c web.C, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	filePath, fileName, err := models.FetchHeaderContentByChannel(ch, query["language"])
-
+	fileName, content, err := FetchHardwareTemplateContentByChannel(ch, query["language"])
 	if err != nil {
-		Render.JSON(w, http.StatusBadRequest, map[string]string{"error": "header file not created"})
+		Render.JSON(w, http.StatusInternalServerError, map[string]string{"error": "hardware template file not created"})
 		return
 	}
 
-	w.Header().Set("Content-Disposition", fmt.Sprintf("Attachment; filename=\"%s\"", fileName))
-	http.ServeFile(w, r, filePath)
-	os.Remove(filePath)
+	w.Header().Set("Content-Type", "text/plain; charset=\"UTF-8\"")
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", fileName))
+	http.ServeContent(w, r, fileName, time.Now(), bytes.NewReader([]byte(content)))
 }
 
 func DeleteChannel(c web.C, w http.ResponseWriter, r *http.Request) {
