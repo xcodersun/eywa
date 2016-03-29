@@ -24,12 +24,12 @@ Here is a growing list of features we want to support:
 - [x] Connection Manager
 - [x] Device Control
 - [x] Command Line Tools
+- [x] Connection Attach Mode
 - [ ] Admin Panel
 - [x] Basic Authentication
 - [x] SSL protection
 - [x] Data Indexing
 - [ ] Data Streaming
-- [ ] File Upload
 - [x] Data Export
 - [x] Data Retention
 - [ ] Data Visualization
@@ -52,7 +52,7 @@ Performance
 
 How performant is Eywa? Well, we did a simple benchmark and the [benchmark script](https://github.com/vivowares/eywa/blob/master/benchmark/benchmark.go) is also available in the repo under `benchmark` directory.
 
-On a machine of 12 CPUs + 32GB mem from [Digital Ocean](https://www.digitalocean.com/). A single Eywa node can keep track of more than 1.5 million devices, with a lot of potential. CPU is merely used, but memory is the limiting factor.
+The latest benchmark shows, on a machine of 12 CPUs + 32GB mem from [Digital Ocean](https://www.digitalocean.com/). A single Eywa node can keep track of more than 1.5 million devices, with a lot of potential. CPU is merely used, but memory is the limiting factor.
 
 For more details please check out wiki on [Performance](https://github.com/vivowares/eywa/wiki/Performance).
 

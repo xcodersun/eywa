@@ -35,3 +35,4 @@
 |gopkg.in/yaml.v2|https://github.com/go-yaml/yaml/blob/v2/LICENSE|
 |github.com/speps/go-hashids|https://github.com/speps/go-hashids/blob/master/LICENSE|
 |github.com/google/btree|https://github.com/google/btree/blob/master/LICENSE|
+|github.com/olebedev/emitter|https://github.com/olebedev/emitter/blob/master/LICENSE|
