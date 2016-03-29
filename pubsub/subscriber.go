@@ -3,28 +3,26 @@ package pubsub
 import (
 	"fmt"
 	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/gorilla/websocket"
-	"strings"
+	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/vivowares/emitter"
 	"time"
 )
 
 var writeTimeout = 5 * time.Second
 
-func NewWebsocketSubscriber(p Publisher, id string, ws *websocket.Conn) *WebsocketSubscriber {
+func NewWebsocketSubscriber(p Publisher, ws *websocket.Conn) *WebsocketSubscriber {
 	return &WebsocketSubscriber{
 		p:  p,
-		id: id,
 		ws: ws,
 	}
 }
 
 type WebsocketSubscriber struct {
-	id string
 	p  Publisher
 	ws *websocket.Conn
 }
 
 func (s *WebsocketSubscriber) Topic() string {
-	return s.p.Topic() + "/" + strings.Replace(s.id, "/", "-", -1)
+	return s.p.Topic()
 }
 
 func (s *WebsocketSubscriber) flush(p []byte) error {
@@ -42,18 +40,19 @@ func (s *WebsocketSubscriber) flush(p []byte) error {
 func (s *WebsocketSubscriber) Subscribe(banner string) {
 	go func() {
 		s.p.Attach()
-
-		defer func() {
-			s.p.Detach()
-			EM.Off(s.Topic())
-		}()
+		defer s.p.Detach()
 
 		banner = fmt.Sprintf("%s\n%s\n\n", cowsay, banner)
 		if s.flush([]byte(banner)) != nil {
 			return
 		}
 
-		for event := range EM.On(s.Topic()) {
+		listener := EM.On(s.Topic(), emitter.Close)
+		defer func() {
+			EM.Off(s.Topic(), listener)
+		}()
+
+		for event := range listener {
 			msg := event.String(0)
 			if s.flush([]byte(msg)) != nil {
 				return

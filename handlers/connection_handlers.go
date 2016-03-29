@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/zenazn/goji/web"
-	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/zenazn/goji/web/middleware"
 	. "github.com/vivowares/eywa/configs"
 	"github.com/vivowares/eywa/connections"
 	"github.com/vivowares/eywa/models"
@@ -219,7 +218,6 @@ func AttachConnection(c web.C, w http.ResponseWriter, r *http.Request) {
 
 	pubsub.NewWebsocketSubscriber(
 		conn.(pubsub.Publisher),
-		c.Env[middleware.RequestIDKey].(string),
 		ws,
 	).Subscribe(
 		fmt.Sprintf("You are now attached to connection %s:%s ...", cm.Id(), conn.Identifier()),

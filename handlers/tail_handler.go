@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/zenazn/goji/web"
-	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/zenazn/goji/web/middleware"
 	"github.com/vivowares/eywa/pubsub"
 	. "github.com/vivowares/eywa/utils"
 	"net/http"
@@ -17,7 +16,6 @@ func TailLog(c web.C, w http.ResponseWriter, r *http.Request) {
 
 	pubsub.NewWebsocketSubscriber(
 		pubsub.EywaLogPublisher,
-		c.Env[middleware.RequestIDKey].(string),
 		ws,
 	).Subscribe("You are now attached to Eywa access log...")
 }

@@ -27,15 +27,10 @@ func (p *BasicPublisher) Topic() string { return p.topic }
 
 func (p *BasicPublisher) Publish(c Callback) {
 	if p.Attached() {
-		go func() {
-			defer func() { recover() }()
-			EM.Emit(p.Topic()+"/*", c())
-		}()
+		EM.Emit(p.Topic(), c())
 	}
 }
 
 func (p *BasicPublisher) Unpublish() {
-	if p.Attached() {
-		EM.Off(p.Topic() + "/*")
-	}
+	EM.Off(p.Topic())
 }
