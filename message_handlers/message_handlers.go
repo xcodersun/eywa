@@ -11,6 +11,8 @@ import (
 
 var SupportedMessageHandlers = map[string]*Middleware{"indexer": Indexer, "logger": Logger}
 
+var DefaultMessageHandlers = []string{"indexer", "logger"}
+
 var channelNotFound = errors.New("channel not found when indexing data")
 
 func findCachedChannel(idStr string) (*models.Channel, bool) {

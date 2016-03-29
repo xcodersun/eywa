@@ -29,10 +29,20 @@ func findChannel(c web.C) (*models.Channel, bool) {
 
 func messageHandler(ch *models.Channel) MessageHandler {
 	md := NewMiddlewareStack()
+	set := make(map[string]struct{})
+	for _, hStr := range DefaultMessageHandlers {
+		set[hStr] = struct{}{}
+		md.Use(SupportedMessageHandlers[hStr])
+	}
+
 	for _, hStr := range ch.MessageHandlers {
-		if m, found := SupportedMessageHandlers[hStr]; found {
-			md.Use(m)
+		if _, found := set[hStr]; !found {
+			if h, ok := SupportedMessageHandlers[hStr]; ok {
+				set[hStr] = struct{}{}
+				md.Use(h)
+			}
 		}
 	}
+
 	return md.Chain(nil)
 }
