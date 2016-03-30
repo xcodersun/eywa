@@ -111,7 +111,7 @@ func GetChannelIndexStats(c web.C, w http.ResponseWriter, r *http.Request) {
 }
 
 func GetChannelHardwareTemplateFiles(c web.C, w http.ResponseWriter, r *http.Request) {
-	ch, found := findCachedChannel(c, "id")
+	ch, found := findChannel(c, "id")
 	if !found {
 		Render.JSON(w, http.StatusNotFound, map[string]string{"error": "channel not found"})
 		return
@@ -135,12 +135,11 @@ func GetChannelHardwareTemplateFiles(c web.C, w http.ResponseWriter, r *http.Req
 
 	fileName, content, err := FetchHardwareTemplateContentByChannel(ch, query["language"])
 	if err != nil {
-		Render.JSON(w, http.StatusInternalServerError, map[string]string{"error": "hardware template file not created"})
+		Render.JSON(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
 	w.Header().Set("Content-Type", "text/plain; charset=\"UTF-8\"")
-	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", fileName))
 	http.ServeContent(w, r, fileName, time.Now(), bytes.NewReader([]byte(content)))
 }
 
