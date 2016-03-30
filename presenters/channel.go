@@ -67,35 +67,29 @@ func fetchClangTemplateContentByChannel(ch *Channel) (string, error) {
 
 	header, err := utils.HardwareTemplateParse(hwTmplPath, "CLANG_HTTP_POST_HEADER", "#defkey", "#end")
 	if err != nil {
-		Logger.Error(fmt.Sprintf("%v", err))
 		return "", err
 	}
 
 	tmplHeader, err := template.New("clang_http_post_template").Parse(header)
 	if err != nil {
-		Logger.Error(fmt.Sprintf("%v", err))
 		return "", err
 	}
 	err = tmplHeader.Execute(&bufHeader, ch)
 	if err != nil {
-		Logger.Error(fmt.Sprintf("%v", err))
 		return "", err
 	}
 
 	body, err := utils.HardwareTemplateParse(hwTmplPath, "CLANG_HTTP_POST_BODY", "#defkey", "#end")
 	if err != nil {
-		Logger.Error(fmt.Sprintf("%v", err))
 		return "", err
 	}
 
 	tmplBody, err := template.New("clang_http_post_body").Parse(body)
 	if err != nil {
-		Logger.Error(fmt.Sprintf("%v", err))
 		return "", err
 	}
 	err = tmplBody.Execute(&bufBody, ch)
 	if err != nil {
-		Logger.Error(fmt.Sprintf("%v", err))
 		return "", err
 	}
 
