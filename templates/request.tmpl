@@ -1,0 +1,18 @@
+# block wrapped by "#defkey" and "#end" is a golang text/template.
+# "\\n" is an escape for carrior return
+
+#defkey HTTP_POST_HEADER
+POST /channels/devices/<deviceID>/upload?
+{{ range $i, $e := .Tags }}
+{{ if $i }}&{{ end }}{{ $e }}=<TagValue>
+{{ end }} HTTP/1.1\n
+Host: <HostIP/HostDomain>:<HostPort>\n
+Content-Type: application/json\n
+AccessToken: <ChannelAccessToken>\n
+Content-Length: <BodyLength>\n
+\n
+#end
+
+#defkey HTTP_POST_BODY
+{{"{"}}{{ range $key, $value := .Fields }}{{ $key }}=<data>,{{ end }}{{"}"}}\n
+#end
