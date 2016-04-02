@@ -7,8 +7,6 @@ import (
 	. "github.com/vivowares/eywa/presenters"
 	. "github.com/vivowares/eywa/utils"
 	"net/http"
-	"time"
-	"bytes"
 )
 
 func CreateChannel(c web.C, w http.ResponseWriter, r *http.Request) {
@@ -123,14 +121,12 @@ func GetChannelRequestTemplate(c web.C, w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	tmplName, tmpl, err := FetchRequestTemplateByChannel(ch)
+	_, tmpl, err := FetchRequestTemplateByChannel(ch)
 	if err != nil {
 		Render.JSON(w, http.StatusInternalServerError, err.Error())
-		return
+	} else {
+		Render.Text(w, http.StatusOK, tmpl)
 	}
-
-	w.Header().Set("Content-Type", "text/plain; charset=\"UTF-8\"")
-	http.ServeContent(w, r, tmplName, time.Now(), bytes.NewReader([]byte(tmpl)))
 }
 
 func DeleteChannel(c web.C, w http.ResponseWriter, r *http.Request) {
