@@ -7,7 +7,6 @@ import (
 	. "github.com/vivowares/eywa/presenters"
 	. "github.com/vivowares/eywa/utils"
 	"net/http"
-	"fmt"
 	"time"
 	"bytes"
 )
@@ -110,37 +109,28 @@ func GetChannelIndexStats(c web.C, w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func GetChannelHardwareTemplateFiles(c web.C, w http.ResponseWriter, r *http.Request) {
-	ch, found := findChannel(c, "id")
+func GetChannelRequestTemplate(c web.C, w http.ResponseWriter, r *http.Request) {
+	ch, found := findChannel(c)
 	if !found {
 		Render.JSON(w, http.StatusNotFound, map[string]string{"error": "channel not found"})
 		return
 	}
 
-	hashId, _ := ch.HashId()
 	query := QueryToMap(r.URL.Query())
-	if len(query) == 0 {
-		templateFiles := make(map[string]string)
-		for _, lang := range SupportedHardwareTemplateLanguages {
-			templateFiles[lang] = fmt.Sprintf("/channels/%s/hardware_template?language=%s", hashId, lang)
-		}
-		Render.JSON(w, http.StatusOK, templateFiles)
-		return
-	}
 
-	if len(query) > 1 || query["language"] == "" {
+	if len(query) != 0 {
 		Render.JSON(w, http.StatusBadRequest, map[string]string{"error": "invalid query"})
 		return
 	}
 
-	fileName, content, err := FetchHardwareTemplateContentByChannel(ch, query["language"])
+	tmplName, tmpl, err := FetchRequestTemplateByChannel(ch)
 	if err != nil {
 		Render.JSON(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
 	w.Header().Set("Content-Type", "text/plain; charset=\"UTF-8\"")
-	http.ServeContent(w, r, fileName, time.Now(), bytes.NewReader([]byte(content)))
+	http.ServeContent(w, r, tmplName, time.Now(), bytes.NewReader([]byte(tmpl)))
 }
 
 func DeleteChannel(c web.C, w http.ResponseWriter, r *http.Request) {

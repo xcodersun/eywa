@@ -7,17 +7,17 @@ import (
 	"bufio"
 )
 
-func HardwareTemplateParse(hwTmplPath string, key string, delimStart string, delimEnd string) (string, error) {
+func RequestTemplateParse(hwTmplPath string, key string, delimStart string, delimEnd string) (string, error) {
 	template := ""
 	openDelim := true
 
-  	hwTmplFile, err := os.Open(hwTmplPath)
-  	if err != nil {
-  		return "", err
-  	}
-  	defer hwTmplFile.Close()
+	hwTmplFile, err := os.Open(hwTmplPath)
+	if err != nil {
+		return "", err
+	}
+	defer hwTmplFile.Close()
 
-  	scanner := bufio.NewScanner(hwTmplFile)
+	scanner := bufio.NewScanner(hwTmplFile)
 	for scanner.Scan() {
 		line := scanner.Text()
 		if strings.HasPrefix(line, delimStart) && strings.Contains(line, key) {
@@ -27,8 +27,8 @@ func HardwareTemplateParse(hwTmplPath string, key string, delimStart string, del
 					openDelim = false
 					break
 				}
-				if strings.HasSuffix(line, "\\\\n") {
-					line = strings.Replace(line, "\\\\n", "\n", -1)
+				if strings.HasSuffix(line, "\\n") {
+					line = strings.Replace(line, "\\n", "\n", 1)
 				}
 				template += line
 			}
