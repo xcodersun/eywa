@@ -74,7 +74,7 @@ func (q *RawQuery) Parse(params map[string]string) error {
 				return errors.New("unsupported operator for tagging: " + t[1])
 			} else if len(t[2]) == 0 {
 				return errors.New("empty tagging value: " + tag)
-			} else if !StringSliceContains(q.Channel.Tags, t[0]) {
+			} else if !StringSliceContains(q.Channel.Tags, t[0]) && !StringSliceContains(InternalTags, t[0]) {
 				return errors.New("undefined tag: " + t[0] + " on channel: " + q.Channel.Name)
 			} else {
 				q.Tags[t[0]] = t[2]
