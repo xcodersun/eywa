@@ -5,9 +5,9 @@ package api_tests
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/bitly/go-simplejson"
-	. "github.com/vivowares/eywa/Godeps/_workspace/src/github.com/smartystreets/goconvey/convey"
-	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/verdverm/frisby"
+	"github.com/bitly/go-simplejson"
+	. "github.com/smartystreets/goconvey/convey"
+	"github.com/verdverm/frisby"
 	. "github.com/vivowares/eywa/models"
 	"log"
 	"net/http"

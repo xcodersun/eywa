@@ -4,12 +4,12 @@ package api_tests
 
 import (
 	"fmt"
-	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/bitly/go-simplejson"
-	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/gorilla/websocket"
-	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/satori/go.uuid"
-	. "github.com/vivowares/eywa/Godeps/_workspace/src/github.com/smartystreets/goconvey/convey"
-	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/verdverm/frisby"
-	"github.com/vivowares/eywa/Godeps/_workspace/src/gopkg.in/olivere/elastic.v3"
+	"github.com/bitly/go-simplejson"
+	"github.com/gorilla/websocket"
+	"github.com/satori/go.uuid"
+	. "github.com/smartystreets/goconvey/convey"
+	"github.com/verdverm/frisby"
+	"gopkg.in/olivere/elastic.v3"
 	. "github.com/vivowares/eywa/configs"
 	. "github.com/vivowares/eywa/connections"
 	. "github.com/vivowares/eywa/models"

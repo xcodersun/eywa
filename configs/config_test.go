@@ -2,7 +2,7 @@ package configs
 
 import (
 	"bytes"
-	. "github.com/vivowares/eywa/Godeps/_workspace/src/github.com/smartystreets/goconvey/convey"
+	. "github.com/smartystreets/goconvey/convey"
 	. "github.com/vivowares/eywa/utils"
 	"io/ioutil"
 	"log"

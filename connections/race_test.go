@@ -2,7 +2,7 @@ package connections
 
 import (
 	"fmt"
-	. "github.com/vivowares/eywa/Godeps/_workspace/src/github.com/smartystreets/goconvey/convey"
+	. "github.com/smartystreets/goconvey/convey"
 	. "github.com/vivowares/eywa/configs"
 	. "github.com/vivowares/eywa/utils"
 	"math/rand"
