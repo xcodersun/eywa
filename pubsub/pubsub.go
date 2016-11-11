@@ -1,7 +1,7 @@
 package pubsub
 
 import (
-	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/vivowares/emitter"
+	"github.com/vivowares/emitter"
 )
 
 var capacity uint = 512

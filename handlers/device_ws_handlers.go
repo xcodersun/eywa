@@ -2,8 +2,8 @@ package handlers
 
 import (
 	"fmt"
-	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/zenazn/goji/web"
-	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/zenazn/goji/web/middleware"
+	"github.com/zenazn/goji/web"
+	"github.com/zenazn/goji/web/middleware"
 	"github.com/vivowares/eywa/connections"
 	. "github.com/vivowares/eywa/utils"
 	"net/http"

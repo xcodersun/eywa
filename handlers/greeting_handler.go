@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/zenazn/goji/web"
+	"github.com/zenazn/goji/web"
 	. "github.com/vivowares/eywa/utils"
 	"net/http"
 )

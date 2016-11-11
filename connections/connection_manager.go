@@ -2,8 +2,8 @@ package connections
 
 import (
 	"errors"
-	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/google/btree"
-	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/gorilla/websocket"
+	"github.com/google/btree"
+	"github.com/gorilla/websocket"
 	. "github.com/vivowares/eywa/configs"
 	"github.com/vivowares/eywa/pubsub"
 	"strconv"

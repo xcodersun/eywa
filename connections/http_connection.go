@@ -2,7 +2,7 @@ package connections
 
 import (
 	"errors"
-	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/google/btree"
+	"github.com/google/btree"
 	"github.com/vivowares/eywa/pubsub"
 	"strings"
 	"sync"

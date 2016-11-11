@@ -2,7 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
-	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/zenazn/goji/web"
+	"github.com/zenazn/goji/web"
 	"github.com/vivowares/eywa/configs"
 	. "github.com/vivowares/eywa/utils"
 	"net/http"

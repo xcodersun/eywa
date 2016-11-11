@@ -2,8 +2,8 @@ package pubsub
 
 import (
 	"fmt"
-	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/gorilla/websocket"
-	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/vivowares/emitter"
+	"github.com/gorilla/websocket"
+	"github.com/vivowares/emitter"
 	"time"
 )
 

@@ -3,7 +3,7 @@ package models
 import (
 	"errors"
 	"fmt"
-	"github.com/vivowares/eywa/Godeps/_workspace/src/gopkg.in/olivere/elastic.v3"
+	"gopkg.in/olivere/elastic.v3"
 	. "github.com/vivowares/eywa/utils"
 	"strconv"
 	"strings"

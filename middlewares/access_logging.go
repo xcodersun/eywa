@@ -3,9 +3,9 @@ package middlewares
 import (
 	"bytes"
 	"fmt"
-	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/zenazn/goji/web"
-	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/zenazn/goji/web/middleware"
-	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/zenazn/goji/web/mutil"
+	"github.com/zenazn/goji/web"
+	"github.com/zenazn/goji/web/middleware"
+	"github.com/zenazn/goji/web/mutil"
 	. "github.com/vivowares/eywa/configs"
 	. "github.com/vivowares/eywa/loggers"
 	"net/http"

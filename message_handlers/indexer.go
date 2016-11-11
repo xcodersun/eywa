@@ -2,8 +2,8 @@ package message_handlers
 
 import (
 	"encoding/json"
-	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/satori/go.uuid"
-	"github.com/vivowares/eywa/Godeps/_workspace/src/gopkg.in/olivere/elastic.v3"
+	"github.com/satori/go.uuid"
+	"gopkg.in/olivere/elastic.v3"
 	. "github.com/vivowares/eywa/configs"
 	. "github.com/vivowares/eywa/connections"
 	. "github.com/vivowares/eywa/models"

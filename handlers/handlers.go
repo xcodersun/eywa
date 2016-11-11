@@ -1,8 +1,8 @@
 package handlers
 
 import (
-	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/gorilla/websocket"
-	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/zenazn/goji/web"
+	"github.com/gorilla/websocket"
+	"github.com/zenazn/goji/web"
 	. "github.com/vivowares/eywa/connections"
 	. "github.com/vivowares/eywa/message_handlers"
 	"github.com/vivowares/eywa/models"

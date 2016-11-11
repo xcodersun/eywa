@@ -1,9 +1,7 @@
 {
 	"ImportPath": "github.com/vivowares/eywa",
-	"GoVersion": "go1.5",
-	"Packages": [
-		"./..."
-	],
+	"GoVersion": "go1.7",
+	"GodepVersion": "v75",
 	"Deps": [
 		{
 			"ImportPath": "github.com/BurntSushi/toml",
@@ -11,12 +9,8 @@
 			"Rev": "056c9bc7be7190eaa7715723883caffa5f8fa3e4"
 		},
 		{
-			"ImportPath": "github.com/bitly/go-simplejson",
-			"Comment": "v0.5.0",
-			"Rev": "aabad6e819789e569bd6aabf444c935aa9ba1e44"
-		},
-		{
 			"ImportPath": "github.com/elithrar/simple-scrypt",
+			"Comment": "v1.1",
 			"Rev": "47767683c6c880a9f89e48d376c70de7f5268951"
 		},
 		{
@@ -34,10 +28,6 @@
 		{
 			"ImportPath": "github.com/jinzhu/inflection",
 			"Rev": "3272df6c21d04180007eb3349844c89a3856bc25"
-		},
-		{
-			"ImportPath": "github.com/jtolds/gls",
-			"Rev": "9a4a02dbe491bef4bab3c24fd9f3087d6c4c6690"
 		},
 		{
 			"ImportPath": "github.com/kr/pretty",
@@ -60,21 +50,12 @@
 		},
 		{
 			"ImportPath": "github.com/mattn/go-sqlite3",
-			"Comment": "v1.1.0-27-g5651a9d",
-			"Rev": "5651a9d9d49ec25811d08220ee972080378d52ea"
+			"Comment": "v1.2.0",
+			"Rev": "ca5e3819723d8eeaf170ad510e7da1d6d2e94a08"
 		},
 		{
 			"ImportPath": "github.com/mitchellh/mapstructure",
 			"Rev": "281073eb9eb092240d33ef253c404f1cca550309"
-		},
-		{
-			"ImportPath": "github.com/moul/http2curl",
-			"Rev": "1c29be06762e43e04dd954a01c66991104ce4374"
-		},
-		{
-			"ImportPath": "github.com/mozillazg/request",
-			"Comment": "v0.5.0",
-			"Rev": "c7b9b28d405aea75359a0a5dfb89f52a84632f6d"
 		},
 		{
 			"ImportPath": "github.com/olivere/elastic/uritemplates",
@@ -82,31 +63,17 @@
 			"Rev": "a8215e0b307af4727033f0cbc52e42600c5baebc"
 		},
 		{
-			"ImportPath": "github.com/parnurzeal/gorequest",
-			"Comment": "v0.2.13-7-g27bfb0d",
-			"Rev": "27bfb0dcbcc020d11b7839af416fb8dafc2ab01c"
-		},
-		{
 			"ImportPath": "github.com/rs/cors",
 			"Rev": "ceb1fbf238d7711a11a86a2622d0b85305348aeb"
 		},
 		{
 			"ImportPath": "github.com/rs/xhandler",
+			"Comment": "v1.0",
 			"Rev": "d9d9599b6aaf6a058cb7b1f48291ded2cbd13390"
 		},
 		{
 			"ImportPath": "github.com/satori/go.uuid",
 			"Rev": "d41af8bb6a7704f00bc3b7cba9355ae6a5a80048"
-		},
-		{
-			"ImportPath": "github.com/smartystreets/assertions",
-			"Comment": "1.5.0-405-g01fedaa",
-			"Rev": "01fedaa993c0a9f9aa55111501cd7c81a49e812e"
-		},
-		{
-			"ImportPath": "github.com/smartystreets/goconvey/convey",
-			"Comment": "1.5.0-449-g530dd3d",
-			"Rev": "530dd3d2cafa09958178e8c557bc4abeea1651a5"
 		},
 		{
 			"ImportPath": "github.com/speps/go-hashids",
@@ -133,11 +100,6 @@
 			"Rev": "d7c3df429697d42cc63332fa9ab88fef7a0fa6f7"
 		},
 		{
-			"ImportPath": "github.com/verdverm/frisby",
-			"Comment": "1.0.1-8-g709764c",
-			"Rev": "709764c9382cd689fa2ad9e32c0c6d831f9914a5"
-		},
-		{
 			"ImportPath": "github.com/vivowares/emitter",
 			"Rev": "66d7e996e73b3d1abe490eee7270118daa125291"
 		},
@@ -151,7 +113,22 @@
 			"Rev": "bf843a174a08e846246b8945f8a9a853d84a256a"
 		},
 		{
+			"ImportPath": "github.com/zenazn/goji/graceful/listener",
+			"Comment": "v0.9.0-34-gbf843a1",
+			"Rev": "bf843a174a08e846246b8945f8a9a853d84a256a"
+		},
+		{
 			"ImportPath": "github.com/zenazn/goji/web",
+			"Comment": "v0.9.0-34-gbf843a1",
+			"Rev": "bf843a174a08e846246b8945f8a9a853d84a256a"
+		},
+		{
+			"ImportPath": "github.com/zenazn/goji/web/middleware",
+			"Comment": "v0.9.0-34-gbf843a1",
+			"Rev": "bf843a174a08e846246b8945f8a9a853d84a256a"
+		},
+		{
+			"ImportPath": "github.com/zenazn/goji/web/mutil",
 			"Comment": "v0.9.0-34-gbf843a1",
 			"Rev": "bf843a174a08e846246b8945f8a9a853d84a256a"
 		},
@@ -168,20 +145,17 @@
 			"Rev": "1796f9b8b7178e3c7587dff118d3bb9d37f9b0b3"
 		},
 		{
-			"ImportPath": "golang.org/x/net/proxy",
-			"Rev": "1796f9b8b7178e3c7587dff118d3bb9d37f9b0b3"
-		},
-		{
-			"ImportPath": "golang.org/x/net/publicsuffix",
-			"Rev": "1796f9b8b7178e3c7587dff118d3bb9d37f9b0b3"
-		},
-		{
 			"ImportPath": "gopkg.in/natefinch/lumberjack.v2",
 			"Comment": "v1.0-18-g600ceb4",
 			"Rev": "600ceb4523e5b7ff745f91083c8a023c2bf73af5"
 		},
 		{
 			"ImportPath": "gopkg.in/olivere/elastic.v3",
+			"Comment": "v3.0.14",
+			"Rev": "33747b6d450839d8186edd535f36ae1c90e75730"
+		},
+		{
+			"ImportPath": "gopkg.in/olivere/elastic.v3/uritemplates",
 			"Comment": "v3.0.14",
 			"Rev": "33747b6d450839d8186edd535f36ae1c90e75730"
 		},

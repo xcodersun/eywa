@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 	"time"
-	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/speps/go-hashids"
-	"github.com/vivowares/eywa/Godeps/_workspace/src/gopkg.in/olivere/elastic.v3"
+	"github.com/speps/go-hashids"
+	"gopkg.in/olivere/elastic.v3"
 	"github.com/vivowares/eywa/connections"
 	. "github.com/vivowares/eywa/utils"
 )
