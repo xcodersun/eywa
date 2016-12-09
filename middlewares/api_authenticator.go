@@ -2,8 +2,8 @@ package middlewares
 
 import (
 	"github.com/zenazn/goji/web"
-	. "github.com/vivowares/eywa/configs"
-	. "github.com/vivowares/eywa/utils"
+	. "github.com/eywa/configs"
+	. "github.com/eywa/utils"
 	"net/http"
 )
 

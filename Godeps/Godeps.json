@@ -1,5 +1,5 @@
 {
-	"ImportPath": "github.com/vivowares/eywa",
+	"ImportPath": "github.com/eywa",
 	"GoVersion": "go1.7",
 	"GodepVersion": "v75",
 	"Deps": [
@@ -12,6 +12,10 @@
 			"ImportPath": "github.com/elithrar/simple-scrypt",
 			"Comment": "v1.1",
 			"Rev": "47767683c6c880a9f89e48d376c70de7f5268951"
+		},
+		{
+			"ImportPath": "github.com/emitter",
+			"Rev": "66d7e996e73b3d1abe490eee7270118daa125291"
 		},
 		{
 			"ImportPath": "github.com/google/btree",
@@ -100,12 +104,8 @@
 			"Rev": "d7c3df429697d42cc63332fa9ab88fef7a0fa6f7"
 		},
 		{
-			"ImportPath": "github.com/vivowares/emitter",
-			"Rev": "66d7e996e73b3d1abe490eee7270118daa125291"
-		},
-		{
-			"ImportPath": "github.com/vivowares/waterwheel",
-			"Rev": "2ec5767fe9fe5c6a2cf7ccd2f409d3a88451438f"
+			"ImportPath": "github.com/waterwheel",
+			"Rev": "f2da7f4d24547074d24bba132726734b30661cd5"
 		},
 		{
 			"ImportPath": "github.com/zenazn/goji/graceful",

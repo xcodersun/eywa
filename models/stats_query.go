@@ -3,7 +3,7 @@ package models
 import (
 	"errors"
 	"gopkg.in/olivere/elastic.v3"
-	. "github.com/vivowares/eywa/utils"
+	. "github.com/eywa/utils"
 	"strconv"
 	"strings"
 	"time"

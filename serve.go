@@ -2,11 +2,11 @@ package main
 
 import (
 	"fmt"
-	"github.com/vivowares/eywa/configs"
-	"github.com/vivowares/eywa/connections"
-	. "github.com/vivowares/eywa/loggers"
-	"github.com/vivowares/eywa/models"
-	"github.com/vivowares/eywa/pubsub"
+	"github.com/eywa/configs"
+	"github.com/eywa/connections"
+	. "github.com/eywa/loggers"
+	"github.com/eywa/models"
+	"github.com/eywa/pubsub"
 	"github.com/zenazn/goji/graceful"
 	"io/ioutil"
 	"log"

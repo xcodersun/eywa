@@ -7,8 +7,8 @@ import (
 	"time"
 	"github.com/speps/go-hashids"
 	"gopkg.in/olivere/elastic.v3"
-	"github.com/vivowares/eywa/connections"
-	. "github.com/vivowares/eywa/utils"
+	"github.com/eywa/connections"
+	. "github.com/eywa/utils"
 )
 
 var SupportedDataTypes = []string{"float", "int", "boolean"}

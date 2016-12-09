@@ -5,8 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"gopkg.in/olivere/elastic.v3"
-	. "github.com/vivowares/eywa/connections"
-	. "github.com/vivowares/eywa/utils"
+	. "github.com/eywa/connections"
+	. "github.com/eywa/utils"
 	"time"
 )
 

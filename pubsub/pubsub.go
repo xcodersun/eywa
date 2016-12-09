@@ -1,7 +1,7 @@
 package pubsub
 
 import (
-	"github.com/vivowares/emitter"
+	"github.com/emitter"
 )
 
 var capacity uint = 512

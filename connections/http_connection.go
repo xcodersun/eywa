@@ -3,7 +3,7 @@ package connections
 import (
 	"errors"
 	"github.com/google/btree"
-	"github.com/vivowares/eywa/pubsub"
+	"github.com/eywa/pubsub"
 	"strings"
 	"sync"
 	"time"

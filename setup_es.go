@@ -3,9 +3,9 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	. "github.com/vivowares/eywa/configs"
-	. "github.com/vivowares/eywa/models"
-	. "github.com/vivowares/eywa/utils"
+	. "github.com/eywa/configs"
+	. "github.com/eywa/models"
+	. "github.com/eywa/utils"
 )
 
 var messages = `

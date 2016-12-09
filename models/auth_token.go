@@ -8,7 +8,7 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/elithrar/simple-scrypt"
-	. "github.com/vivowares/eywa/configs"
+	. "github.com/eywa/configs"
 	"io"
 	"time"
 )

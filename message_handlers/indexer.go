@@ -4,10 +4,10 @@ import (
 	"encoding/json"
 	"github.com/satori/go.uuid"
 	"gopkg.in/olivere/elastic.v3"
-	. "github.com/vivowares/eywa/configs"
-	. "github.com/vivowares/eywa/connections"
-	. "github.com/vivowares/eywa/models"
-	"github.com/vivowares/eywa/pubsub"
+	. "github.com/eywa/configs"
+	. "github.com/eywa/connections"
+	. "github.com/eywa/models"
+	"github.com/eywa/pubsub"
 )
 
 var Indexer = NewMiddleware("indexer", func(h MessageHandler) MessageHandler {

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/google/btree"
 	"github.com/gorilla/websocket"
-	. "github.com/vivowares/eywa/configs"
+	. "github.com/eywa/configs"
 	"io/ioutil"
 	"net/http"
 	"sync"

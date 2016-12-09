@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"github.com/zenazn/goji/web"
 	"github.com/zenazn/goji/web/middleware"
-	"github.com/vivowares/eywa/connections"
-	. "github.com/vivowares/eywa/utils"
+	"github.com/eywa/connections"
+	. "github.com/eywa/utils"
 	"net/http"
 	"strings"
 )

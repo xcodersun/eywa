@@ -3,9 +3,9 @@ package handlers
 import (
 	"encoding/json"
 	"github.com/zenazn/goji/web"
-	"github.com/vivowares/eywa/models"
-	. "github.com/vivowares/eywa/presenters"
-	. "github.com/vivowares/eywa/utils"
+	"github.com/eywa/models"
+	. "github.com/eywa/presenters"
+	. "github.com/eywa/utils"
 	"net/http"
 )
 

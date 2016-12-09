@@ -2,7 +2,7 @@ package handlers
 
 import (
 	"github.com/zenazn/goji/web"
-	. "github.com/vivowares/eywa/utils"
+	. "github.com/eywa/utils"
 	"net/http"
 )
 

@@ -3,7 +3,7 @@ package pubsub
 import (
 	"fmt"
 	"github.com/gorilla/websocket"
-	"github.com/vivowares/emitter"
+	"github.com/emitter"
 	"time"
 )
 

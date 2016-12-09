@@ -1,10 +1,10 @@
 package loggers
 
 import (
-	"github.com/vivowares/waterwheel"
+	"github.com/waterwheel"
 	"gopkg.in/natefinch/lumberjack.v2"
-	. "github.com/vivowares/eywa/configs"
-	"github.com/vivowares/eywa/pubsub"
+	. "github.com/eywa/configs"
+	"github.com/eywa/pubsub"
 	"log"
 )
 

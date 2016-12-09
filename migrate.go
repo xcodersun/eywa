@@ -1,8 +1,8 @@
 package main
 
 import (
-	. "github.com/vivowares/eywa/models"
-	. "github.com/vivowares/eywa/utils"
+	. "github.com/eywa/models"
+	. "github.com/eywa/utils"
 )
 
 func migrate() {

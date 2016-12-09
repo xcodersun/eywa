@@ -3,8 +3,8 @@ package message_handlers
 import (
 	"errors"
 	"fmt"
-	. "github.com/vivowares/eywa/connections"
-	"github.com/vivowares/eywa/models"
+	. "github.com/eywa/connections"
+	"github.com/eywa/models"
 	"strings"
 	"time"
 )
