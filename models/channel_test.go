@@ -2,7 +2,7 @@ package models
 
 import (
 	. "github.com/smartystreets/goconvey/convey"
-	. "github.com/vivowares/eywa/configs"
+	. "github.com/eywa/configs"
 	"log"
 	"os"
 	"path"

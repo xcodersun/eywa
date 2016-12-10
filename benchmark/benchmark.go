@@ -7,7 +7,7 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/parnurzeal/gorequest"
 	"github.com/satori/go.uuid"
-	. "github.com/vivowares/eywa/utils"
+	. "github.com/eywa/utils"
 	"log"
 	"math/rand"
 	"net"

@@ -8,7 +8,7 @@ import (
 	"github.com/bitly/go-simplejson"
 	. "github.com/smartystreets/goconvey/convey"
 	"github.com/verdverm/frisby"
-	. "github.com/vivowares/eywa/models"
+	. "github.com/eywa/models"
 	"log"
 	"net/http"
 	"os"

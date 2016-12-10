@@ -3,7 +3,7 @@ package configs
 import (
 	"bytes"
 	. "github.com/smartystreets/goconvey/convey"
-	. "github.com/vivowares/eywa/utils"
+	. "github.com/eywa/utils"
 	"io/ioutil"
 	"log"
 	"os"

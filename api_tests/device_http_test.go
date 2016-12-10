@@ -8,7 +8,7 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 	"github.com/verdverm/frisby"
 	"gopkg.in/olivere/elastic.v3"
-	. "github.com/vivowares/eywa/models"
+	. "github.com/eywa/models"
 	"log"
 	"net/http"
 	"os"
