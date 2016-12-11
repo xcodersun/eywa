@@ -10,6 +10,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"fmt"
+	. "github.com/eywa/loggers"
 )
 
 var closedCMErr = errors.New("connection manager is closed")
@@ -74,11 +76,15 @@ func (cm *ConnectionManager) NewWebsocketConnection(id string, ws wsConn, h Mess
 
 	cm.Unlock()
 
-	if _conn != nil {
-		go _conn.(Connection).close(false)
+	if _conn == nil {
+		Logger.Info(fmt.Sprintf("New connection"))
+		conn.start();
+	} else {
+		Logger.Info(fmt.Sprintf("Existing connection found, id=%s", id))
+		if _conn.(Connection).Closed() {
+			_conn.(Connection).start();
+		}
 	}
-
-	conn.start()
 
 	return conn, nil
 }
