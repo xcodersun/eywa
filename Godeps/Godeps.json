@@ -2,11 +2,19 @@
 	"ImportPath": "github.com/eywa",
 	"GoVersion": "go1.7",
 	"GodepVersion": "v75",
+	"Packages": [
+		"./..."
+	],
 	"Deps": [
 		{
 			"ImportPath": "github.com/BurntSushi/toml",
 			"Comment": "v0.1.0-21-g056c9bc",
 			"Rev": "056c9bc7be7190eaa7715723883caffa5f8fa3e4"
+		},
+		{
+			"ImportPath": "github.com/bitly/go-simplejson",
+			"Comment": "v0.5.0",
+			"Rev": "aabad6e819789e569bd6aabf444c935aa9ba1e44"
 		},
 		{
 			"ImportPath": "github.com/elithrar/simple-scrypt",
@@ -33,6 +41,10 @@
 		{
 			"ImportPath": "github.com/jinzhu/inflection",
 			"Rev": "3272df6c21d04180007eb3349844c89a3856bc25"
+		},
+		{
+			"ImportPath": "github.com/jtolds/gls",
+			"Rev": "9a4a02dbe491bef4bab3c24fd9f3087d6c4c6690"
 		},
 		{
 			"ImportPath": "github.com/kr/pretty",
@@ -63,9 +75,23 @@
 			"Rev": "281073eb9eb092240d33ef253c404f1cca550309"
 		},
 		{
+			"ImportPath": "github.com/moul/http2curl",
+			"Rev": "1c29be06762e43e04dd954a01c66991104ce4374"
+		},
+		{
+			"ImportPath": "github.com/mozillazg/request",
+			"Comment": "v0.5.0",
+			"Rev": "c7b9b28d405aea75359a0a5dfb89f52a84632f6d"
+		},
+		{
 			"ImportPath": "github.com/olivere/elastic/uritemplates",
 			"Comment": "v2.0.23-27-ga8215e0",
 			"Rev": "a8215e0b307af4727033f0cbc52e42600c5baebc"
+		},
+		{
+			"ImportPath": "github.com/parnurzeal/gorequest",
+			"Comment": "v0.2.13-7-g27bfb0d",
+			"Rev": "27bfb0dcbcc020d11b7839af416fb8dafc2ab01c"
 		},
 		{
 			"ImportPath": "github.com/rs/cors",
@@ -79,6 +105,31 @@
 		{
 			"ImportPath": "github.com/satori/go.uuid",
 			"Rev": "d41af8bb6a7704f00bc3b7cba9355ae6a5a80048"
+		},
+		{
+			"ImportPath": "github.com/smartystreets/assertions",
+			"Comment": "1.5.0-405-g01fedaa",
+			"Rev": "01fedaa993c0a9f9aa55111501cd7c81a49e812e"
+		},
+		{
+			"ImportPath": "github.com/smartystreets/assertions/internal/oglematchers",
+			"Comment": "1.5.0-405-g01fedaa",
+			"Rev": "01fedaa993c0a9f9aa55111501cd7c81a49e812e"
+		},
+		{
+			"ImportPath": "github.com/smartystreets/goconvey/convey",
+			"Comment": "1.5.0-449-g530dd3d",
+			"Rev": "530dd3d2cafa09958178e8c557bc4abeea1651a5"
+		},
+		{
+			"ImportPath": "github.com/smartystreets/goconvey/convey/gotest",
+			"Comment": "1.5.0-449-g530dd3d",
+			"Rev": "530dd3d2cafa09958178e8c557bc4abeea1651a5"
+		},
+		{
+			"ImportPath": "github.com/smartystreets/goconvey/convey/reporting",
+			"Comment": "1.5.0-449-g530dd3d",
+			"Rev": "530dd3d2cafa09958178e8c557bc4abeea1651a5"
 		},
 		{
 			"ImportPath": "github.com/speps/go-hashids",
@@ -103,6 +154,11 @@
 		{
 			"ImportPath": "github.com/unrolled/render",
 			"Rev": "d7c3df429697d42cc63332fa9ab88fef7a0fa6f7"
+		},
+		{
+			"ImportPath": "github.com/verdverm/frisby",
+			"Comment": "1.0.1-8-g709764c",
+			"Rev": "709764c9382cd689fa2ad9e32c0c6d831f9914a5"
 		},
 		{
 			"ImportPath": "github.com/waterwheel",
@@ -143,6 +199,14 @@
 		},
 		{
 			"ImportPath": "golang.org/x/net/context",
+			"Rev": "1796f9b8b7178e3c7587dff118d3bb9d37f9b0b3"
+		},
+		{
+			"ImportPath": "golang.org/x/net/proxy",
+			"Rev": "1796f9b8b7178e3c7587dff118d3bb9d37f9b0b3"
+		},
+		{
+			"ImportPath": "golang.org/x/net/publicsuffix",
 			"Rev": "1796f9b8b7178e3c7587dff118d3bb9d37f9b0b3"
 		},
 		{
