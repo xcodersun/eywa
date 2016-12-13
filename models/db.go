@@ -4,11 +4,11 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 	"errors"
-	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/jinzhu/gorm"
-	_ "github.com/vivowares/eywa/Godeps/_workspace/src/github.com/mattn/go-sqlite3"
-	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/vivowares/waterwheel"
-	. "github.com/vivowares/eywa/configs"
-	. "github.com/vivowares/eywa/loggers"
+	"github.com/jinzhu/gorm"
+	_ "github.com/mattn/go-sqlite3"
+	"github.com/waterwheel"
+	. "github.com/eywa/configs"
+	. "github.com/eywa/loggers"
 	"strings"
 )
 

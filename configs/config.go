@@ -3,9 +3,9 @@ package configs
 import (
 	"bytes"
 	"encoding/xml"
-	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/spf13/viper"
-	"github.com/vivowares/eywa/Godeps/_workspace/src/gopkg.in/yaml.v2"
-	. "github.com/vivowares/eywa/utils"
+	"github.com/spf13/viper"
+	"gopkg.in/yaml.v2"
+	. "github.com/eywa/utils"
 	"io"
 	"sync/atomic"
 	"text/template"

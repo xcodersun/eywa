@@ -5,9 +5,9 @@ import (
 	"bytes"
 	"path"
 	"strings"
-	"github.com/vivowares/eywa/configs"
-	"github.com/vivowares/eywa/utils"
-	. "github.com/vivowares/eywa/models"
+	"github.com/eywa/configs"
+	"github.com/eywa/utils"
+	. "github.com/eywa/models"
 )
 
 type HardwareTemplateHandler func(ch *Channel)(string, error)

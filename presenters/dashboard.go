@@ -1,7 +1,7 @@
 package presenters
 
 import (
-	. "github.com/vivowares/eywa/models"
+	. "github.com/eywa/models"
 )
 
 type DashboardBrief struct {

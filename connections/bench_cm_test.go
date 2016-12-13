@@ -1,8 +1,8 @@
 package connections
 
 import (
-	. "github.com/vivowares/eywa/configs"
-	. "github.com/vivowares/eywa/utils"
+	. "github.com/eywa/configs"
+	. "github.com/eywa/utils"
 	"strconv"
 	"testing"
 	"time"

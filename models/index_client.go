@@ -2,9 +2,9 @@ package models
 
 import (
 	"fmt"
-	. "github.com/vivowares/eywa/Godeps/_workspace/src/gopkg.in/olivere/elastic.v3"
-	. "github.com/vivowares/eywa/configs"
-	. "github.com/vivowares/eywa/loggers"
+	. "gopkg.in/olivere/elastic.v3"
+	. "github.com/eywa/configs"
+	. "github.com/eywa/loggers"
 	"log"
 	"strings"
 )

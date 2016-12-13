@@ -1,7 +1,7 @@
 package connections
 
 import (
-	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/google/btree"
+	"github.com/google/btree"
 	"strings"
 	"time"
 )

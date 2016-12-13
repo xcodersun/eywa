@@ -7,8 +7,8 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
-	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/elithrar/simple-scrypt"
-	. "github.com/vivowares/eywa/configs"
+	"github.com/elithrar/simple-scrypt"
+	. "github.com/eywa/configs"
 	"io"
 	"time"
 )

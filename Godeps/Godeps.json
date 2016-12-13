@@ -1,6 +1,7 @@
 {
-	"ImportPath": "github.com/vivowares/eywa",
-	"GoVersion": "go1.5",
+	"ImportPath": "github.com/eywa",
+	"GoVersion": "go1.7",
+	"GodepVersion": "v75",
 	"Packages": [
 		"./..."
 	],
@@ -17,7 +18,12 @@
 		},
 		{
 			"ImportPath": "github.com/elithrar/simple-scrypt",
+			"Comment": "v1.1",
 			"Rev": "47767683c6c880a9f89e48d376c70de7f5268951"
+		},
+		{
+			"ImportPath": "github.com/emitter",
+			"Rev": "66d7e996e73b3d1abe490eee7270118daa125291"
 		},
 		{
 			"ImportPath": "github.com/google/btree",
@@ -25,7 +31,8 @@
 		},
 		{
 			"ImportPath": "github.com/gorilla/websocket",
-			"Rev": "527637c0f38a8035d7856bb758e56f7ee2c704a9"
+			"Comment": "v1.0.0-40-g0868951",
+			"Rev": "0868951cdb8e69bc42df4598bdc6164ff2f1a072"
 		},
 		{
 			"ImportPath": "github.com/jinzhu/gorm",
@@ -60,8 +67,8 @@
 		},
 		{
 			"ImportPath": "github.com/mattn/go-sqlite3",
-			"Comment": "v1.1.0-27-g5651a9d",
-			"Rev": "5651a9d9d49ec25811d08220ee972080378d52ea"
+			"Comment": "v1.2.0",
+			"Rev": "ca5e3819723d8eeaf170ad510e7da1d6d2e94a08"
 		},
 		{
 			"ImportPath": "github.com/mitchellh/mapstructure",
@@ -92,6 +99,7 @@
 		},
 		{
 			"ImportPath": "github.com/rs/xhandler",
+			"Comment": "v1.0",
 			"Rev": "d9d9599b6aaf6a058cb7b1f48291ded2cbd13390"
 		},
 		{
@@ -104,7 +112,22 @@
 			"Rev": "01fedaa993c0a9f9aa55111501cd7c81a49e812e"
 		},
 		{
+			"ImportPath": "github.com/smartystreets/assertions/internal/oglematchers",
+			"Comment": "1.5.0-405-g01fedaa",
+			"Rev": "01fedaa993c0a9f9aa55111501cd7c81a49e812e"
+		},
+		{
 			"ImportPath": "github.com/smartystreets/goconvey/convey",
+			"Comment": "1.5.0-449-g530dd3d",
+			"Rev": "530dd3d2cafa09958178e8c557bc4abeea1651a5"
+		},
+		{
+			"ImportPath": "github.com/smartystreets/goconvey/convey/gotest",
+			"Comment": "1.5.0-449-g530dd3d",
+			"Rev": "530dd3d2cafa09958178e8c557bc4abeea1651a5"
+		},
+		{
+			"ImportPath": "github.com/smartystreets/goconvey/convey/reporting",
 			"Comment": "1.5.0-449-g530dd3d",
 			"Rev": "530dd3d2cafa09958178e8c557bc4abeea1651a5"
 		},
@@ -138,12 +161,8 @@
 			"Rev": "709764c9382cd689fa2ad9e32c0c6d831f9914a5"
 		},
 		{
-			"ImportPath": "github.com/vivowares/emitter",
-			"Rev": "66d7e996e73b3d1abe490eee7270118daa125291"
-		},
-		{
-			"ImportPath": "github.com/vivowares/waterwheel",
-			"Rev": "2ec5767fe9fe5c6a2cf7ccd2f409d3a88451438f"
+			"ImportPath": "github.com/waterwheel",
+			"Rev": "f2da7f4d24547074d24bba132726734b30661cd5"
 		},
 		{
 			"ImportPath": "github.com/zenazn/goji/graceful",
@@ -151,7 +170,22 @@
 			"Rev": "bf843a174a08e846246b8945f8a9a853d84a256a"
 		},
 		{
+			"ImportPath": "github.com/zenazn/goji/graceful/listener",
+			"Comment": "v0.9.0-34-gbf843a1",
+			"Rev": "bf843a174a08e846246b8945f8a9a853d84a256a"
+		},
+		{
 			"ImportPath": "github.com/zenazn/goji/web",
+			"Comment": "v0.9.0-34-gbf843a1",
+			"Rev": "bf843a174a08e846246b8945f8a9a853d84a256a"
+		},
+		{
+			"ImportPath": "github.com/zenazn/goji/web/middleware",
+			"Comment": "v0.9.0-34-gbf843a1",
+			"Rev": "bf843a174a08e846246b8945f8a9a853d84a256a"
+		},
+		{
+			"ImportPath": "github.com/zenazn/goji/web/mutil",
 			"Comment": "v0.9.0-34-gbf843a1",
 			"Rev": "bf843a174a08e846246b8945f8a9a853d84a256a"
 		},
@@ -182,6 +216,11 @@
 		},
 		{
 			"ImportPath": "gopkg.in/olivere/elastic.v3",
+			"Comment": "v3.0.14",
+			"Rev": "33747b6d450839d8186edd535f36ae1c90e75730"
+		},
+		{
+			"ImportPath": "gopkg.in/olivere/elastic.v3/uritemplates",
 			"Comment": "v3.0.14",
 			"Rev": "33747b6d450839d8186edd535f36ae1c90e75730"
 		},

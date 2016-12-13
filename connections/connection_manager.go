@@ -2,14 +2,16 @@ package connections
 
 import (
 	"errors"
-	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/google/btree"
-	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/gorilla/websocket"
-	. "github.com/vivowares/eywa/configs"
-	"github.com/vivowares/eywa/pubsub"
+	"github.com/google/btree"
+	"github.com/gorilla/websocket"
+	. "github.com/eywa/configs"
+	"github.com/eywa/pubsub"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
+	"fmt"
+	. "github.com/eywa/loggers"
 )
 
 var closedCMErr = errors.New("connection manager is closed")
@@ -74,11 +76,15 @@ func (cm *ConnectionManager) NewWebsocketConnection(id string, ws wsConn, h Mess
 
 	cm.Unlock()
 
-	if _conn != nil {
-		go _conn.(Connection).close(false)
+	if _conn == nil {
+		Logger.Info(fmt.Sprintf("New connection"))
+		conn.start();
+	} else {
+		Logger.Info(fmt.Sprintf("Existing connection found, id=%s", id))
+		if _conn.(Connection).Closed() {
+			_conn.(Connection).start();
+		}
 	}
-
-	conn.start()
 
 	return conn, nil
 }

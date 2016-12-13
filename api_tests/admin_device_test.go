@@ -4,11 +4,11 @@ package api_tests
 
 import (
 	"fmt"
-	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/gorilla/websocket"
-	. "github.com/vivowares/eywa/Godeps/_workspace/src/github.com/smartystreets/goconvey/convey"
-	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/verdverm/frisby"
-	. "github.com/vivowares/eywa/connections"
-	. "github.com/vivowares/eywa/models"
+	"github.com/gorilla/websocket"
+	. "github.com/smartystreets/goconvey/convey"
+	"github.com/verdverm/frisby"
+	. "github.com/eywa/connections"
+	. "github.com/eywa/models"
 	"log"
 	"net/http"
 	"os"
@@ -59,13 +59,14 @@ func TestAdminToDevice(t *testing.T) {
 			SetHeader("Authentication", authStr()).SetJson(map[string]string{"test": message}).Send()
 		f.ExpectStatus(http.StatusOK)
 
+		wg.Wait()
+
 		So(rcvErr, ShouldBeNil)
 		So(rcvMsgType, ShouldEqual, websocket.BinaryMessage)
 		strs := strings.Split(string(rcvData), "|")
 		So(strs[len(strs)-1], ShouldEqual, fmt.Sprintf("{\"test\":\"%s\"}", message))
 		So(strs[0], ShouldEqual, strconv.Itoa(int(TypeSendMessage)))
 
-		wg.Wait()
 		cli.Close()
 	})
 
@@ -80,6 +81,9 @@ func TestAdminToDevice(t *testing.T) {
 		var rcvMsgType int
 		var rcvErr error
 		var sendMsgType MessageType
+		var wg sync.WaitGroup
+
+		wg.Add(1)
 		go func() {
 			cli.SetReadDeadline(time.Now().Add(2 * time.Second))
 			rcvMsgType, rcvData, rcvErr = cli.ReadMessage()
@@ -90,6 +94,7 @@ func TestAdminToDevice(t *testing.T) {
 			msg = NewWebsocketMessage(TypeResponseMessage, msg.Id(), []byte(respMsg), nil)
 			p, _ := msg.Marshal()
 			cli.WriteMessage(websocket.BinaryMessage, p)
+			wg.Done()
 		}()
 
 		f := frisby.Create("send message to device").Post(AdminRequestToDevicePath(chId, deviceId)).
@@ -98,6 +103,8 @@ func TestAdminToDevice(t *testing.T) {
 			AfterContent(func(F *frisby.Frisby, content []byte, err error) {
 			So(string(content), ShouldEqual, respMsg)
 		})
+
+		wg.Wait()
 
 		So(rcvErr, ShouldBeNil)
 		So(rcvMsgType, ShouldEqual, websocket.BinaryMessage)

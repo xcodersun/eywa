@@ -1,7 +1,7 @@
 package connections
 
 import (
-	. "github.com/vivowares/eywa/Godeps/_workspace/src/github.com/smartystreets/goconvey/convey"
+	. "github.com/smartystreets/goconvey/convey"
 	"reflect"
 	"testing"
 )

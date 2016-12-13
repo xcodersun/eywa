@@ -3,9 +3,9 @@ package connections
 import (
 	"errors"
 	"fmt"
-	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/google/btree"
-	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/gorilla/websocket"
-	. "github.com/vivowares/eywa/configs"
+	"github.com/google/btree"
+	"github.com/gorilla/websocket"
+	. "github.com/eywa/configs"
 	"io/ioutil"
 	"net/http"
 	"sync"

@@ -2,7 +2,7 @@ package handlers
 
 import (
 	"fmt"
-	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/zenazn/goji/web"
+	"github.com/zenazn/goji/web"
 	"net/http"
 )
 

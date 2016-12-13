@@ -1,12 +1,12 @@
 package main
 
 import (
-	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/rs/cors"
-	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/zenazn/goji/web"
-	"github.com/vivowares/eywa/Godeps/_workspace/src/github.com/zenazn/goji/web/middleware"
-	. "github.com/vivowares/eywa/configs"
-	"github.com/vivowares/eywa/handlers"
-	"github.com/vivowares/eywa/middlewares"
+	"github.com/rs/cors"
+	. "github.com/eywa/configs"
+	"github.com/eywa/handlers"
+	"github.com/eywa/middlewares"
+	"github.com/zenazn/goji/web"
+	"github.com/zenazn/goji/web/middleware"
 	"net/http"
 )
 

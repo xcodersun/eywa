@@ -3,7 +3,7 @@ package utils
 import (
 	"encoding/json"
 	"encoding/xml"
-	. "github.com/vivowares/eywa/Godeps/_workspace/src/github.com/smartystreets/goconvey/convey"
+	. "github.com/smartystreets/goconvey/convey"
 	"reflect"
 	"testing"
 	"time"
