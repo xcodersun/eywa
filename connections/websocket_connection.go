@@ -225,7 +225,6 @@ func (c *WebsocketConnection) wListen() {
 					msg: nil,
 					err: err,
 				}
-
 				if _, ok := err.(*websocketError); ok {
 					c.close(true)
 				}
@@ -331,6 +330,17 @@ func (c *WebsocketConnection) rListen() {
 	}
 }
 
+func (c *WebsocketConnection) unregister() {
+	// To avoid race condition where a new connection has registered
+	// under the same id and current connection become orphan, in which
+	// case the orphan connection has different creatd time with the
+	// registered connection
+	conn, found := c.cm.FindConnection(c.identifier)
+	if found && conn.CreatedAt() == c.createdAt {
+		c.cm.unregister(c)
+	}
+}
+
 func (c *WebsocketConnection) close(unregister bool) error {
 	c.closeOnce.Do(func() {
 		c.closed = true
@@ -339,10 +349,9 @@ func (c *WebsocketConnection) close(unregister bool) error {
 		close(c.rch)
 		c.closewch <- true
 		if unregister {
-			c.cm.unregister(c)
+			c.unregister()
 		}
 		go c.h(c, &websocketMessage{_type: TypeDisconnectMessage}, nil)
-
 		go func() {
 			time.Sleep(3 * time.Second) // for user experience
 			c.BasicPublisher.Unpublish()

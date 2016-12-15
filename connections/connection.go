@@ -20,6 +20,7 @@ type Connection interface {
 
 	start()
 	close(bool) error
+	unregister()
 	wait()
 }
 
@@ -50,4 +51,5 @@ func (l *Lesser) Metadata() map[string]string           { return nil }
 func (l *Lesser) ConnectionManager() *ConnectionManager { return nil }
 func (l *Lesser) start()                                {}
 func (l *Lesser) close(bool) error                      { return nil }
+func (l *Lesser) unregister()                           {}
 func (l *Lesser) wait()                                 {}
