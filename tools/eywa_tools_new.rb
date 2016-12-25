@@ -12,6 +12,30 @@ rescue => e
   puts response
 end
 
+def get_option(opt, option_name)
+  if opt[option_name].nil? || opt[option_name].length == 0
+    puts "Missing #{option_name}, quitting..."
+    exit 1
+  end
+  opt[option_name]
+end
+
+def load_libs
+  begin
+    require('websocket-client-simple')
+  rescue LoadError
+    puts LOAD_MSG
+    exit 1
+  end
+end
+
+def _sleep
+  begin
+    sleep
+  rescue Interrupt
+  end
+end
+
 def login
   auth = nil
   code = nil
@@ -60,7 +84,7 @@ def list_channels(opt)
 end
 
 def show_channel(opt)
-  channel_id = opt[:channel_id]
+  channel_id = get_option(opt, :channel_id)
 
   code = nil
   uri = URI("#{$profile['protocol']}://#{$profile['host']}:#{$profile['port']}/admin/channels/#{channel_id}")
@@ -122,6 +146,8 @@ def create_channel(opt)
 end
 
 def update_channel(opt)
+  channel_id = get_option(opt, :channel_id)
+
   puts 'Current channel definition:'
   show_channel(opt)
   print "Are you sure you want to update channel it? (yes/no): "
@@ -138,7 +164,6 @@ def update_channel(opt)
     puts "Fail to parse #{opt[:template]}, please check the json format"
     exit 1
   end
-  channel_id = opt[:channel_id]
 
   puts "Please review changes to your channel:"
   puts JSON.pretty_generate(channel)
@@ -209,6 +234,173 @@ def delete_channel(opt)
   list_channels(opt)
 end
 
+def connection_counts(opt)
+  code = nil
+  uri = URI("#{$profile['protocol']}://#{$profile['host']}:#{$profile['port']}/admin/connections/counts")
+  begin
+    Net::HTTP.start(uri.host, uri.port, :use_ssl => uri.scheme == 'https', :verify_mode => OpenSSL::SSL::VERIFY_NONE) do |http|
+      request = Net::HTTP::Get.new uri
+      request.add_field('Authentication', opt[:auth_token])
+
+      response = http.request request
+      code = response.code
+      puts response.body
+    end
+  rescue => e
+    puts e.message
+  end
+
+  if code.to_i != 200
+    puts "Failed to get connection counts. code=#{code}"
+    exit 1
+  end
+end
+
+def connection_status(opt)
+  channel_id = get_option(opt, :channel_id)
+  device_id = get_option(opt, :device_id)
+
+  print "With connection history?(yes/no): "
+  yes_or_no = gets.chomp.strip
+  if yes_or_no != 'yes'
+    puts 'Skipping connection history...'
+    yes_or_no = false
+  else
+    yes_or_no = true
+  end
+
+  code = nil
+  uri = URI("#{$profile['protocol']}://#{$profile['host']}:#{$profile['port']}/admin/channels/#{channel_id}/devices/#{device_id}/status")
+  uri.query = URI.encode_www_form({history: yes_or_no})
+  begin
+    Net::HTTP.start(uri.host, uri.port, :use_ssl => uri.scheme == 'https', :verify_mode => OpenSSL::SSL::VERIFY_NONE) do |http|
+      request = Net::HTTP::Get.new uri
+      request.add_field('Authentication', opt[:auth_token])
+
+      response = http.request request
+      code = response.code
+      print_response(response.body)
+    end
+  rescue => e
+    puts e.message
+  end
+
+  if code.to_i != 200
+    puts "Failed to get connection status. code=#{code}"
+    exit 1
+  end
+end
+
+def send_to_connection(opt)
+  channel_id = get_option(opt, :channel_id)
+  device_id = get_option(opt, :device_id)
+  message = get_option(opt, :message)
+
+  code = nil
+  uri = URI("#{$profile['protocol']}://#{$profile['host']}:#{$profile['port']}/admin/channels/#{channel_id}/devices/#{device_id}/send")
+  begin
+    Net::HTTP.start(uri.host, uri.port, :use_ssl => uri.scheme == 'https', :verify_mode => OpenSSL::SSL::VERIFY_NONE) do |http|
+      request = Net::HTTP::Post.new uri
+      request.add_field('Authentication', opt[:auth_token])
+      request.body = message
+
+      response = http.request request
+      code = response.code
+    end
+  rescue => e
+    puts e.message
+  end
+
+  if code.to_i != 200
+    puts "Failed to send message: [#{message}] to device: [#{device_id}] in channel: [#{channel_id}]. code=#{code}"
+    exit 1
+  end
+  puts 'Message sent successfully!'
+end
+
+def request_to_connection(opt)
+  channel_id = get_option(opt, :channel_id)
+  device_id = get_option(opt, :device_id)
+  message = get_option(opt, :message)
+
+  code = nil
+  resp = nil
+  uri = URI("#{$profile['protocol']}://#{$profile['host']}:#{$profile['port']}/admin/channels/#{channel_id}/devices/#{device_id}/request")
+  uri.query = URI.encode_www_form({timeout: opt[:timeout]}) if !opt[:timeout].nil? && opt[:timeout].length > 0
+  begin
+    Net::HTTP.start(uri.host, uri.port, :use_ssl => uri.scheme == 'https', :verify_mode => OpenSSL::SSL::VERIFY_NONE) do |http|
+      request = Net::HTTP::Post.new uri
+      request.add_field('Authentication', opt[:auth_token])
+      request.body = message
+
+      response = http.request request
+      code = response.code
+      resp = response.body
+    end
+  rescue => e
+    puts e.message
+  end
+
+  if code.to_i != 200
+    puts "Failed to request message: [#{message}] to device: [#{device_id}] in channel: [#{channel_id}]. code=#{code}"
+    exit 1
+  end
+
+  puts 'Message request successfully!'
+  puts "Response: \n  #{resp}"
+end
+
+def scan_connections(opt)
+  channel_id = get_option(opt, :channel_id)
+
+  code = nil
+  resp = nil
+  uri = URI("#{$profile['protocol']}://#{$profile['host']}:#{$profile['port']}/admin/channels/#{channel_id}/connections/scan")
+
+  begin
+    Net::HTTP.start(uri.host, uri.port, :use_ssl => uri.scheme == 'https', :verify_mode => OpenSSL::SSL::VERIFY_NONE) do |http|
+      http.read_timeout = 3600
+      request = Net::HTTP::Get.new uri
+      request.add_field('Authentication', opt[:auth_token])
+
+      response = http.request request
+      code = response.code
+      resp = response.body
+    end
+  rescue => e
+    puts e.message
+  end
+
+  if code.to_i != 200
+    puts resp
+    puts "Failed to query connections. code=#{code}"
+    print_wiki_query
+    exit 1
+  end
+
+  print_response(resp)
+  puts 'Successfully scanned connections!'
+end
+
+def attach_connection(opt)
+  channel_id = get_option(opt, :channel_id)
+  device_id = get_option(opt, :device_id)
+
+  url = "ws://#{$profile['host']}:#{$profile['port']}/admin/channels/#{channel_id}/devices/#{device_id}/attach"
+  ws = WebSocket::Client::Simple.connect(url, {headers: {"Authentication"=>opt[:auth_token]}})
+  opt[:ws] = ws
+  welcome = nil
+  ws.on(:message) do |msg|
+    welcome = msg unless welcome
+    puts msg.data
+  end
+  sleep 1
+  if welcome.nil?
+    puts "Unable to attach to connection, check if it's online by `connection-status` ..."
+  else
+    _sleep
+  end
+end
 
 ##########################
 #          Main          #
@@ -217,7 +409,7 @@ USAGE_BANNER = "Usage: eywa_tools.rb [subcommand [options]]"
 
 SUBUSAGE = <<HELP
 Subcommands are:
-   channels   :     create, update, list, delete and show channels, etc.
+   channel    :     create, update, list, delete and show channels, etc.
    connection :     count, show, send to and request for connection, etc.
 See 'eywa_tools.rb SUBCOMMAND --help' for more information on a specific command.
 HELP
@@ -246,7 +438,7 @@ end
 options = {nop: true}
 
 subcommands = { 
-  'channels' => OptionParser.new do |opts|
+  'channel' => OptionParser.new do |opts|
     opts.banner = "Usage eywa_tools channels [options]"
     opts.separator ""
     opts.on("-c template.json", "--create", "Create a new channel") do |template|
@@ -259,7 +451,7 @@ subcommands = {
       options[:template] = template
     end
 
-    opts.on("-l all", "--list", "List all channels") do |all|
+    opts.on("-l", "--list", "List all channels") do
       options[:subcommand] = "list_channels"
     end
 
@@ -279,9 +471,44 @@ subcommands = {
 
    end,
 
-   'connection' => OptionParser.new do |opts|
-      opts.banner = "Usage eywa_tools connection [options]"
-      opts.separator ""
+  'connection' => OptionParser.new do |opts|
+    opts.banner = "Usage eywa_tools connection [options]"
+    opts.separator ""
+
+    opts.on("-c", "--counts", "Count total connections") do
+      options[:subcommand] = "connection_counts"
+    end
+
+    opts.on("-u", "--status", "Check  connection status") do
+      options[:subcommand] = "connection_status"
+    end
+
+    opts.on("-s message", "--send", "Send a message to device") do |message|
+      options[:subcommand] = "send_to_connection"
+      options[:message] = message
+    end
+
+    opts.on("-r message", "--request", "Request a message from device") do |message|
+      options[:subcommand] = "request_to_connection"
+      options[:message] = message
+    end
+
+    opts.on("-a", "--attach", "Attach to a connection") do
+      options[:subcommand] = "attach_connection"
+    end
+
+    opts.on("-n", "--scan", "scan channel connections") do
+      options[:subcommand] = "scan_connections"
+    end
+
+    opts.on("-i channel_id", "--channel", "Specify a channel by ID") do |channel_id|
+      options[:channel_id] = channel_id
+    end
+
+    opts.on("-d device_id", "--device", "Specify a device by ID") do |device_id|
+      options[:device_id] = device_id
+    end
+
    end
  }
 
@@ -324,70 +551,22 @@ when 'show_channel'
   show_channel(options)
 when 'delete_channel'
   delete_channel(options)
+when 'connection_counts'
+  connection_counts(options)
+when 'connection_status'
+  connection_status(options)
+when 'send_to_connection'
+  send_to_connection(options)
+when 'request_to_connection'
+  request_to_connection(options)
+when 'attach_connection'
+  load_libs
+  attach_connection(options)
+when 'scan_connections'
+  scan_connections(options)
 end
 
 =begin
-
-def connection_counts(opt)
-  code = nil
-  uri = URI("http#{opt[:use_ssl] ? 's': ""}://#{opt[:host]}:#{opt[:port]}/admin/connections/counts")
-  begin
-    Net::HTTP.start(uri.host, uri.port, :use_ssl => uri.scheme == 'https', :verify_mode => OpenSSL::SSL::VERIFY_NONE) do |http|
-      request = Net::HTTP::Get.new uri
-      request.add_field('Authentication', opt[:auth_token])
-
-      response = http.request request
-      code = response.code
-      puts response.body
-    end
-  rescue => e
-    puts e.message
-  end
-
-  if code.to_i != 200
-    puts "Failed to get connection counts. code=#{code}"
-    exit 1
-  end
-end
-
-def connection_status(opt)
-  channel_id = get_option(opt, :channel_id, false, Proc.new{|opt, _| list_channels(opt)})
-  device_id = get_option(opt, :device_id, false)
-
-  if opt[:yes].nil?
-    print "With connection history?(yes/no): "
-    yes_or_no = gets.chomp.strip
-    if yes_or_no != 'yes'
-      puts 'Skipping connection history...'
-      yes_or_no = false
-    else
-      yes_or_no = true
-    end
-  else
-    yes_or_no = true
-  end
-
-  code = nil
-  uri = URI("http#{opt[:use_ssl] ? 's': ""}://#{opt[:host]}:#{opt[:port]}/admin/channels/#{channel_id}/devices/#{device_id}/status")
-  uri.query = URI.encode_www_form({history: yes_or_no})
-  begin
-    Net::HTTP.start(uri.host, uri.port, :use_ssl => uri.scheme == 'https', :verify_mode => OpenSSL::SSL::VERIFY_NONE) do |http|
-      request = Net::HTTP::Get.new uri
-      request.add_field('Authentication', opt[:auth_token])
-
-      response = http.request request
-      code = response.code
-      print_response(response.body)
-    end
-  rescue => e
-    puts e.message
-  end
-
-  if code.to_i != 200
-    puts "Failed to get connection status. code=#{code}"
-    exit 1
-  end
-end
 
 def show_settings(opt)
   code = nil
@@ -409,65 +588,6 @@ def show_settings(opt)
     puts "Failed to get Eywa settings. code=#{code}"
     exit 1
   end
-end
-
-def send_to_connection(opt)
-  channel_id = get_option(opt, :channel_id, false, Proc.new{|opt, _| list_channels(opt)})
-  device_id = get_option(opt, :device_id)
-  message = get_option(opt, :message)
-
-  code = nil
-  uri = URI("http#{opt[:use_ssl] ? 's': ""}://#{opt[:host]}:#{opt[:port]}/admin/channels/#{channel_id}/devices/#{device_id}/send")
-  begin
-    Net::HTTP.start(uri.host, uri.port, :use_ssl => uri.scheme == 'https', :verify_mode => OpenSSL::SSL::VERIFY_NONE) do |http|
-      request = Net::HTTP::Post.new uri
-      request.add_field('Authentication', opt[:auth_token])
-      request.body = message
-
-      response = http.request request
-      code = response.code
-    end
-  rescue => e
-    puts e.message
-  end
-
-  if code.to_i != 200
-    puts "Failed to send message: [#{message}] to device: [#{device_id}] in channel: [#{channel_id}]. code=#{code}"
-    exit 1
-  end
-  puts 'Message sent successfully!'
-end
-
-def request_to_connection(opt)
-  channel_id = get_option(opt, :channel_id, false, Proc.new{|opt, _| list_channels(opt)})
-  device_id = get_option(opt, :device_id)
-  message = get_option(opt, :message)
-
-  code = nil
-  resp = nil
-  uri = URI("http#{opt[:use_ssl] ? 's': ""}://#{opt[:host]}:#{opt[:port]}/admin/channels/#{channel_id}/devices/#{device_id}/request")
-  uri.query = URI.encode_www_form({timeout: opt[:timeout]}) if !opt[:timeout].nil? && opt[:timeout].length > 0
-  begin
-    Net::HTTP.start(uri.host, uri.port, :use_ssl => uri.scheme == 'https', :verify_mode => OpenSSL::SSL::VERIFY_NONE) do |http|
-      request = Net::HTTP::Post.new uri
-      request.add_field('Authentication', opt[:auth_token])
-      request.body = message
-
-      response = http.request request
-      code = response.code
-      resp = response.body
-    end
-  rescue => e
-    puts e.message
-  end
-
-  if code.to_i != 200
-    puts "Failed to request message: [#{message}] to device: [#{device_id}] in channel: [#{channel_id}]. code=#{code}"
-    exit 1
-  end
-
-  puts 'Message request successfully!'
-  puts "Response: \n  #{resp}"
 end
 
 def update_settings(opt)
@@ -664,47 +784,6 @@ def query_raw(opt)
   end
 end
 
-def scan_connections(opt)
-  channel_id = get_option(opt, :channel_id, false, Proc.new{|opt| list_channels(opt)})
-  params = {
-    size: get_option(opt, :size, true),
-    last: get_option(opt, :last, true)
-  }.delete_if{|_, v| v.length == 0}
-
-  puts "Please review your query:"
-  puts JSON.pretty_generate(params)
-  puts "Press enter to continue, or Ctrl-C to abort"
-  gets
-
-  code = nil
-  resp = nil
-  uri = URI("http#{opt[:use_ssl] ? 's': ""}://#{opt[:host]}:#{opt[:port]}/admin/channels/#{channel_id}/connections/scan")
-  uri.query = URI.encode_www_form(params)
-  begin
-    Net::HTTP.start(uri.host, uri.port, :use_ssl => uri.scheme == 'https', :verify_mode => OpenSSL::SSL::VERIFY_NONE) do |http|
-      http.read_timeout = 3600
-      request = Net::HTTP::Get.new uri
-      request.add_field('Authentication', opt[:auth_token])
-
-      response = http.request request
-      code = response.code
-      resp = response.body
-    end
-  rescue => e
-    puts e.message
-  end
-
-  if code.to_i != 200
-    puts resp
-    puts "Failed to query connections. code=#{code}"
-    print_wiki_query
-    exit 1
-  end
-
-  print_response(resp)
-  puts 'Successfully scanned connections!'
-end
-
 def tail_log(opt)
   url = "ws#{opt[:use_ssl] ? 's': ""}://#{opt[:host]}:#{opt[:port]}/admin/tail"
   ws = WebSocket::Client::Simple.connect(url, {headers: {"Authentication"=>opt[:auth_token]}})
@@ -722,43 +801,10 @@ def tail_log(opt)
   end
 end
 
-def attach_connection(opt)
-  channel_id = get_option(opt, :channel_id, false, Proc.new{|opt, _| list_channels(opt)})
-  device_id = get_option(opt, :device_id, false)
-
-  url = "ws#{opt[:use_ssl] ? 's': ""}://#{opt[:host]}:#{opt[:port]}/admin/channels/#{channel_id}/devices/#{device_id}/attach"
-  ws = WebSocket::Client::Simple.connect(url, {headers: {"Authentication"=>opt[:auth_token]}})
-  opt[:ws] = ws
-  welcome = nil
-  ws.on(:message) do |msg|
-    welcome = msg unless welcome
-    puts msg.data
-  end
-  sleep 1
-  if welcome.nil?
-    puts "Unable to attach to connection, check if it's online by `connection-status` ..."
-  else
-    _sleep
-  end
-end
-
-def _sleep
-  begin
-    sleep
-  rescue Interrupt
-  end
-end
-
 def cleanup_ws(opt)
   opt[:ws].close if opt[:ws]
 end
 
 options = parse_opts(ARGV)
-options[:auth_token] = login(options)
-
-Signal.trap("INT") {
-  puts "\nTask aborted."
-  exit 1
-}
   
 =end
