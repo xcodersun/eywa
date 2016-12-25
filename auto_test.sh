@@ -9,6 +9,7 @@ integration=0
 testname=""
 tag=""
 override=0
+timeout=0
 rebuild=0
 
 OPTIND=1
@@ -34,7 +35,7 @@ Usage:
   -b rebuild binary before running integration tests. default: not rebuild
 EOM
 
-while getopts "h?vobifn:s:l:t:T:" opt; do
+while getopts "h?vobifn:s:l:t:T:O:" opt; do
     case "$opt" in
     h|\?)
         echo "$USAGE"
@@ -59,6 +60,8 @@ while getopts "h?vobifn:s:l:t:T:" opt; do
         ;;
     o)  override=1
         ;;
+    O)  timeout=$OPTARG
+	;;
     b)  rebuild=1
         ;;
     esac
@@ -78,7 +81,11 @@ if [[ $iters -eq 0 && $utilFail -eq 1 ]]; then
   fi
 fi
 
-params="$([[ $verbose != 1 ]] || echo '-v' ) $([[ ${#tag} -gt 0 ]] && echo '-tags' ${tag}) $([[ ${#testname} -gt 0 ]] && echo '--run' ${testname}) ./..."
+params="$([[ $verbose != 1 ]] || echo '-v' ) \
+$([[ $timeout -gt 0 ]] && echo '-timeout' ${timeout}s) \
+$([[ ${#tag} -gt 0 ]] && echo '-tags' ${tag}) \
+$([[ ${#testname} -gt 0 ]] && echo '--run' \
+${testname}) ./..."
 
 serverpid=""
 
