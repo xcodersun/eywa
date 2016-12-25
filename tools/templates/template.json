@@ -4,7 +4,6 @@
   "fields": {
     "humidity": "int",
     "temperature": "float"
-    "formaldehyde": "float"
   },
   "tags": ["room", "floor"],
   "access_tokens": ["1234abcd"]
