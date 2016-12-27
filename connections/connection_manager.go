@@ -98,6 +98,8 @@ func (cm *ConnectionManager) NewHttpConnection(id string, httpConn *httpConn, h 
 		BasicPublisher: p,
 	}
 
+	conn.start()
+
 	if httpConn._type == HttpPush {
 		conn.close(false)
 		return conn, nil
@@ -116,8 +118,6 @@ func (cm *ConnectionManager) NewHttpConnection(id string, httpConn *httpConn, h 
 	if _conn != nil {
 		go _conn.(Connection).close(false)
 	}
-
-	conn.start()
 
 	return conn, nil
 }
