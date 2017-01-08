@@ -68,6 +68,8 @@ func AdminRouter() http.Handler {
 	admin.Get("/configs", handlers.GetConfig)
 	admin.Put("/configs", handlers.UpdateConfig)
 
+	admin.Get("/summary", handlers.GetSummary)
+
 	admin.Get("/tail", handlers.TailLog)
 
 	admin.Get("/channels", handlers.ListChannels)

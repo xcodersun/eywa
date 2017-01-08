@@ -115,7 +115,7 @@ func CloseConnectionManager(id string) error {
 	return cm.close()
 }
 
-func Counts() map[string]int {
+func Counts() (map[string]int, int) {
 	cms := make(map[string]*ConnectionManager)
 	cmLock.RLock()
 	for id, cm := range connManagers {
@@ -123,12 +123,14 @@ func Counts() map[string]int {
 	}
 	cmLock.RUnlock()
 
+	var total int = 0
 	counts := make(map[string]int)
 	for id, cm := range cms {
 		counts[id] = cm.Count()
+		total += cm.Count()
 	}
 
-	return counts
+	return counts, total
 }
 
 func FindConnectionManager(id string) (*ConnectionManager, bool) {

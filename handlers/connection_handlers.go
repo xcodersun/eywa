@@ -17,7 +17,8 @@ import (
 )
 
 func ConnectionCounts(c web.C, w http.ResponseWriter, r *http.Request) {
-	Render.JSON(w, http.StatusOK, connections.Counts())
+	connectionsCounts, _ := connections.Counts()
+	Render.JSON(w, http.StatusOK, connectionsCounts)
 }
 
 func ConnectionCount(c web.C, w http.ResponseWriter, r *http.Request) {
