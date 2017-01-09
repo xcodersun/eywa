@@ -119,11 +119,13 @@ func TestApiToDevice(t *testing.T) {
 
 	Convey("successfully uploads the structed data and indexed into ES via http, also long polling for downloading data", t, func() {
 		reqBody := Channel{
-			Name:         "test http polling",
-			Description:  "desc",
-			Tags:         []string{"tag1", "tag2"},
-			Fields:       map[string]string{"field1": "int"},
-			AccessTokens: []string{"token1"},
+			Name:            "test http polling",
+			Description:     "desc",
+			Tags:            []string{"tag1", "tag2"},
+			Fields:          map[string]string{"field1": "int"},
+			AccessTokens:    []string{"token1"},
+			ConnectionLimit: 5,
+			MessageRate:     1000,
 		}
 		f := frisby.Create("create channel").Post(ListChannelPath()).
 			SetHeader("Content-Type", "application/json").

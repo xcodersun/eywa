@@ -7,6 +7,7 @@ import (
 	. "github.com/eywa/presenters"
 	. "github.com/eywa/utils"
 	"net/http"
+	"time"
 )
 
 func CreateChannel(c web.C, w http.ResponseWriter, r *http.Request) {
@@ -17,6 +18,8 @@ func CreateChannel(c web.C, w http.ResponseWriter, r *http.Request) {
 		Render.JSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
 		return
 	}
+	ch.Created = NanoToMilli(time.Now().UTC().UnixNano())
+	ch.Modified = ch.Created
 
 	err = ch.Create()
 	if err != nil {
@@ -31,6 +34,7 @@ func UpdateChannel(c web.C, w http.ResponseWriter, r *http.Request) {
 	if !found {
 		w.WriteHeader(http.StatusNotFound)
 	} else {
+		created := ch.Created
 		fields := ch.Fields
 		ch.Fields = nil
 		decoder := json.NewDecoder(r.Body)
@@ -42,6 +46,8 @@ func UpdateChannel(c web.C, w http.ResponseWriter, r *http.Request) {
 		if ch.Fields == nil {
 			ch.Fields = fields
 		}
+		ch.Created = created
+		ch.Modified = NanoToMilli(time.Now().UTC().UnixNano())
 		err = ch.Update()
 		if err != nil {
 			Render.JSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})

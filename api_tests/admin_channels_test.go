@@ -25,12 +25,14 @@ var DeviceServer string
 var ConfigFile string
 
 type ChannelResp struct {
-	Id           string            `json:"id"`
-	Name         string            `json:"name"`
-	Description  string            `json:"description"`
-	Tags         []string          `json:"tags"`
-	Fields       map[string]string `json:"fields"`
-	AccessTokens []string          `json:"access_tokens"`
+	Id              string            `json:"id"`
+	Name            string            `json:"name"`
+	Description     string            `json:"description"`
+	Tags            []string          `json:"tags"`
+	Fields          map[string]string `json:"fields"`
+	AccessTokens    []string          `json:"access_tokens"`
+	ConnectionLimit int               `json:"connection_limit"`
+	MessageRate     int               `json:"message_rate"`
 }
 
 func init() {
@@ -93,11 +95,13 @@ func TestAdminChannels(t *testing.T) {
 		})
 
 		reqBody := Channel{
-			Name:         "test",
-			Description:  "desc",
-			Tags:         []string{"tag1", "tag2"},
-			Fields:       map[string]string{"field1": "int"},
-			AccessTokens: []string{"token1"},
+			Name:            "test",
+			Description:     "desc",
+			Tags:            []string{"tag1", "tag2"},
+			Fields:          map[string]string{"field1": "int"},
+			AccessTokens:    []string{"token1"},
+			ConnectionLimit: 5,
+			MessageRate:     1000,
 		}
 		f = frisby.Create("create channel").Post(ListChannelPath())
 		f.SetJson(reqBody).Send()
@@ -115,12 +119,14 @@ func TestAdminChannels(t *testing.T) {
 		})
 
 		expResp := &ChannelResp{
-			Id:           chId,
-			Name:         reqBody.Name,
-			Description:  reqBody.Description,
-			Tags:         reqBody.Tags,
-			Fields:       reqBody.Fields,
-			AccessTokens: reqBody.AccessTokens,
+			Id:              chId,
+			Name:            reqBody.Name,
+			Description:     reqBody.Description,
+			Tags:            reqBody.Tags,
+			Fields:          reqBody.Fields,
+			AccessTokens:    reqBody.AccessTokens,
+			ConnectionLimit: reqBody.ConnectionLimit,
+			MessageRate:     reqBody.MessageRate,
 		}
 
 		f = frisby.Create("get channel").Get(GetChannelPath(chId)).Send()
@@ -180,11 +186,13 @@ func TestAdminChannels(t *testing.T) {
 		})
 
 		reqBody := Channel{
-			Name:         "test",
-			Description:  "desc",
-			Tags:         []string{"tag1", "tag2"},
-			Fields:       map[string]string{"field1": "int"},
-			AccessTokens: []string{"token1"},
+			Name:            "test",
+			Description:     "desc",
+			Tags:            []string{"tag1", "tag2"},
+			Fields:          map[string]string{"field1": "int"},
+			AccessTokens:    []string{"token1"},
+			ConnectionLimit: 5,
+			MessageRate:     1000,
 		}
 		f = frisby.Create("create channel").Post(ListChannelPath())
 		f.SetJson(reqBody).Send()
@@ -231,12 +239,14 @@ func TestAdminChannels(t *testing.T) {
 		f.ExpectStatus(http.StatusOK)
 
 		expResp := &ChannelResp{
-			Id:           chId,
-			Name:         reqBody.Name,
-			Description:  reqBody.Description,
-			Tags:         []string{"tag1", "tag2", "tag3"},
-			Fields:       map[string]string{"field1": "int", "field2": "boolean"},
-			AccessTokens: reqBody.AccessTokens,
+			Id:              chId,
+			Name:            reqBody.Name,
+			Description:     reqBody.Description,
+			Tags:            []string{"tag1", "tag2", "tag3"},
+			Fields:          map[string]string{"field1": "int", "field2": "boolean"},
+			AccessTokens:    reqBody.AccessTokens,
+			ConnectionLimit: reqBody.ConnectionLimit,
+			MessageRate:     reqBody.MessageRate,
 		}
 
 		f = frisby.Create("get channel").Get(GetChannelPath(chId)).Send()

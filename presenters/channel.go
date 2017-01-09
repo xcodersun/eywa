@@ -16,6 +16,7 @@ type ChannelBrief struct {
 	ID          string `json:"id"`
 	Name        string `json:"name"`
 	Description string `json:"description"`
+	Created     int64  `json:"created"`
 }
 
 type ChannelDetail struct {
@@ -29,6 +30,7 @@ func NewChannelBrief(c *Channel) *ChannelBrief {
 		ID:          hashId,
 		Name:        c.Name,
 		Description: c.Description,
+		Created:     c.Created,
 	}
 }
 

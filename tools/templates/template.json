@@ -6,5 +6,7 @@
     "temperature": "float"
   },
   "tags": ["room", "floor"],
-  "access_tokens": ["1234abcd"]
+  "access_tokens": ["1234abcd"],
+  "connection_limit": 5,
+  "message_rate": 1000
 }

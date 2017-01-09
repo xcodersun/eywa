@@ -34,11 +34,13 @@ func TestChannel(t *testing.T) {
 
 	Convey("creates/updates/deletes channel", t, func() {
 		c := &Channel{
-			Name:         "test",
-			Description:  "desc",
-			Tags:         []string{"tag1", "tag2"},
-			Fields:       map[string]string{"field1": "int"},
-			AccessTokens: []string{"token1"},
+			Name:            "test",
+			Description:     "desc",
+			Tags:            []string{"tag1", "tag2"},
+			Fields:          map[string]string{"field1": "int"},
+			AccessTokens:    []string{"token1"},
+			ConnectionLimit: 5,
+			MessageRate:     1000,
 		}
 
 		c.Create()
@@ -66,11 +68,13 @@ func TestChannel(t *testing.T) {
 
 	Convey("validates channel before saving", t, func() {
 		c := &Channel{
-			Name:         "",
-			Description:  "desc",
-			Tags:         []string{"tag1", "tag2"},
-			Fields:       map[string]string{"field1": "int"},
-			AccessTokens: []string{"token1"},
+			Name:            "",
+			Description:     "desc",
+			Tags:            []string{"tag1", "tag2"},
+			Fields:          map[string]string{"field1": "int"},
+			AccessTokens:    []string{"token1"},
+			ConnectionLimit: 5,
+			MessageRate:     1000,
 		}
 		err := c.Create()
 		So(err.Error(), ShouldContainSubstring, "name is empty")
@@ -85,12 +89,22 @@ func TestChannel(t *testing.T) {
 		err = c.Create()
 		So(err.Error(), ShouldContainSubstring, "access_tokens are empty")
 
+		c.ConnectionLimit = -1
+		err = c.Create()
+		So(err.Error(), ShouldContainSubstring, "connection limit is negative")
+
+		c.ConnectionLimit = 5
+		c.MessageRate = -1
+		err = c.Create()
+		So(err.Error(), ShouldContainSubstring, "message rate is negative")
+
 		tags := []string{}
 		for i := 0; i < 65; i++ {
 			tags = append(tags, "tag"+strconv.Itoa(i))
 		}
 		c.Tags = tags
 		c.AccessTokens = []string{"token1"}
+		c.MessageRate = 1000
 		err = c.Create()
 		So(err.Error(), ShouldContainSubstring, "too many tags")
 
@@ -144,11 +158,13 @@ func TestChannel(t *testing.T) {
 
 	Convey("does not allow removing tags/fields or updating fields' types", t, func() {
 		c := &Channel{
-			Name:         "test",
-			Description:  "desc",
-			Tags:         []string{"tag1", "tag2"},
-			Fields:       map[string]string{"field1": "int"},
-			AccessTokens: []string{"token1"},
+			Name:            "test",
+			Description:     "desc",
+			Tags:            []string{"tag1", "tag2"},
+			Fields:          map[string]string{"field1": "int"},
+			AccessTokens:    []string{"token1"},
+			ConnectionLimit: 5,
+			MessageRate:     1000,
 		}
 
 		err := c.Create()

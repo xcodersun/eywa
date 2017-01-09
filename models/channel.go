@@ -20,10 +20,14 @@ type Channel struct {
 	Id              int         `sql:"type:integer primary key autoincrement" json:"-"`
 	Name            string      `sql:"type:varchar(255);unique_index" json:"name"`
 	Description     string      `sql:"type:text" json:"description"`
+	Created         int64       `sql:"type:integer" json:"created"`
+	Modified        int64       `sql:"type:integer" json:"modified"`
 	Tags            StringSlice `sql:"type:text" json:"tags"`
 	Fields          StringMap   `sql:"type:text" json:"fields"`
 	MessageHandlers StringSlice `sql:"type:text" json:"-"`
 	AccessTokens    StringSlice `sql:"type:text" json:"access_tokens"`
+	ConnectionLimit int         `sql:"type:integer" json:"connection_limit"`
+	MessageRate     int         `sql:"type:integer" json:"message_rate"`
 }
 
 func (c *Channel) validate() error {
@@ -33,6 +37,14 @@ func (c *Channel) validate() error {
 
 	if len(c.Description) == 0 {
 		return errors.New("description is empty")
+	}
+
+	if c.ConnectionLimit < 0 {
+		return errors.New("connection limit is negative")
+	}
+
+	if c.MessageRate < 0 {
+		return errors.New("message rate is negative")
 	}
 
 	if c.Tags == nil {

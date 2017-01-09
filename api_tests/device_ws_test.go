@@ -24,11 +24,13 @@ import (
 
 func CreateTestChannel() (string, *Channel) {
 	ch := &Channel{
-		Name:         "test channel",
-		Description:  "desc",
-		Tags:         []string{"tag1", "tag2"},
-		Fields:       map[string]string{"field1": "int"},
-		AccessTokens: []string{"token1"},
+		Name:            "test channel",
+		Description:     "desc",
+		Tags:            []string{"tag1", "tag2"},
+		Fields:          map[string]string{"field1": "int"},
+		AccessTokens:    []string{"token1"},
+		ConnectionLimit: 5,
+		MessageRate:     1000,
 	}
 	f := frisby.Create("create channel").Post(ListChannelPath()).
 		SetHeader("Content-Type", "application/json").
