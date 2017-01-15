@@ -39,11 +39,11 @@ func (c *Channel) validate() error {
 		return errors.New("description is empty")
 	}
 
-	if c.ConnectionLimit < 0 {
+	if c.ConnectionLimit <= 0 {
 		return errors.New("connection limit is negative")
 	}
 
-	if c.MessageRate < 0 {
+	if c.MessageRate <= 0 {
 		return errors.New("message rate is negative")
 	}
 
