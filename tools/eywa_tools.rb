@@ -171,7 +171,7 @@ def get_option(opt, option_name, skip=false, pre_hook=nil, post_hook=nil)
 end
 
 def print_wiki_query
-  puts 'For detailed query syntax, please refer to https://github.com/vivowares/eywa/wiki/Query-Eywa .'
+  puts 'For detailed query syntax, please refer to https://github.com/xcodersun/eywa/wiki/Query-Eywa .'
 end
 
 def print_response(response)

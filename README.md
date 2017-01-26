@@ -50,16 +50,16 @@ Please let us know if you want more features by creating issues. Pull requests a
 Performance
 -----------
 
-How performant is Eywa? Well, we did a simple benchmark and the [benchmark script](https://github.com/vivowares/eywa/blob/master/benchmark/benchmark.go) is also available in the repo under `benchmark` directory.
+How performant is Eywa? Well, we did a simple benchmark and the [benchmark script](https://github.com/xcodersun/eywa/blob/master/benchmark/benchmark.go) is also available in the repo under `benchmark` directory.
 
 The latest benchmark shows, on a machine of 12 CPUs + 32GB mem from [Digital Ocean](https://www.digitalocean.com/). A single Eywa node can keep track of more than 1.5 million devices, with a lot of potential. CPU is merely used, but memory is the limiting factor.
 
-For more details please check out wiki on [Performance](https://github.com/vivowares/eywa/wiki/Performance).
+For more details please check out wiki on [Performance](https://github.com/xcodersun/eywa/wiki/Performance).
 
 How to use?
 -----------
 
-You can get started with our [wiki](https://github.com/vivowares/eywa/wiki).
+You can get started with our [wiki](https://github.com/xcodersun/eywa/wiki).
 
 
 Community / Contributing
