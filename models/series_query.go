@@ -14,6 +14,7 @@ var SeriesAggName = "series_agg"
 
 type SeriesQuery struct {
 	Channel      *Channel
+	Device       string
 	Field        string
 	Tags         map[string]string
 	SummaryType  string
@@ -111,6 +112,11 @@ func (q *SeriesQuery) QueryES() (interface{}, error) {
 	filterAgg := elastic.NewFilterAggregation()
 
 	boolQ := elastic.NewBoolQuery()
+
+	if q.Device != "" {
+		termQ := elastic.NewTermQuery("device_id", q.Device)
+		boolQ.Must(termQ)
+	}
 
 	termQs := make([]elastic.Query, 0)
 	for tagN, tagV := range q.Tags {

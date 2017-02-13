@@ -36,7 +36,12 @@ func QuerySeries(c web.C, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	q := &models.SeriesQuery{Channel: ch}
+	device := c.URLParams["device_id"];
+
+	q := &models.SeriesQuery{
+		Channel: ch,
+		Device: device,
+	}
 	err := q.Parse(QueryToMap(r.URL.Query()))
 	if err != nil {
 		Render.JSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})

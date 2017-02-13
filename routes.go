@@ -91,6 +91,8 @@ func AdminRouter() http.Handler {
 	admin.Get("/channels/:id/index_stats", handlers.GetChannelIndexStats)
 	admin.Get("/channels/:id/request_template", handlers.GetChannelRequestTemplate)
 
+	admin.Get("/channels/:id/devices/:device_id/series", handlers.QuerySeries)
+
 	admin.Get("/connections/counts", handlers.ConnectionCounts)
 	admin.Get("/channels/:channel_id/connections/count", handlers.ConnectionCount)
 	admin.Get("/channels/:channel_id/connections/scan", handlers.ScanConnections)
