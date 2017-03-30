@@ -8,11 +8,15 @@ import (
 	. "github.com/eywa/models"
 	. "github.com/eywa/utils"
 	"net/http"
+	"regexp"
 )
 
 func AdminAuthenticator(c *web.C, h http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path == "/login" || r.Method == "OPTIONS" {
+	  // Since javascript only supports basic authentication, we'll bypass the authentication token
+	  var attachUrl = regexp.MustCompile(`/channels/.*/devices/.*/attach`)
+
+		if r.URL.Path == "/login" || r.Method == "OPTIONS" || attachUrl.MatchString(r.URL.Path) {
 			h.ServeHTTP(w, r)
 		} else {
 			if len(r.Header.Get("Authentication")) != 0 {
