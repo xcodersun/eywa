@@ -13,6 +13,7 @@ import (
 
 func AdminAuthenticator(c *web.C, h http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
+	  // Workaround(20170329 alex):
 	  // Since javascript only supports basic authentication, we'll bypass the authentication token
 	  var attachUrl = regexp.MustCompile(`/channels/.*/devices/.*/attach`)
 
