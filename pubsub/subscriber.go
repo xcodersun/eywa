@@ -54,9 +54,22 @@ func (s *WebsocketSubscriber) Subscribe(banner string) {
 
 		for event := range listener {
 			msg := event.String(0)
-			if s.flush([]byte(msg)) != nil {
+			if msg == "UNSUBSCRIBE" || s.flush([]byte(msg)) != nil {
+				s.ws.Close();
 				return
 			}
+		}
+	}()
+
+	// Monitor attacher's websocket
+	go func() {
+		messageType, _, err := s.ws.ReadMessage()
+		// In error case, we want to close the websocket too. In other hand,
+		// JS websocket library close with code 1005 (RFC 6455 section 11.7)
+		// which is an error per gorilla websocket.
+		if err != nil || messageType == websocket.CloseMessage {
+			s.p.Publish(func() string{ return "UNSUBSCRIBE" })
+			return
 		}
 	}()
 }
