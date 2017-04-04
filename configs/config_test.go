@@ -2,8 +2,8 @@ package configs
 
 import (
 	"bytes"
-	. "github.com/smartystreets/goconvey/convey"
 	. "github.com/eywa/utils"
+	. "github.com/smartystreets/goconvey/convey"
 	"io/ioutil"
 	"log"
 	"os"

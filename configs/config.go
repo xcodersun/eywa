@@ -3,9 +3,9 @@ package configs
 import (
 	"bytes"
 	"encoding/xml"
+	. "github.com/eywa/utils"
 	"github.com/spf13/viper"
 	"gopkg.in/yaml.v2"
-	. "github.com/eywa/utils"
 	"io"
 	"sync/atomic"
 	"text/template"
@@ -16,12 +16,13 @@ var cfgPtr unsafe.Pointer
 var filename string
 var params map[string]string
 
-func Config() *Conf {
-	return (*Conf)(cfgPtr)
-}
-
+// function for unit test
 func SetConfig(cfg *Conf) {
 	atomic.StorePointer(&cfgPtr, unsafe.Pointer(cfg))
+}
+
+func Config() *Conf {
+	return (*Conf)(cfgPtr)
 }
 
 func ReadConfig(buf io.Reader) (*Conf, error) {
