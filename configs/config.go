@@ -16,15 +16,17 @@ var cfgPtr unsafe.Pointer
 var filename string
 var params map[string]string
 
-// function for unit test
+// function to update config pointer
 func SetConfig(cfg *Conf) {
 	atomic.StorePointer(&cfgPtr, unsafe.Pointer(cfg))
 }
 
+// return pointer to the cached config
 func Config() *Conf {
 	return (*Conf)(cfgPtr)
 }
 
+// read configuration from a .yml file and cache it in cfgPtr.
 func ReadConfig(buf io.Reader) (*Conf, error) {
 	v := viper.New()
 	v.SetConfigType("yml")
@@ -138,6 +140,7 @@ func ReadConfig(buf io.Reader) (*Conf, error) {
 	return cfg, nil
 }
 
+// update the config cache
 func Update(settings map[string]interface{}) error {
 	_cfg, err := Config().DeepCopy()
 	if err != nil {
@@ -204,16 +207,12 @@ func InitializeConfig(f string, p map[string]string) error {
 	return nil
 }
 
-type Conf struct {
-	Service     *ServiceConf     `json:"service" assign:"service;;-"`
-	Security    *SecurityConf    `json:"security" assign:"security;;"`
-	Connections *ConnectionsConf `json:"connections" assign:"connections;;"`
-	Indices     *IndexConf       `json:"indices" assign:"indices;;"`
-	Database    *DbConf          `json:"database" assign:"database;;-"`
-	Logging     *LogsConf        `json:"logging" assign:"logging;;-"`
-}
-
+// copy every field in the config cache and returns a new cfg pointer to
+// the new copy. The old figure cache will be garbage collected. 
 func (cfg *Conf) DeepCopy() (*Conf, error) {
+	// The reason of not using json decoder is that json decoder ignores tags
+	// with `json:"-"`. So it will miss some fields which is not what DeepCopy
+	// wants. Instead, xml decoder marshals every fields.
 	asBytes, err := xml.Marshal(cfg)
 	if err != nil {
 		return nil, err
@@ -226,6 +225,15 @@ func (cfg *Conf) DeepCopy() (*Conf, error) {
 	}
 
 	return _cfg, nil
+}
+
+type Conf struct {
+	Service     *ServiceConf     `json:"service" assign:"service;;-"`
+	Security    *SecurityConf    `json:"security" assign:"security;;"`
+	Connections *ConnectionsConf `json:"connections" assign:"connections;;"`
+	Indices     *IndexConf       `json:"indices" assign:"indices;;"`
+	Database    *DbConf          `json:"database" assign:"database;;-"`
+	Logging     *LogsConf        `json:"logging" assign:"logging;;-"`
 }
 
 type DbConf struct {
