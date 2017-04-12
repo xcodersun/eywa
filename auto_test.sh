@@ -148,6 +148,7 @@ if [[ ${#serverpid} -gt 0 ]]; then
 
   waitIter=0
   while [[ $running -eq 0 ]]; do
+    echo "Trying ${waitIter} time."
     if [[ $waitIter -gt 10 ]]; then
       echo 'Error: server failed to shutdown.'
       exit 1
@@ -157,6 +158,7 @@ if [[ ${#serverpid} -gt 0 ]]; then
 
     ps auxww | grep $serverpid | grep -v grep >/dev/null 2>&1
     running=$?
+    waitIter=$((waitIter+1))
   done
 
   echo "Test server is shutdown..."

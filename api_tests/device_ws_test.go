@@ -52,7 +52,7 @@ func DeleteTestChannel(chId string) {
 	f.ExpectStatus(http.StatusOK)
 }
 
-func CreateWsConnection(chId, deviceId string, ch *Channel) *websocket.Conn {
+func CreateWsConnection(chId, deviceId string, ch *Channel) (*websocket.Conn, error) {
 	u := url.URL{
 		Scheme: "ws",
 		Host: fmt.Sprintf("%s:%d",
@@ -62,8 +62,7 @@ func CreateWsConnection(chId, deviceId string, ch *Channel) *websocket.Conn {
 	h := map[string][]string{"AccessToken": ch.AccessTokens}
 
 	cli, _, err := websocket.DefaultDialer.Dial(u.String(), h)
-	So(err, ShouldBeNil)
-	return cli
+	return cli, err
 }
 
 func ConnectionCountPath(chId string) string {
@@ -86,20 +85,28 @@ func CheckConnectionCount(chId string) int64 {
 }
 
 func TestWsConnection(t *testing.T) {
-
+	// Initialize database
 	InitializeDB()
 	DB.LogMode(true)
 	DB.SetLogger(log.New(os.Stdout, "", log.LstdFlags))
 	DB.DropTableIfExists(&Channel{})
 	DB.AutoMigrate(&Channel{})
-
+	// Initialize elasticsearch index client
 	InitializeIndexClient()
-
+	// Create a test channel
 	chId, ch := CreateTestChannel()
 
-	Convey("successfully ping the server and get the timestamp", t, func() {
-		cli := CreateWsConnection(chId, "abc", ch)
+	// Create websocket connection
+	cli, cliErr := CreateWsConnection(chId, "abc", ch)
+	// Wait for a few seconds for connection manager to register the new connection
+	time.Sleep(2 * time.Second)
+
+	Convey("Websocket connection is ready", t, func() {
+		So(cliErr, ShouldBeNil)
 		So(CheckConnectionCount(chId), ShouldEqual, 1)
+	})
+
+	Convey("successfully ping the server and get the timestamp", t, func() {
 		cli.SetPongHandler(func(data string) error {
 			_, err := strconv.ParseInt(data, 10, 64)
 			So(err, ShouldBeNil)
@@ -107,17 +114,11 @@ func TestWsConnection(t *testing.T) {
 		})
 		cli.WriteControl(websocket.PingMessage, []byte{}, time.Now().Add(1*time.Second))
 		cli.SetReadDeadline(time.Now().Add(1 * time.Second))
+		// Wait for ping from server
 		cli.ReadMessage()
-
-		cli.Close()
-		So(CheckConnectionCount(chId), ShouldEqual, 0)
 	})
 
 	Convey("successfully uploads structured data and get it indexed", t, func() {
-
-		cli := CreateWsConnection(chId, "abc", ch)
-		So(CheckConnectionCount(chId), ShouldEqual, 1)
-
 		tag1 := uuid.NewV4().String()
 		data := fmt.Sprintf("1|123|tag1=%s&field1=100", tag1)
 		cli.SetWriteDeadline(time.Now().Add(1 * time.Second))
@@ -125,16 +126,17 @@ func TestWsConnection(t *testing.T) {
 
 		IndexClient.Refresh().Do()
 		time.Sleep(3 * time.Second)
-
 		searchRes, err := IndexClient.Search().Index("_all").Query(elastic.NewTermQuery("tag1", tag1)).Do()
 		So(err, ShouldBeNil)
 		So(searchRes.TotalHits(), ShouldEqual, 1)
-
-		cli.Close()
-		So(CheckConnectionCount(chId), ShouldEqual, 0)
 	})
 
+	Convey("Close the websocket connection", t, func() {
+		cli.Close()
+		time.Sleep(2 * time.Second)
+		So(CheckConnectionCount(chId), ShouldEqual, 0)
+	})
+	// Delete the channel
 	DeleteTestChannel(chId)
-
 	frisby.Global.PrintReport()
 }

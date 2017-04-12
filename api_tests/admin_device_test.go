@@ -39,10 +39,18 @@ func TestAdminToDevice(t *testing.T) {
 
 	chId, ch := CreateTestChannel()
 
-	Convey("successfully send data to device from api", t, func() {
-		deviceId := "abc"
-		cli := CreateWsConnection(chId, deviceId, ch)
+	websocketDeviceId := "abc"
+	// Create websocket connection
+	cli, cliErr := CreateWsConnection(chId, websocketDeviceId, ch)
+	// Wait for a few seconds for connection manager to register the new connection
+	time.Sleep(2 * time.Second)
 
+	Convey("Websocket connection is ready", t, func() {
+		So(cliErr, ShouldBeNil)
+		So(CheckConnectionCount(chId), ShouldEqual, 1)
+	})
+
+	Convey("successfully send data to device from api", t, func() {
 		message := "this is a test message"
 		var rcvData []byte
 		var rcvMsgType int
@@ -55,7 +63,7 @@ func TestAdminToDevice(t *testing.T) {
 			wg.Done()
 		}()
 
-		f := frisby.Create("send message to device").Post(AdminSendToDevicePath(chId, deviceId)).
+		f := frisby.Create("send message to device").Post(AdminSendToDevicePath(chId, websocketDeviceId)).
 			SetHeader("Authentication", authStr()).SetJson(map[string]string{"test": message}).Send()
 		f.ExpectStatus(http.StatusOK)
 
@@ -66,14 +74,9 @@ func TestAdminToDevice(t *testing.T) {
 		strs := strings.Split(string(rcvData), "|")
 		So(strs[len(strs)-1], ShouldEqual, fmt.Sprintf("{\"test\":\"%s\"}", message))
 		So(strs[0], ShouldEqual, strconv.Itoa(int(TypeSendMessage)))
-
-		cli.Close()
 	})
 
 	Convey("successfully request data from device", t, func() {
-		deviceId := "abc"
-		cli := CreateWsConnection(chId, deviceId, ch)
-
 		reqMsg := "request message"
 		respMsg := "response message"
 		var rcvMessage string
@@ -97,7 +100,7 @@ func TestAdminToDevice(t *testing.T) {
 			wg.Done()
 		}()
 
-		f := frisby.Create("send message to device").Post(AdminRequestToDevicePath(chId, deviceId)).
+		f := frisby.Create("send message to device").Post(AdminRequestToDevicePath(chId, websocketDeviceId)).
 			SetHeader("Authentication", authStr()).SetJson(map[string]string{"test": reqMsg}).Send()
 		f.ExpectStatus(http.StatusOK).
 			AfterContent(func(F *frisby.Frisby, content []byte, err error) {
@@ -110,8 +113,12 @@ func TestAdminToDevice(t *testing.T) {
 		So(rcvMsgType, ShouldEqual, websocket.BinaryMessage)
 		So(rcvMessage, ShouldEqual, `{"test":"request message"}`)
 		So(sendMsgType, ShouldEqual, TypeRequestMessage)
+	})
 
+	Convey("Close the websocket connection", t, func() {
 		cli.Close()
+		time.Sleep(2 * time.Second)
+		So(CheckConnectionCount(chId), ShouldEqual, 0)
 	})
 
 	DeleteTestChannel(chId)

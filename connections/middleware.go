@@ -20,10 +20,14 @@ type MiddlewareStack struct {
 // This is implimented without thread safty intentionally.
 // We don't encouge using this method concurrently with other methods
 func (ms *MiddlewareStack) Chain(h MessageHandler) MessageHandler {
+	// Most inner handler should be empty.
 	if h == nil {
 		h = func(Connection, Message, error) {}
 	}
 
+	// Pop out handlers from middleware stack and wrap them togther such
+	// that the bottom handler in stack will be the most outer handler which
+	// gets executed first. The chain of execution ends at the empty handler.
 	for i := len(ms.middlewares) - 1; i >= 0; i-- {
 		h = ms.middlewares[i].handlerFunc(h)
 	}

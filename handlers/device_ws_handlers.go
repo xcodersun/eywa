@@ -37,6 +37,13 @@ func WsHandler(c web.C, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// The actual handshake stop point. The Upgrade function will establish a long
+	// live connection with clients and return 200 code if no error. So client does
+	// not have to wait for the complete hanlder finishes its work. It means that
+	// when client thinks server is ready to take the connection, the server is
+	// probably not yet completed with connection registration work to connection
+	// manger. So if client send websocket requests too early, it will receive
+	// 'device is not online' error.
 	ws, err := connections.WsUp.Upgrade(w, r, nil)
 	if err != nil {
 		Render.JSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
@@ -47,6 +54,7 @@ func WsHandler(c web.C, w http.ResponseWriter, r *http.Request) {
 	meta["ip"] = strings.Split(r.RemoteAddr, ":")[0]
 	meta["request_id"] = c.Env[middleware.RequestIDKey].(string)
 
+	// Register the new websocket connection to connection manager.
 	_, err = cm.NewWebsocketConnection(deviceId, ws, messageHandler(ch), meta)
 
 	if err != nil {

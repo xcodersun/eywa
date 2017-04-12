@@ -79,29 +79,54 @@ type wsConn interface {
 }
 
 type WebsocketConnection struct {
+	// Reference to the connection manager
 	cm           *ConnectionManager
+	// Gorilla websocket
 	ws           wsConn
+	// Websocket connection creation time. This can be used to compute
+	// total connection alive time for stats
 	createdAt    time.Time
+	// Last ping time. This will be used to check if client is alive
+	// because in most cases, client will close it's socket unexpectedly.
+	// TODO(alexsun): currently, it is not used yet.
 	lastPingedAt time.Time
+	// Websocket connection closing time. This can be used to compute
+	// total connection alive time for stats.
 	closedAt     time.Time
+	// The key for connecton manager to find the websocket connection.
+	// TODO(alexsun): currently, device id is used the key which could
+	// be duplicated across different users. The key hould include user's
+	// identification as well.
 	identifier   string
+	// The head message handler.
 	h            MessageHandler
 	metadata     map[string]string
 	*pubsub.BasicPublisher
 
-	wg        sync.WaitGroup
+	// Write channel for wListen thread. By closing this channel does terminate
+	// wListen thread.
+	wch      chan *websocketMessageReq // size=?
+	// Read channel for rListen thread. By closing this channel does terminate
+	// rListen thread.
+	rch      chan struct{}             // size=0
+	closewch chan bool                 // size=1
+
+	// Sync group for threads of rListen and wListen. It's incremented before
+	// rListen and wListen starts and decremented when they are closed. The
+	// wait() function will block caller until both rListen and wListen is
+	// terminated. It is used by ConnectionManager's close() function which
+	// need to make sure that each connection has closed its rListen and wListen
+	// threads.
+	rwStart   sync.WaitGroup
+	// Make sure that the websocket connection is closed once and only once.
 	closeOnce sync.Once
 	closed    bool
 
-	// there is a chance for this msgChan to grow,
+	// There is a chance for this msgChan to grow,
 	// in extreme race condition. no plan to fix it.
 	// simple solution is to limit the size of it,
 	// close the connection when it blows up.
 	msgChans *syncRespChanMap
-
-	wch      chan *websocketMessageReq // size=?
-	closewch chan bool                 // size=1
-	rch      chan struct{}             // size=0
 }
 
 func (c *WebsocketConnection) Identifier() string { return c.identifier }
@@ -212,7 +237,7 @@ func (c *WebsocketConnection) sendSyncMessage(messageType MessageType, payload [
 }
 
 func (c *WebsocketConnection) wListen() {
-	defer c.wg.Done()
+	defer c.rwStart.Done()
 	for {
 		req, more := <-c.wch
 		if more {
@@ -296,7 +321,7 @@ func (c *WebsocketConnection) readWsMessage() (*websocketMessage, error) {
 }
 
 func (c *WebsocketConnection) rListen() {
-	defer c.wg.Done()
+	defer c.rwStart.Done()
 	for {
 		select {
 		case <-c.rch:
@@ -361,13 +386,17 @@ func (c *WebsocketConnection) close(unregister bool) error {
 }
 
 func (c *WebsocketConnection) wait() {
-	c.wg.Wait()
+	c.rwStart.Wait()
 }
 
 func (c *WebsocketConnection) start() {
-	c.wg.Add(2)
+	// Start listening to read channel
+	c.rwStart.Add(1)
 	go c.rListen()
+	// Start listening to write channel
+	c.rwStart.Add(1)
 	go c.wListen()
+	// Start the message handler chain
 	go c.h(c, &websocketMessage{_type: TypeConnectMessage}, nil)
 }
 
